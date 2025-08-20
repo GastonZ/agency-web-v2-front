@@ -1,13 +1,13 @@
 import React from 'react';
+import OnlineLayout from '../layout/OnlineLayout';
 
 const Dashboard: React.FC = () => {
     return (
-        <div>
-            <h1>Dashboard</h1>
-            <p>
-                Welcome
-            </p>
-        </div>
+        <OnlineLayout>
+            <div>
+                Dashboard
+            </div>
+        </OnlineLayout>
     );
 };
 

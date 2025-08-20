@@ -1,4 +1,5 @@
 import api from "./api/api";
+import { getToken } from "../utils/helper";
 
 export interface LoginCredentials {
   email: string;
@@ -45,28 +46,23 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
 }
 
 export async function validateToken(tokenArg?: string): Promise<boolean> {
-  const token = tokenArg ?? localStorage.getItem("aiaToken") ?? "";
+  const token = tokenArg ?? getToken();
   if (!token) return false;
 
   try {
     await api.post<void>("/auth/validate-token", { token });
     return true;
   } catch (error: any) {
-    if (error.response) {
+    if (error?.response) {
       const status: number = error.response.status;
       const message: string = error.response.data?.message;
 
       if (status === 401 && message === "Invalid or expired token") {
         return false;
       }
-
-      if (status >= 500) {
-        throw new Error("Error del servidor. Intente más tarde.");
-      }
-
+      if (status >= 500) throw new Error("Error del servidor. Intente más tarde.");
       throw new Error(message || `Error ${status} al validar token`);
     }
-
     throw new Error("No se pudo conectar con el servidor. Intenta de nuevo.");
   }
 }

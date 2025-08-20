@@ -30,8 +30,10 @@
     "about_welcome": "Bem-vindo",
     "hide": "Esconder",
     "show": "Mostrar",
-    "error_credentials": "Incorrect credentials",
-    "error_invalid": "Invalid server response",
-    "error_server": "Server error. Please try again later.",
-    "error_network": "Could not connect to the server. Please try again."
+    "error_credentials": "Credenciais incorretas",
+    "error_invalid": "Resposta inválida do servidor",
+    "error_server": "Erro no servidor. Tente novamente mais tarde.",
+    "error_network": "Não foi possível conectar ao servidor. Tente novamente.",
+    "not_found_message": "Ops! A página que você procura não existe.",
+    "go_home": "Vá para casa"
 }
