@@ -1,11 +1,14 @@
 import React, { forwardRef, useState } from "react";
 import { Input } from "./Input";
+import { useTranslation } from "react-i18next";
 
 type PasswordInputProps = React.ComponentProps<typeof Input>;
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ ...props }, ref) => {
     const [show, setShow] = useState(false);
+
+    const { t } = useTranslation('translations');
 
     return (
       <div className="relative">
@@ -23,7 +26,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
           tabIndex={-1}
         >
-          {show ? "Ocultar" : "Mostrar"}
+          {show ? t("hide") : t("show")}
         </button>
       </div>
     );

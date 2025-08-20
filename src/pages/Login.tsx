@@ -5,10 +5,13 @@ import { Input } from "../components/ui/Input";
 import { PasswordInput } from "../components/ui/PasswordInput";
 import { Button } from "../components/ui/Button";
 import { FormError } from "../components/ui/FormError";
+import { useTranslation } from 'react-i18next'
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  const { t } = useTranslation('translations');
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +23,7 @@ const Login: React.FC = () => {
     e.preventDefault();
 
     if (!email || !password) {
-      setErrorMsg("Por favor ingresa email y contraseña.");
+      setErrorMsg(t("emptyFields"));
       return;
     }
 
@@ -35,18 +38,21 @@ const Login: React.FC = () => {
     } catch (err: any) {
       const msg = err?.message;
 
-      if (msg === "Credenciales incorrectas") {
-        setErrorMsg(msg);
+      console.log(msg);
+      
+
+      if (msg === t("error.invalidCredentials")) {
+        setErrorMsg(t(msg));
         setPassword("");
         passwordRef.current?.focus();
-      } else if (msg === "Error del servidor. Intente más tarde.") {
-        setErrorMsg(msg);
+      } else if (msg === t("error.serverError")) {
+        setErrorMsg(t(msg));
         setShowRetry(true);
-      } else if (msg === "No se pudo conectar con el servidor. Intenta de nuevo.") {
-        setErrorMsg(msg);
+      } else if (msg === t("error.connectionError")) {
+        setErrorMsg(t(msg));
         setShowRetry(true);
       } else {
-        setErrorMsg(msg);
+        setErrorMsg(t(msg));
       }
     } finally {
       setLoading(false);
@@ -64,31 +70,31 @@ const Login: React.FC = () => {
         <h1 className="text-3xl font-semibold text-center tracking-tight">AgencIA</h1>
 
         <div className="mt-14 text-center">
-          <h2 className="text-2xl font-semibold">Iniciar sesión</h2>
+          <h2 className="text-2xl font-semibold">{t("login_title")}</h2>
           <p className="mt-2 text-sm text-gray-500">
-            Ingresa tu correo electrónico para entrar en esta app
+            {t("login_subtitle")}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
           <Input
             type="email"
-            label="Correo electrónico"
+            label={t("login_email_label")}
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="correoelectrónico@dominio.com"
+            placeholder={t("login_email_placeholder")}
             disabled={loading}
             autoComplete="email"
           />
 
           <PasswordInput
             ref={passwordRef}
-            label="Contraseña"
+            label={t("login_password_label")}
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="********"
+            placeholder={t("login_password_placeholder")}
             disabled={loading}
             autoComplete="current-password"
           />
@@ -96,7 +102,7 @@ const Login: React.FC = () => {
           <FormError message={errorMsg} />
 
           <Button type="submit" loading={loading}>
-            Iniciar sesión
+            {t("login_button")}
           </Button>
 
           {showRetry && (
@@ -107,19 +113,19 @@ const Login: React.FC = () => {
               className="mt-2"
               disabled={loading}
             >
-              Reintentar
+              {t("login_retry")}
             </Button>
           )}
         </form>
 
         <p className="mt-8 text-center text-xs text-gray-400">
-          Al hacer clic en Continuar aceptas nuestros{" "}
+          {t("login_terms")}{" "}
           <a href="#" className="underline">
-            Términos de servicio
+            {t("login_terms_link")}
           </a>{" "}
-          y la{" "}
+          {t("termsAnd")}{" "}
           <a href="#" className="underline">
-            Política de privacidad
+            {t("login_privacy_link")}
           </a>
         </p>
       </div>

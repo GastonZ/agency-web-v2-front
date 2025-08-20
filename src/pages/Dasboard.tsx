@@ -1,9 +1,9 @@
 import React from 'react';
 
-const Home: React.FC = () => {
+const Dashboard: React.FC = () => {
     return (
         <div>
-            <h1>Home</h1>
+            <h1>Dashboard</h1>
             <p>
                 Welcome
             </p>
@@ -11,4 +11,4 @@ const Home: React.FC = () => {
     );
 };
 
-export default Home;
+export default Dashboard;

@@ -17,7 +17,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
     const { data } = await api.post<LoginResponse>("auth/login", credentials);
 
     if (!data?.token || !data?.email || !data?.userId) {
-      throw new Error("Respuesta inválida del servidor");
+      throw new Error("error_invalid");
     }
 
     return data;
@@ -30,17 +30,17 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
         (status === 400 || status === 401) &&
         (message === "Invalid login credentials" || message === "Invalid password")
       ) {
-        throw new Error("Credenciales incorrectas");
+        throw new Error("error_credentials");
       }
 
       if (status >= 500) {
-        throw new Error("Error del servidor. Intente más tarde.");
+        throw new Error("error_server");
       }
 
       throw new Error(message || `Error ${status} en la autenticación`);
     }
 
-    throw new Error("No se pudo conectar con el servidor. Intenta de nuevo.");
+    throw new Error("error_network");
   }
 }
 
