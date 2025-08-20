@@ -1,6 +1,10 @@
 import React, { useRef, useState } from "react";
 import { loginUser } from "../services/client";
 import { useNavigate } from "react-router-dom";
+import { Input } from "../components/ui/Input";
+import { PasswordInput } from "../components/ui/PasswordInput";
+import { Button } from "../components/ui/Button";
+import { FormError } from "../components/ui/FormError";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -27,9 +31,7 @@ const Login: React.FC = () => {
     try {
       const res = await loginUser({ email, password });
       localStorage.setItem("aiaToken", res.token);
-
-
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: any) {
       const msg = err?.message;
 
@@ -57,8 +59,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-start justify-center">
-      <div className="w-full max-w-sm px-4 pt-24 pb-12">
+    <div>
+      <div className="w-full max-w-sm px-4">
         <h1 className="text-3xl font-semibold text-center tracking-tight">AgencIA</h1>
 
         <div className="mt-14 text-center">
@@ -67,52 +69,46 @@ const Login: React.FC = () => {
             Ingresa tu correo electrónico para entrar en esta app
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-          <input
+          <Input
             type="email"
+            label="Correo electrónico"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="correoelectrónico@dominio.com"
-            className="w-full h-12 rounded-md border border-gray-200 px-4 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black/80"
             disabled={loading}
+            autoComplete="email"
           />
 
-          <input
-            type="password"
+          <PasswordInput
             ref={passwordRef}
+            label="Contraseña"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="********"
-            className="w-full h-12 rounded-md border border-gray-200 px-4 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black/80"
             disabled={loading}
+            autoComplete="current-password"
           />
 
-          {errorMsg && (
-            <div role="alert" className="text-red-500 text-sm mt-1">
-              {errorMsg}
-            </div>
-          )}
+          <FormError message={errorMsg} />
 
-          <button
-            type="submit"
-            className="w-full h-11 rounded-md bg-black text-white text-sm font-medium hover:bg-black/90 transition-colors disabled:opacity-60"
-            disabled={loading}
-          >
-            {loading ? "Ingresando..." : "Iniciar sesión"}
-          </button>
+          <Button type="submit" loading={loading}>
+            Iniciar sesión
+          </Button>
 
           {showRetry && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleRetry}
-              className="w-full h-11 rounded-md bg-gray-100 text-gray-900 text-sm font-medium hover:bg-gray-200 transition-colors mt-2"
+              className="mt-2"
               disabled={loading}
             >
               Reintentar
-            </button>
+            </Button>
           )}
         </form>
 
