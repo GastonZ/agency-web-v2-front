@@ -34,5 +34,6 @@
     "error_server": "Error del servidor. Intente más tarde.",
     "error_network": "No se pudo conectar con el servidor. Intenta de nuevo.",
     "not_found_message": "¡Ups! La página que buscas no existe.",
-    "go_home": "Ir al inicio"
+    "go_home": "Ir al inicio",
+    "loading": "Cargando..."
 }

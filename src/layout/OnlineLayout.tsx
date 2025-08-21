@@ -1,6 +1,5 @@
 import React from 'react';
 import type { ReactNode } from 'react';
-import { Info } from 'lucide-react';
 import LenguageBtn from '../components/ui/features/LenguageBtn';
 import LogoutBtn from '../components/ui/features/LogoutBtn';
 

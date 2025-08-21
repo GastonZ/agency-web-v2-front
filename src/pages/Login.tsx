@@ -123,7 +123,7 @@ const Login: React.FC = () => {
           <a href="#" className="underline">
             {t("login_terms_link")}
           </a>{" "}
-          {t("termsAnd")}{" "}
+          &{" "}
           <a href="#" className="underline">
             {t("login_privacy_link")}
           </a>

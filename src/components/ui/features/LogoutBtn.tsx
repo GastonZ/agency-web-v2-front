@@ -26,10 +26,10 @@ const LogoutBtn: React.FC<LogoutBtnProps> = ({
     return (
         <button
             onClick={handleLogout}
-            className="flex items-center p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex items-center p-3 cursor-pointer hover:scale-110 transition-transform duration-200 ease-in-out"
             title="Logout"
             type="button"
-        >
+            >
             <LogOut size={20} />
         </button>
     );
