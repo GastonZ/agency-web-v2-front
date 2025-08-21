@@ -13,10 +13,10 @@ const Auth: React.FC = () => {
         <OfflineLayout>
             {isLogin ? <Login /> : <SignUp setIsLogin={setIsLogin} />}
             <button 
-            className='flex justify-center items-center w-full mt-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer'
+            className='flex justify-center items-center w-full mt-4 p-2 bg-black dark:bg-gray-100 rounded-md cursor-pointer hover:scale-105 transition-transform'
                 onClick={() => setIsLogin((prev) => !prev)}
             >
-                <p className='text-center w-full text-sm text-gray-500'>
+                <p className='text-center w-full text-sm text-gray-200 dark:text-black'>
                     {isLogin ? t("auth_no_account") : t("auth_have_account")}
                 </p>
             </button>

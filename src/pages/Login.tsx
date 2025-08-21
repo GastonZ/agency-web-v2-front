@@ -67,11 +67,11 @@ const Login: React.FC = () => {
   return (
     <div>
       <div className="w-full max-w-sm px-4">
-        <h1 className="text-3xl font-semibold text-center tracking-tight">AgencIA</h1>
+        <h1 className="text-3xl font-semibold text-center tracking-tight text-black dark:text-white">AgencIA</h1>
 
         <div className="mt-14 text-center">
-          <h2 className="text-2xl font-semibold">{t("login_title")}</h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <h2 className="text-2xl font-semibold text-black dark:text-white">{t("login_title")}</h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">
             {t("login_subtitle")}
           </p>
         </div>
@@ -118,7 +118,7 @@ const Login: React.FC = () => {
           )}
         </form>
 
-        <p className="mt-8 text-center text-xs text-gray-400">
+        <p className="mt-8 text-center text-xs text-gray-400 dark:text-gray-200">
           {t("login_terms")}{" "}
           <a href="#" className="underline">
             {t("login_terms_link")}
