@@ -13,6 +13,27 @@ export interface LoginResponse {
   active: boolean;
 }
 
+export interface SignUpData {
+  name: string;
+  lastName: string;
+  email: string;
+  password: string;
+  username?: string;
+}
+
+export interface SignUpResponse {
+  id: string;
+  email: string;
+  active: boolean;
+  lastName: string;
+  name: string;
+  isGoogleUser: boolean;
+  isFacebookUser: boolean;
+  isInstagramUser: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export async function loginUser(credentials: LoginCredentials): Promise<LoginResponse> {
   try {
     const { data } = await api.post<LoginResponse>("auth/login", credentials);
@@ -44,6 +65,41 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
     throw new Error("error_network");
   }
 }
+
+export async function signUp(data: SignUpData): Promise<SignUpResponse> {
+  try {
+    const payload = {
+      name: data.name,
+      lastName: data.lastName,
+      email: data.email,
+      password: data.password,
+      ...(data.username && { username: data.username }),
+    };
+
+    const response = await api.post<SignUpResponse>("users", payload);
+
+    if (!response.data?.id || !response.data?.email || !response.data?.active) {
+      throw new Error("error_invalid");
+    }
+
+    return response.data;
+  } catch (error: any) {
+    if (error) {
+      const status: number = error.status;
+      const message: string = error.data?.message;
+
+      if (status === 400 && message === "Email already exists") {
+        throw new Error("error_email_exists");
+      }
+      if (status >= 500) {
+        throw new Error("error_server");
+      }
+      throw new Error(message || `Error ${status} en el registro`);
+    }
+    throw new Error("error_network");
+  }
+}
+
 
 export async function validateToken(tokenArg?: string): Promise<boolean> {
   const token = tokenArg ?? getToken();

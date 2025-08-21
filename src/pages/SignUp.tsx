@@ -4,21 +4,37 @@ import { PasswordInput } from "../components/ui/PasswordInput";
 import { Button } from "../components/ui/Button";
 import { FormError } from "../components/ui/FormError";
 import { useTranslation } from 'react-i18next';
+import { signUp } from "../services/client";
 
 const SignUp: React.FC = () => {
+    const [name, setName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
     const { t } = useTranslation('translations');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email || !password) {
+        if (!name || !lastName || !password || !email) {
             setError(t("signup_error_required"));
             return;
         }
         setError("");
+        try {
+            await signUp({
+                name,
+                lastName,
+                username: username || undefined,
+                email,
+                password,
+            });
+            // Optionally redirect or show success message
+        } catch (err: any) {
+            setError(err.message || t("signup_error_generic"));
+        }
     };
 
     return (
@@ -35,6 +51,33 @@ const SignUp: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+                    <Input
+                        type="text"
+                        label={t("signup_name_label") || "Name"}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        placeholder={t("signup_name_placeholder") || "John"}
+                        autoComplete="given-name"
+                    />
+                    <Input
+                        type="text"
+                        label={t("signup_lastname_label") || "Last Name"}
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                        placeholder={t("signup_lastname_placeholder") || "Doe"}
+                        autoComplete="family-name"
+                    />
+                    <Input
+                        type="text"
+                        label={t("signup_username_label") || "Username"}
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required={false}
+                        placeholder={t("signup_username_placeholder") || "Optional"}
+                        autoComplete="username"
+                    />
                     <Input
                         type="email"
                         label={t("login_email_label")}
