@@ -2,11 +2,15 @@ import React, { useState } from "react";
 import { Input } from "../components/ui/Input";
 import { PasswordInput } from "../components/ui/PasswordInput";
 import { Button } from "../components/ui/Button";
-import { FormError } from "../components/ui/FormError";
 import { useTranslation } from 'react-i18next';
 import { signUp } from "../services/client";
+import { toast } from "react-toastify";
 
-const SignUp: React.FC = () => {
+interface SignUpProps {
+  setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
     const [name, setName] = useState("");
     const [lastName, setLastName] = useState("");
     const [username, setUsername] = useState("");
@@ -20,6 +24,7 @@ const SignUp: React.FC = () => {
         e.preventDefault();
         if (!name || !lastName || !password || !email) {
             setError(t("signup_error_required"));
+            toast.error(t("signup_error_required"));
             return;
         }
         setError("");
@@ -31,9 +36,13 @@ const SignUp: React.FC = () => {
                 email,
                 password,
             });
-            // Optionally redirect or show success message
+            toast.success(t("signup_success") || "Sign up successful!");
+            setIsLogin(true);
+
         } catch (err: any) {
-            setError(err.message || t("signup_error_generic"));
+            const errorMsg = err.message || t("signup_error_generic");
+            setError(errorMsg);
+            toast.error(errorMsg);
         }
     };
 
@@ -96,8 +105,6 @@ const SignUp: React.FC = () => {
                         placeholder="********"
                         autoComplete="new-password"
                     />
-
-                    <FormError message={error} />
 
                     <Button type="submit">{t("signup_button")}</Button>
                 </form>

@@ -11,7 +11,7 @@ const Auth: React.FC = () => {
 
     return (
         <OfflineLayout>
-            {isLogin ? <Login /> : <SignUp />}
+            {isLogin ? <Login /> : <SignUp setIsLogin={setIsLogin} />}
             <button 
             className='flex justify-center items-center w-full mt-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer'
                 onClick={() => setIsLogin((prev) => !prev)}

@@ -6,9 +6,11 @@ import Auth from '../pages/Auth';
 import PublicOnlyRoute from './PublicOnlyRoute';
 import ProtectedRoute from './ProtectedRoute';
 import NotFound from '../components/ui/features/NotFound';
+import { ToastContainer } from 'react-toastify';
 
 const AppRouter: React.FC = () => (
     <Router>
+        <ToastContainer />
         <Routes>
             {/* Rutas públicas (solo si NO estás autenticado) */}
             <Route
