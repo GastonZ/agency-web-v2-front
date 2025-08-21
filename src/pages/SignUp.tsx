@@ -41,8 +41,8 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
 
         } catch (err: any) {
             const errorMsg = err.message || t("signup_error_generic");
-            setError(errorMsg);
-            toast.error(errorMsg);
+            setError(t(errorMsg));
+            toast.error(t(errorMsg));
         }
     };
 

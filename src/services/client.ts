@@ -91,6 +91,11 @@ export async function signUp(data: SignUpData): Promise<SignUpResponse> {
       if (status === 400 && message === "Email already exists") {
         throw new Error("error_email_exists");
       }
+
+      if (status === 409 && message === "User already exists") {
+        throw new Error("error_user_exists");
+      }
+
       if (status >= 500) {
         throw new Error("error_server");
       }
