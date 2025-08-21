@@ -25,7 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           aria-describedby={error ? errorId : hint ? hintId : undefined}
           aria-invalid={!!error}
-          className={`w-full h-12 rounded-md border border-gray-200 px-4 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black/80 ${className}`}
+          className={`w-full text-black dark:text-white h-12 rounded-md border border-gray-200 px-4 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black/80 ${className}`}
           {...props}
         />
         {hint && !error && (
