@@ -8,7 +8,7 @@ const NotFound: React.FC = () => {
 
     return (
 
-        <div className="min-h-screen flex flex-col items-center justify-center dark:bg-gradient-to-bl from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-emerald-50/40 to-neutral-200 dark:from-neutral-950 dark:via-neutral-900/95 dark:to-emerald-950/80">
             <div className="bg-white rounded-xl shadow-2xl p-10 flex flex-col items-center">
                 <svg
                     className="w-24 h-24 text-red-500 mb-6"
