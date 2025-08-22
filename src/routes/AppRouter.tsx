@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import Dashboard from '../pages/Dasboard';
 import CampaignCreation from '../pages/CampaignCreation';
 import Auth from '../pages/Auth';
@@ -8,11 +8,14 @@ import ProtectedRoute from './ProtectedRoute';
 import NotFound from '../components/features/NotFound';
 import { ToastContainer } from 'react-toastify';
 
+import { ModerationProvider } from '../context/ModerationContext';
+import Moderation from '../features/ModerationCampaign/Main/Moderation';
+
 const AppRouter: React.FC = () => (
     <Router>
         <ToastContainer />
         <Routes>
-            {/* Rutas públicas (solo si NO estás autenticado) */}
+            {/* Rutas públicas*/}
             <Route
                 path="/auth"
                 element={
@@ -26,10 +29,22 @@ const AppRouter: React.FC = () => (
             <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/campaign_selection" element={<CampaignCreation />} />
+
+                <Route
+                    path="/campaign_moderation_creation/*"
+                    element={
+                        <ModerationProvider storageKey="campaign:moderation:draft">
+                            <Outlet />
+                        </ModerationProvider>
+                    }
+                >
+                    <Route index element={<Moderation />} />
+                </Route>
+
             </Route>
 
             {/* (opcional) 404 */}
-            <Route path="*" element={<NotFound />}/>
+            <Route path="*" element={<NotFound />} />
         </Routes>
     </Router>
 );
