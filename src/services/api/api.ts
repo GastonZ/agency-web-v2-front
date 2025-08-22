@@ -3,7 +3,7 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'a
 import { getToken } from '../../utils/helper';
 
 const api: AxiosInstance = axios.create({
-    baseURL: 'http://localhost:9000/api/',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
