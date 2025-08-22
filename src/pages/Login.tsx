@@ -6,6 +6,7 @@ import { PasswordInput } from "../components/ui/PasswordInput";
 import { Button } from "../components/ui/Button";
 import { FormError } from "../components/ui/FormError";
 import { useTranslation } from 'react-i18next'
+import GoogleSignInButton from "../components/features/GoogleLogin";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -130,6 +131,7 @@ const Login: React.FC = () => {
           >
             {t("login_button")}
           </Button>
+          <GoogleSignInButton />
 
           {showRetry && (
             <Button

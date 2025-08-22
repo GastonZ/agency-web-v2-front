@@ -66,6 +66,11 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
   }
 }
 
+export async function googleLogin(idToken: string): Promise<LoginResponse> {
+  const { data } = await api.post<LoginResponse>("/auth/google-login", { idToken });
+  return data;
+}
+
 export async function signUp(data: SignUpData): Promise<SignUpResponse> {
   try {
     const payload = {
