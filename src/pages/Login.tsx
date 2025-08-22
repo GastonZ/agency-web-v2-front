@@ -68,16 +68,18 @@ const Login: React.FC = () => {
     <div className="w-full max-w-md mx-auto p-3 md:p-4">
       <div
         className={[
-          "rounded-2xl border shadow-sm overflow-hidden",
-          "bg-white/80 dark:bg-neutral-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/60",
-          "border-neutral-200 dark:border-neutral-800",
-          "focus-within:ring-2 focus-within:ring-neutral-300 dark:focus-within:ring-neutral-600",
-          "transition-shadow",
+          "rounded-2xl border overflow-hidden shadow-lg",
+          "bg-white/20 dark:bg-neutral-900/30",
+          "backdrop-blur-xl supports-[backdrop-filter]:bg-white/10",
+          "border-white/30 dark:border-white/10",
+          "focus-within:ring-2 focus-within:ring-emerald-400/20",
+          "transition-all",
         ].join(" ")}
       >
+        {/* Header */}
         <div className="px-5 pt-5 pb-3">
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
               {t("welcome")}
             </h1>
           </div>
@@ -85,14 +87,15 @@ const Login: React.FC = () => {
             <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
               {t("login_title")}
             </h2>
-            <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-300">
+            <p className="mt-1.5 text-sm text-neutral-600 dark:text-neutral-400">
               {t("login_subtitle")}
             </p>
           </div>
         </div>
 
-        <div className="border-t border-neutral-200 dark:border-neutral-800" />
+        <div className="border-t border-white/20 dark:border-white/10" />
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="px-5 py-5 space-y-3">
           <Input
             type="email"
@@ -103,6 +106,7 @@ const Login: React.FC = () => {
             placeholder={t("login_email_placeholder")}
             disabled={loading}
             autoComplete="email"
+            className="focus:ring-emerald-400/60"
           />
 
           <PasswordInput
@@ -114,11 +118,16 @@ const Login: React.FC = () => {
             placeholder={t("login_password_placeholder")}
             disabled={loading}
             autoComplete="current-password"
+            className="focus:ring-emerald-400/60"
           />
 
           <FormError message={errorMsg} />
 
-          <Button type="submit" loading={loading} className="w-full">
+          <Button
+            type="submit"
+            loading={loading}
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-md shadow-emerald-500/30"
+          >
             {t("login_button")}
           </Button>
 
@@ -127,7 +136,7 @@ const Login: React.FC = () => {
               type="button"
               variant="secondary"
               onClick={handleRetry}
-              className="w-full"
+              className="w-full border border-emerald-400/40 text-emerald-500 dark:text-emerald-300 hover:bg-emerald-400/10"
               disabled={loading}
             >
               {t("login_retry")}
@@ -135,21 +144,22 @@ const Login: React.FC = () => {
           )}
         </form>
 
-        <div className="border-t border-neutral-200 dark:border-neutral-800" />
+        <div className="border-t border-white/20 dark:border-white/10" />
         <div className="px-5 py-4">
-          <p className="text-center text-xs leading-relaxed text-neutral-500 dark:text-neutral-300">
+          <p className="text-center text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
             {t("login_terms")}{" "}
-            <a className="underline underline-offset-2 hover:opacity-80" href="#">
+            <a className="underline underline-offset-2 hover:text-emerald-500" href="#">
               {t("login_terms_link")}
             </a>{" "}
             &{" "}
-            <a className="underline underline-offset-2 hover:opacity-80" href="#">
+            <a className="underline underline-offset-2 hover:text-emerald-500" href="#">
               {t("login_privacy_link")}
             </a>
           </p>
         </div>
       </div>
     </div>
+
 
   );
 };

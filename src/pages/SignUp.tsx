@@ -50,25 +50,23 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
         <div className="w-full max-w-md mx-auto p-3 md:p-4">
             <div
                 className={[
-                    "rounded-2xl border shadow-sm overflow-hidden",
-                    "bg-white/80 dark:bg-neutral-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/60",
-                    "border-neutral-200 dark:border-neutral-800",
-                    "focus-within:ring-2 focus-within:ring-neutral-300 dark:focus-within:ring-neutral-600",
-                    "transition-shadow",
+                    "rounded-2xl border overflow-hidden shadow-lg",
+                    "bg-white/20 dark:bg-neutral-900/30",
+                    "backdrop-blur-xl supports-[backdrop-filter]:bg-white/10",
+                    "border-white/30 dark:border-white/10",
+                    "focus-within:ring-2 focus-within:ring-emerald-400/20",
+                    "transition-all",
                 ].join(" ")}
             >
                 <div className="px-5 pt-5 pb-3">
-                    <div className="flex items-center justify-center gap-2">
-                        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-                            {t("new_here")}
-                        </h1>
-                    </div>
-
+                    <h1 className="text-2xl font-bold text-center text-neutral-900 dark:text-neutral-50">
+                        {t("new_here")}
+                    </h1>
                     <div className="mt-6 text-center">
                         <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
                             {t("signup_button")}
                         </h2>
-                        <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-300">
+                        <p className="mt-1.5 text-sm text-neutral-600 dark:text-neutral-400">
                             {t("signup_subtitle")}
                         </p>
                     </div>
@@ -122,7 +120,10 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
                         autoComplete="new-password"
                     />
 
-                    <Button type="submit" className="w-full">
+                    <Button
+                        type="submit"
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-md shadow-emerald-500/30"
+                    >
                         {t("signup_button")}
                     </Button>
                 </form>

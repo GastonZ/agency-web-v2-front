@@ -75,20 +75,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             </span>
           </div>
 
-          {!isMobile && (
-            <button
-              onClick={() => setCollapsed((v) => !v)}
-              className="inline-flex items-center justify-center rounded-md p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600"
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {collapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </button>
-          )}
-
           {isMobile && onClose && (
             <button
               onClick={onClose}
