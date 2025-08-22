@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from '../pages/Dasboard';
-import About from '../pages/About';
+import CampaignCreation from '../pages/CampaignCreation';
 import Auth from '../pages/Auth';
 import PublicOnlyRoute from './PublicOnlyRoute';
 import ProtectedRoute from './ProtectedRoute';
@@ -25,7 +25,7 @@ const AppRouter: React.FC = () => (
             {/* Rutas privadas */}
             <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/about" element={<About />} />
+                <Route path="/campaign_selection" element={<CampaignCreation />} />
             </Route>
 
             {/* (opcional) 404 */}

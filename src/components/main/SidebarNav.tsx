@@ -136,6 +136,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
 export const defaultNavItems: NavItem[] = [
   { id: "home", label: "Dashboard", href: "/", icon: Home },
-  { id: "campaign", label: "Campaign", href: "/campaign", icon: Folder },
+  { id: "campaign", label: "Campaign", href: "/campaign_selection", icon: Folder },
   { id: "settings", label: "Settings", href: "/settings", icon: Settings },
 ];
