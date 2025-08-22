@@ -45,5 +45,10 @@
     "error_network": "Could not connect to the server. Please try again.",
     "not_found_message": "Oops! The page you're looking for doesn't exist.",
     "go_home": "Go to Home",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "dark_mode": "Dark",
+    "light_mode": "Light",
+    "system_mode": "System",
+    "welcome": "Welcome",
+    "new_here": "New here?"
 }

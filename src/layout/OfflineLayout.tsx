@@ -1,8 +1,8 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 import { Info } from 'lucide-react';
-import LenguageBtn from '../components/ui/features/LenguageBtn';
-import ThemeToggle from '../components/ui/features/ThemeToggle';
+import LenguageBtn from '../components/features/LenguageBtn';
+import ThemeToggle from '../components/features/ThemeToggle';
 
 interface OfflineLayoutProps {
     children: ReactNode;

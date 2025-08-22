@@ -5,7 +5,7 @@ import About from '../pages/About';
 import Auth from '../pages/Auth';
 import PublicOnlyRoute from './PublicOnlyRoute';
 import ProtectedRoute from './ProtectedRoute';
-import NotFound from '../components/ui/features/NotFound';
+import NotFound from '../components/features/NotFound';
 import { ToastContainer } from 'react-toastify';
 
 const AppRouter: React.FC = () => (

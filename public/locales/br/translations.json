@@ -45,5 +45,10 @@
     "error_network": "Não foi possível conectar ao servidor. Tente novamente.",
     "not_found_message": "Ops! A página que você procura não existe.",
     "go_home": "Vá para casa",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "dark_mode": "Escuro",
+    "light_mode": "Claro",
+    "system_mode": "Sistema",
+    "welcome": "Bem-vindo",
+    "new_here": "Novo aqui?"
 }

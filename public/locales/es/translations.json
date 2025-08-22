@@ -44,5 +44,10 @@
     "error_network": "No se pudo conectar con el servidor. Intenta de nuevo.",
     "not_found_message": "¡Ups! La página que buscas no existe.",
     "go_home": "Ir al inicio",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "dark_mode": "Oscuro",
+    "light_mode": "Claro",
+    "system_mode": "Sistema",
+    "new_here": "¿Nuevo aquí?"
+
 }

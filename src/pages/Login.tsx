@@ -39,7 +39,7 @@ const Login: React.FC = () => {
       const msg = err?.message;
 
       console.log(msg);
-      
+
 
       if (msg === t("error.invalidCredentials")) {
         setErrorMsg(t(msg));
@@ -65,18 +65,35 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="w-full max-w-sm px-4">
-        <h1 className="text-3xl font-semibold text-center tracking-tight text-black dark:text-white">AgencIA</h1>
-
-        <div className="mt-14 text-center">
-          <h2 className="text-2xl font-semibold text-black dark:text-white">{t("login_title")}</h2>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">
-            {t("login_subtitle")}
-          </p>
+    <div className="w-full max-w-md mx-auto p-3 md:p-4">
+      <div
+        className={[
+          "rounded-2xl border shadow-sm overflow-hidden",
+          "bg-white/80 dark:bg-neutral-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/60",
+          "border-neutral-200 dark:border-neutral-800",
+          "focus-within:ring-2 focus-within:ring-neutral-300 dark:focus-within:ring-neutral-600",
+          "transition-shadow",
+        ].join(" ")}
+      >
+        <div className="px-5 pt-5 pb-3">
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
+              {t("welcome")}
+            </h1>
+          </div>
+          <div className="mt-6 text-center">
+            <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
+              {t("login_title")}
+            </h2>
+            <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-300">
+              {t("login_subtitle")}
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+        <div className="border-t border-neutral-200 dark:border-neutral-800" />
+
+        <form onSubmit={handleSubmit} className="px-5 py-5 space-y-3">
           <Input
             type="email"
             label={t("login_email_label")}
@@ -101,7 +118,7 @@ const Login: React.FC = () => {
 
           <FormError message={errorMsg} />
 
-          <Button type="submit" loading={loading}>
+          <Button type="submit" loading={loading} className="w-full">
             {t("login_button")}
           </Button>
 
@@ -110,7 +127,7 @@ const Login: React.FC = () => {
               type="button"
               variant="secondary"
               onClick={handleRetry}
-              className="mt-2"
+              className="w-full"
               disabled={loading}
             >
               {t("login_retry")}
@@ -118,18 +135,22 @@ const Login: React.FC = () => {
           )}
         </form>
 
-        <p className="mt-8 text-center text-xs text-gray-400 dark:text-gray-200">
-          {t("login_terms")}{" "}
-          <a href="#" className="underline">
-            {t("login_terms_link")}
-          </a>{" "}
-          &{" "}
-          <a href="#" className="underline">
-            {t("login_privacy_link")}
-          </a>
-        </p>
+        <div className="border-t border-neutral-200 dark:border-neutral-800" />
+        <div className="px-5 py-4">
+          <p className="text-center text-xs leading-relaxed text-neutral-500 dark:text-neutral-300">
+            {t("login_terms")}{" "}
+            <a className="underline underline-offset-2 hover:opacity-80" href="#">
+              {t("login_terms_link")}
+            </a>{" "}
+            &{" "}
+            <a className="underline underline-offset-2 hover:opacity-80" href="#">
+              {t("login_privacy_link")}
+            </a>
+          </p>
+        </div>
       </div>
     </div>
+
   );
 };
 
