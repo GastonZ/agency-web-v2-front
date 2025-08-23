@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useModeration } from "../../../context/ModerationContext"; // ajusta la ruta si usas alias
+import { useModeration } from "../../../context/ModerationContext";
 import OnlineLayout from "../../../layout/OnlineLayout";
 import AgencyChatbot from "../../../components/features/AgencyChatbot";
 import { AGE_GROUPS, GENDERS, SOCIOECONOMIC, TONES } from "../../../context/ModerationContext";
@@ -280,7 +280,7 @@ const Moderation: React.FC = () => {
                         <GlassCard className="w-full">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-{/*                                 <div className="mt-6">
+                                {/*                                 <div className="mt-6">
                                     <Label>Objetivos específicos (máx. 5 · 200 caracteres)</Label>
                                     <div className="mt-2 space-y-2">
                                         {objectives.map((obj, idx) => (
