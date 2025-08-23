@@ -6,8 +6,8 @@ import {
     Waves,
     Info,
     Check,
-    Sparkles,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PunkButton } from "../components/ui/PunkButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/Tooltip";
 import { cn } from "../utils/helper";
@@ -22,6 +22,7 @@ type CardSpec = {
     short: string;
     bullets: string[];
     badge?: string;
+    goto: string;
 };
 
 const CARDS: CardSpec[] = [
@@ -37,6 +38,7 @@ const CARDS: CardSpec[] = [
             "Seguimiento y remarketing integrados",
         ],
         badge: "Leads",
+        goto: '/'
     },
     {
         id: "moderation",
@@ -50,6 +52,7 @@ const CARDS: CardSpec[] = [
             "No envía mensajes salientes masivos (solo recepciona)",
         ],
         badge: "Atención",
+        goto: '/campaign_moderation_creation'
     },
     {
         id: "listening",
@@ -63,6 +66,7 @@ const CARDS: CardSpec[] = [
             "Dashboards con KPIs, perfiles y segmentación opcional",
         ],
         badge: "Insights",
+        goto: '/'
     },
 ];
 
@@ -201,18 +205,18 @@ export default function CampaignCreation({
                                     <div className="mt-auto pt-3 flex w-full items-center justify-between">
                                         <span className="hidden text-xs text-neutral-500 md:block dark:text-neutral-400">
                                         </span>
-
-                                        <PunkButton
-                                            size="sm"
-                                            variant="secondary"
-                                            className={cn(
-                                                "h-9 rounded-lg bg-emerald-400/20 text-emerald-700 hover:bg-emerald-400/30 dark:text-emerald-300",
-                                                "ring-1 ring-emerald-400/30 hover:ring-emerald-400/40"
-                                            )}
-                                            onClick={(e) => { e.stopPropagation(); onConfirm?.(card.id); }}
-                                        >
-                                            Create {card.title.split(" ")[0]}
-                                        </PunkButton>
+                                        <Link to={card.goto} style={{ textDecoration: 'none' }}>
+                                            <PunkButton
+                                                size="sm"
+                                                variant="secondary"
+                                                className={cn(
+                                                    "h-9 rounded-lg bg-emerald-400/20 text-emerald-700 hover:bg-emerald-400/30 dark:text-emerald-300",
+                                                    "ring-1 ring-emerald-400/30 hover:ring-emerald-400/40"
+                                                )}
+                                            >
+                                                Create {card.title.split(" ")[0]}
+                                            </PunkButton>
+                                        </Link>
                                     </div>
                                 </motion.button>
                             );
