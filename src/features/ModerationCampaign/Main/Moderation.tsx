@@ -90,8 +90,8 @@ const Chip: React.FC<{ active?: boolean; onClick?: () => void; children: React.R
 const Moderation: React.FC = () => {
     const { data, setBasics, setGeo, setDemographic, setTone, setDates, setAudience } = useModeration();
 
-    const [mainMessage, setMainMessage] = useState<string>(""); // TODO: agregar al contexto si lo deseas
-    const [objectives, setObjectives] = useState<string[]>([]); // máx 5, c/u 200 chars
+    const [mainMessage, setMainMessage] = useState<string>(""); // TODO: agregar al contexto si hace falta
+    const [objectives, setObjectives] = useState<string[]>([]);
     const canAddMoreObjectives = objectives.length < 5;
 
     console.log(data);
