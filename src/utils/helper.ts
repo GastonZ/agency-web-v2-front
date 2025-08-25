@@ -38,3 +38,8 @@ export function cn(
 ): string {
   return classes.filter(Boolean).join(" ");
 }
+
+export function isValidIntlPhone(phone?: string): boolean {
+  if (!phone) return true;
+  return /^\+?[0-9][0-9\s\-()]{6,20}$/.test(phone.trim());
+}

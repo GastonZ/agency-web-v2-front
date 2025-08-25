@@ -39,6 +39,10 @@ export const CHANNELS: Channel[] = ["instagram", "facebook", "whatsapp", "email"
 export interface GeoSeg {
   country?: string; // País
   region?: string;  // Región/Provincia/Estado
+  countryId?: string;
+  stateId?: string;
+  countryCode?: string;
+  regionCode?: string;
   city?: string;    // Ciudad
   postalCode?: string; // Código postal
 }
@@ -152,11 +156,6 @@ function toISO(input?: string | Date): string | undefined {
 
 function genId(prefix = "qa"): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 8)}_${Date.now().toString(36)}`;
-}
-
-function isValidIntlPhone(phone?: string): boolean {
-  if (!phone) return true;
-  return /^\+?[0-9][0-9\s\-()]{6,20}$/.test(phone.trim());
 }
 
 function sanitizeForPersist(data: ModerationCampaign): Omit<ModerationCampaign, "assistant"> & { assistant: Omit<AssistantConfig, "voiceFile"> } {
