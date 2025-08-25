@@ -22,7 +22,14 @@ const ProtectedRoute: React.FC = () => {
     }, [checking]);
 
     if (checking || verifying) {
-        return <div style={{ padding: 24 }}>Verificando sesión…</div>;
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-neutral-950">
+                <div className="text-center space-y-3">
+                    <div className="w-6 h-6 mx-auto border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">Verificando sesión…</p>
+                </div>
+            </div>
+        );
     }
 
     if (!isAuth) {

@@ -21,6 +21,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const ok = await validateToken(getToken());
         setIsAuth(ok);
+        if (!ok) clearToken();
+      } catch {
+        clearToken();
+        setIsAuth(false);
       } finally {
         setChecking(false);
       }
@@ -40,10 +44,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshSession = async () => {
-    const ok = await validateToken(getToken());
-    setIsAuth(ok);
-    if (!ok) clearToken();
-    return ok;
+    try {
+      const ok = await validateToken(getToken());
+      setIsAuth(ok);
+      if (!ok) clearToken();
+      return ok;
+    } catch {
+      clearToken();
+      setIsAuth(false);
+      return false;
+    }
   };
 
   const value = useMemo(() => ({ isAuth, checking, login, logout, refreshSession }), [isAuth, checking]);
