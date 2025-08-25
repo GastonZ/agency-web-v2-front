@@ -83,7 +83,7 @@ export async function signUp(data: SignUpData): Promise<SignUpResponse> {
 
     const response = await api.post<SignUpResponse>("users", payload);
 
-    if (!response.data?.id || !response.data?.email || !response.data?.active) {
+    if (response.status !== 200 && response.status !== 201) {
       throw new Error("error_invalid");
     }
 
