@@ -4,10 +4,10 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 // Types & Option Constants
 // ==========================
 export type AgeGroup = "kids" | "youth" | "adults";
-export const AGE_GROUPS: AgeGroup[] = ["kids", "youth", "adults"]; // (niños, jóvenes, adultos)
+export const AGE_GROUPS: AgeGroup[] = ["kids", "youth", "adults"];
 
-export type Gender = "M" | "F" | "all";
-export const GENDERS: Gender[] = ["M", "F", "all"];
+export type Gender = "male" | "female" | "other";
+export const GENDERS: Gender[] = ["male", "female", "other"];
 
 export type SocioEconomic = "high" | "middle" | "low";
 export const SOCIOECONOMIC: SocioEconomic[] = ["high", "middle", "low"];
@@ -37,75 +37,67 @@ export const CHANNELS: Channel[] = ["instagram", "facebook", "whatsapp", "email"
 // Core Data Shapes
 // ==========================
 export interface GeoSeg {
-  country?: string; // País
-  region?: string;  // Región/Provincia/Estado
+  country?: string;
+  region?: string;
   countryId?: string;
   stateId?: string;
   countryCode?: string;
   regionCode?: string;
-  city?: string;    // Ciudad
-  postalCode?: string; // Código postal
+  city?: string; 
+  postalCode?: string;
 }
 
 export interface DemoSeg {
-  ageGroups: AgeGroup[];          // Demográfico: edad (múltiple)
-  gender: Gender;                 // Demográfico: género
-  socioeconomic: SocioEconomic[]; // Demográfico: nivel socioeconómico (múltiple)
+  ageGroups: AgeGroup[];
+  gender: Gender;
+  socioeconomic: SocioEconomic[];
 }
 
 export interface Audience {
-  geo: GeoSeg;            // Segmentación geográfica
-  demographic: DemoSeg;   // Segmentación demográfica
-  cultural?: string;      // Segmentación cultural (texto libre)
+  geo: GeoSeg;
+  demographic: DemoSeg;
+  cultural?: string;
 }
 
 export interface QA {
-  id: string;            // generado en cliente para manejo de listas
+  id: string;          
   question: string;
   answer: string;
 }
 
 export interface AssistantConfig {
-  name: string;                 // Nombre del asistente
-  greeting: string;             // Saludo inicial
-  conversationLogic: string;    // Lógica de conversación
-  voiceFile?: File | null;      // Archivo de voz subido/grabado (opcional, no persistente)
-  voiceUrl?: string | null;     // URL del archivo de voz ya alojado (opcional, persistente)
+  name: string; 
+  greeting: string;
+  conversationLogic: string;
+  voiceFile?: File | null;
+  voiceUrl?: string | null;
 }
 
 export interface CampaignDates {
-  start?: string; // ISO string
-  end?: string;   // ISO string
+  start?: string;
+  end?: string;
 }
 
 export interface ModerationCampaign {
-  // Basics
-  name: string;           // "Nombre de la campaña"
-  goal: string;           // "Objetivo principal"
-  summary: string;        // "Descripción breve"
-  leadDefinition: string; // "definición de lead"
 
-  // Audience
-  audience: Audience;     // Público objetivo
+  campaignId?: string;
 
-  // Tone & Channels & Schedule
-  tone: ToneOption;       // Tono de comunicación (enum)
-  customTone?: string;    // Si tone === "other"
-  dates: CampaignDates;   // Fechas de inicio y fin
-  channels: Channel[];    // Canales múltiples
+  name: string;
+  goal: string;
+  summary: string;
+  leadDefinition: string;
+  audience: Audience;
+  tone: ToneOption;
+  customTone?: string;
+  dates: CampaignDates;
+  channels: Channel[];
 
-  // Assistant
   assistant: AssistantConfig;
+  knowHow: QA[];
+  allowedTopics: string[];
+  escalationItems: string[];
+  escalationPhone?: string; 
 
-  // Knowledge & Scope
-  knowHow: QA[];          // Q&A list
-  allowedTopics: string[];    // "Responder únicamente consultas relacionadas a" (opcional, múltiples)
-
-  // Escalation
-  escalationItems: string[];  // Pasos/ítems para escalamiento humano (opcional)
-  escalationPhone?: string;   // +NN NNNNNNNNN formato internacional (opcional)
-
-  // Versioning for persistence/migrations if needed
   __version: number;
 }
 
@@ -113,13 +105,14 @@ export interface ModerationCampaign {
 // Defaults
 // ==========================
 export const DEFAULT_CAMPAIGN: ModerationCampaign = {
+  campaignId: undefined,
   name: "",
   goal: "",
   summary: "",
   leadDefinition: "",
   audience: {
     geo: { country: "", region: "", city: "", postalCode: "" },
-    demographic: { ageGroups: [], gender: "all", socioeconomic: [] },
+    demographic: { ageGroups: [], gender: "other", socioeconomic: [] },
     cultural: "",
   },
   tone: "informal",
@@ -207,6 +200,9 @@ function reviveFromPersist(raw: any): ModerationCampaign {
 // ==========================
 interface ModerationContextValue {
   data: ModerationCampaign;
+
+  setCampaignId: (id: string) => void;
+
   // Basics
   setBasics: (p: Partial<Pick<ModerationCampaign, "name" | "goal" | "summary" | "leadDefinition">>) => void;
 
@@ -266,6 +262,10 @@ export const ModerationProvider: React.FC<{
     }
   }, [data, autoPersist, storageKey]);
 
+  const setCampaignId = useCallback<ModerationContextValue["setCampaignId"]>((id) => {
+    setData((prev) => ({ ...prev, campaignId: id }));
+  }, []);
+
   // ---------- Basics
   const setBasics = useCallback<ModerationContextValue["setBasics"]>((p) => {
     setData((prev) => ({ ...prev, ...p }));
@@ -301,12 +301,10 @@ export const ModerationProvider: React.FC<{
   const setDates = useCallback<ModerationContextValue["setDates"]>((start, end) => {
     const s = toISO(start);
     const e = toISO(end);
-    // If both present, ensure start <= end; otherwise keep as-is
     if (s && e) {
       const sd = new Date(s).getTime();
       const ed = new Date(e).getTime();
       if (sd > ed) {
-        // swap to be forgiving
         setData((prev) => ({ ...prev, dates: { start: e, end: s } }));
         return;
       }
@@ -323,7 +321,6 @@ export const ModerationProvider: React.FC<{
   }, []);
 
   const setChannels = useCallback<ModerationContextValue["setChannels"]>((c) => {
-    // Deduplicate and keep valid only
     const sanitized = Array.from(new Set(c.filter((x): x is Channel => CHANNELS.includes(x as Channel))));
     setData((prev) => ({ ...prev, channels: sanitized }));
   }, []);
@@ -409,6 +406,7 @@ export const ModerationProvider: React.FC<{
     resetAll,
     importFromJSON,
     exportToJSON,
+    setCampaignId
   }), [
     data,
     setBasics,
@@ -432,6 +430,7 @@ export const ModerationProvider: React.FC<{
     resetAll,
     importFromJSON,
     exportToJSON,
+    setCampaignId
   ]);
 
   return <ModerationContext.Provider value={value}>{children}</ModerationContext.Provider>;

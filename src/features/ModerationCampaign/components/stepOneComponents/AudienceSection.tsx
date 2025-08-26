@@ -205,7 +205,7 @@ const AudienceSection: React.FC = () => {
                   active={data.audience.demographic.gender === g}
                   onClick={() => setDemographic({ gender: g })}
                 >
-                  {g === "M" ? "Masculino" : g === "F" ? "Femenino" : "Todos"}
+                  {g === "male" ? "Masculino" : g === "female" ? "Femenino" : "Todos"}
                 </Chip>
               ))}
             </div>

@@ -2,15 +2,8 @@ import api from "./api/api";
 import type { AxiosResponse } from "axios";
 
 /** ===== Types you can expand later ===== */
-export type ModerationCampaignCreateResponse = {
-  id: string;
-  // ...add anything your API returns
-};
-
-export type ModerationCampaignUpdateResponse = {
-  id: string;
-  // ...add anything your API returns
-};
+export type ModerationCampaignCreateResponse = { id: string };
+export type ModerationCampaignUpdateResponse = { id: string };
 
 /** ===== Helpers ===== */
 
@@ -59,10 +52,8 @@ function prune<T>(obj: T): T {
   return obj;
 }
 
-/** ===== Mappers from your context data → API shape ===== */
+/** ===== Mappers from context data → API shape ===== */
 
-// Your AGE_GROUPS are 'kids' | 'youth' | 'adults' (displayed Niños/Jóvenes/Adultos)
-// API expects strings like: "jóvenes", "adultos" (lowercase, with accent)
 function mapAgeGroups(ageGroups: string[] | undefined) {
   if (!ageGroups || ageGroups.length === 0) return undefined;
   return ageGroups.map((a) =>
@@ -70,24 +61,20 @@ function mapAgeGroups(ageGroups: string[] | undefined) {
   );
 }
 
-// Your genders: 'M' | 'F' | 'A' (Todos). API wants "masculino" | "femenino" | "todos"
 function mapGender(g?: string) {
   if (!g) return undefined;
-  return g === "M" ? "masculino" : g === "F" ? "femenino" : "todos";
+  return g === "male" ? "M" : g === "F" ? "female" : "todos";
 }
 
-// NSE: 'high' | 'middle' | 'low' → "alta" | "media" | "baja"
 function mapNSE(nse?: string[]) {
   if (!nse || nse.length === 0) return undefined;
   return nse.map((v) => (v === "high" ? "alta" : v === "middle" ? "media" : "baja"));
 }
 
-// Tone: use preset or custom when 'other'
 function mapTone(tone?: string, customTone?: string) {
   if (!tone) return undefined;
   if (tone === "other") return customTone?.trim() || undefined;
-  // already in Spanish set (formal, informal, inspiracional/persuasivo/educativo/humorístico)
-  // If your constants are English, normalize here:
+
   const map: Record<string, string> = {
     formal: "formal",
     informal: "informal",
@@ -99,42 +86,39 @@ function mapTone(tone?: string, customTone?: string) {
   return map[tone] || tone;
 }
 
-/** ====== PUBLIC API ====== */
+/* dto for create and edit moderation step 1 */
 
-/**
- * Build payload from Step One context and create the campaign.
- * It’s OK if some fields are missing; they’ll be filled in later steps with update().
- */
-export async function createModerationCampaignFromStepOne(ctxData: {
-  // minimal shape based on your ModerationContext
+type StepOneCtx = {
   name?: string;
-  goal?: string;         // → objective
-  summary?: string;      // → description
+  goal?: string;          // → objective
+  summary?: string;       // → description
   leadDefinition?: string;
   audience: {
     geo: {
-      country?: string;       // name; you might add a code later
-      countryCode?: string;   // e.g., 'AR' (preferred for API)
+      country?: string;
+      countryCode?: string;
       region?: string;
-      regionCode?: string;    // 'AR-C'
+      regionCode?: string;
       city?: string;
       postalCode?: string;
     };
     demographic: {
       ageGroups: string[];
-      gender?: string;        // 'M' | 'F' | 'A'
-      socioeconomic: string[]; // 'high' | 'middle' | 'low'
+      gender?: string;
+      socioeconomic: string[];
     };
-    cultural?: string;        // → culturalInterests
+    cultural?: string;
   };
   tone?: string;
   customTone?: string;
-  dates: { start?: string; end?: string }; // ISO strings are fine
-}) {
-  const userId = getUserId();
+  dates: { start?: string; end?: string };
+};
 
-  const payload = prune({
-    userId,
+// ---- shared
+function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boolean }) {
+  const userId = getUserId();
+  return prune({
+    ...(opts?.includeUserId ? { userId } : {}),
     name: ctxData.name,
     objective: ctxData.goal,
     description: ctxData.summary,
@@ -142,7 +126,7 @@ export async function createModerationCampaignFromStepOne(ctxData: {
     audience: {
       geo: [
         {
-          countryId: ctxData.audience.geo.countryCode, // if you only have names for now, leave undefined
+          countryId: ctxData.audience.geo.countryCode,
           stateId: ctxData.audience.geo.regionCode,
           city: ctxData.audience.geo.city,
           postalCode: ctxData.audience.geo.postalCode,
@@ -158,34 +142,99 @@ export async function createModerationCampaignFromStepOne(ctxData: {
     communicationTone: mapTone(ctxData.tone, ctxData.customTone),
     startAt: ctxData.dates.start || undefined,
     endAt: ctxData.dates.end || undefined,
-    // These are not in Step One yet; send empty or omit (we omit).
-    // channels: [],
-    // assistantName: undefined,
-    // greeting: undefined,
-    // conversationLogic: undefined,
-    // voiceConfig: undefined,
-    // knowHow: undefined,
-    // respondOnlyRelatedTo: undefined,
-    // humanEscalation: undefined,
-    // escalationContactNumber: undefined,
   });
-
-  const res: AxiosResponse<ModerationCampaignCreateResponse> = await api.post(
-    "/api/moderation-campaigns",
-    payload
-  );
-  return res.data; // expect { id, ... }
 }
 
-/** Generic update for later steps */
-export async function updateModerationCampaign(
-  campaignId: string,
-  patch: Record<string, any>
-) {
-  const body = prune(patch);
-  const res: AxiosResponse<ModerationCampaignUpdateResponse> = await api.put(
-    `/api/moderation-campaigns/${campaignId}`,
-    body
+/** ====== PUBLIC API ====== */
+
+export async function createModerationCampaignFromStepOne(ctxData: StepOneCtx) {
+  const payload = buildStepOnePayload(ctxData, { includeUserId: true });
+  const res: AxiosResponse<ModerationCampaignCreateResponse> = await api.post(
+    "moderation-campaigns",
+    payload
   );
   return res.data;
+}
+
+// ---- update (PUT) — same schema as POST
+export async function updateModerationCampaignFromStepOne(campaignId: string, ctxData: StepOneCtx) {
+  const payload = buildStepOnePayload(ctxData, { includeUserId: false });
+  const res: AxiosResponse<ModerationCampaignUpdateResponse> = await api.put(
+    `moderation-campaigns/${campaignId}`,
+    payload
+  );
+  return res.data;
+}
+
+/* =========================================================
+ * STEP 2: Channels → PUT moderation-campaigns/{id}/channels
+ * ======================================================= */
+export async function updateCampaignChannels(
+  campaignId: string,
+  channels: Array<"instagram" | "facebook" | "whatsapp" | "email" | "x">
+) {
+  const payload = prune({ channels });
+  const res: AxiosResponse<{ id: string }> = await api.put(
+    `moderation-campaigns/${campaignId}/channels`,
+    payload
+  );
+  return res.data; // { id }
+}
+
+/* =========================================================
+ * STEP 3: Assistant settings → PUT moderation-campaigns/{id}/assistant-settings
+ * ======================================================= */
+
+export type AssistantSettingsPayload = {
+  assistantName?: string;
+  greeting?: string;
+  conversationLogic?: string;
+  voiceConfig?: string; // e.g., "{\"voice\":\"es-AR-Standard-A\"}"
+  knowHow?: Array<{ question: string; answer: string }>;
+  respondOnlyRelatedTo?: string; // API expects a single string
+  humanEscalation?: string[];    // array of items
+  escalationContactNumber?: string; // "+NN NNNNNNNNN"
+};
+
+/** From your context → API payload mapper for Step 3 */
+export function mapAssistantSettingsFromContext(data: {
+  assistant: {
+    name?: string;
+    greeting?: string;
+    conversationLogic?: string;
+    voiceUrl?: string | null; // if you want to encode it into voiceConfig
+  };
+  knowHow: Array<{ question: string; answer: string }>;
+  allowedTopics: string[];   // we will join to a single string
+  escalationItems: string[];
+  escalationPhone?: string;
+}): AssistantSettingsPayload {
+  // You mentioned voiceConfig is a JSON string. Use voiceUrl as an example source.
+  const voiceConfig =
+    data.assistant?.voiceUrl
+      ? JSON.stringify({ voiceUrl: data.assistant.voiceUrl })
+      : undefined;
+
+  return prune({
+    assistantName: data.assistant?.name || undefined,
+    greeting: data.assistant?.greeting || undefined,
+    conversationLogic: data.assistant?.conversationLogic || undefined,
+    voiceConfig,
+    knowHow: (data.knowHow || []).map(({ question, answer }) => ({ question, answer })),
+    respondOnlyRelatedTo:
+      (data.allowedTopics || []).length ? data.allowedTopics.join(", ") : undefined,
+    humanEscalation: (data.escalationItems || []).length ? data.escalationItems : undefined,
+    escalationContactNumber: data.escalationPhone || undefined,
+  });
+}
+
+export async function updateAssistantSettings(
+  campaignId: string,
+  payload: AssistantSettingsPayload
+) {
+  const res: AxiosResponse<{ id: string }> = await api.put(
+    `moderation-campaigns/${campaignId}/assistant-settings`,
+    prune(payload)
+  );
+  return res.data; // { id }
 }
