@@ -21,8 +21,7 @@ const Moderation: React.FC = () => {
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
     const { data, setCampaignId } = useModeration();
-
-    // Zod 
+    
     const validateStep = useCallback((index: number) => {
         if (index === 0) {
             const hasName = (data.name || "").trim().length > 1;

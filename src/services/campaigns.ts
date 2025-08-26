@@ -139,7 +139,8 @@ function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boole
       },
       culturalInterests: ctxData.audience.cultural,
     },
-    communicationTone: mapTone(ctxData.tone, ctxData.customTone),
+    communicationTone: ctxData.customTone ? '' : ctxData.tone,
+    communicationToneOther: ctxData.customTone,
     startAt: ctxData.dates.start || undefined,
     endAt: ctxData.dates.end || undefined,
   });
