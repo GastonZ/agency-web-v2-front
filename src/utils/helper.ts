@@ -43,3 +43,78 @@ export function isValidIntlPhone(phone?: string): boolean {
   if (!phone) return true;
   return /^\+?[0-9][0-9\s\-()]{6,20}$/.test(phone.trim());
 }
+
+export function getUserId(): string | undefined {
+  const fromLs = (typeof window !== "undefined" && localStorage.getItem("aiaUserId")) || undefined;
+  if (fromLs) return fromLs;
+
+  try {
+    const token = (typeof window !== "undefined" && localStorage.getItem("aiaToken")) || undefined;
+    if (!token) return undefined;
+    const [, payloadB64] = token.split(".");
+    const json = JSON.parse(atob(payloadB64));
+    // Common claims: userId | uid | sub
+    return json.userId || json.uid || json.sub;
+  } catch {
+    return undefined;
+  }
+}
+
+export function prune<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) {
+    const arr = obj.map(prune).filter((v) =>
+      v === 0 || v === false ? true : Boolean(v && (typeof v !== "object" || Object.keys(v as any).length > 0))
+    );
+    return arr as unknown as T;
+  }
+  if (typeof obj === "object") {
+    const out: Record<string, any> = {};
+    Object.entries(obj as any).forEach(([k, v]) => {
+      const pv = prune(v as any);
+      if (
+        pv === 0 ||
+        pv === false ||
+        (pv !== undefined &&
+          !(typeof pv === "string" && pv.trim() === "") &&
+          !(typeof pv === "object" && pv !== null && Object.keys(pv).length === 0))
+      ) {
+        out[k] = pv;
+      }
+    });
+    return out as T;
+  }
+  return obj;
+}
+
+export function mapAgeGroups(ageGroups: string[] | undefined) {
+  if (!ageGroups || ageGroups.length === 0) return undefined;
+  return ageGroups.map((a) =>
+    a === "kids" ? "niños" : a === "youth" ? "jóvenes" : "adultos"
+  );
+}
+
+export function mapGender(g?: string) {
+  if (!g) return undefined;
+  return g === "male" ? "M" : g === "F" ? "female" : "todos";
+}
+
+export function mapNSE(nse?: string[]) {
+  if (!nse || nse.length === 0) return undefined;
+  return nse.map((v) => (v === "high" ? "alta" : v === "middle" ? "media" : "baja"));
+}
+
+export function mapTone(tone?: string, customTone?: string) {
+  if (!tone) return undefined;
+  if (tone === "other") return customTone?.trim() || undefined;
+
+  const map: Record<string, string> = {
+    formal: "formal",
+    informal: "informal",
+    inspirational: "inspiracional",
+    persuasive: "persuasivo",
+    educational: "educativo",
+    humorous: "humorístico",
+  };
+  return map[tone] || tone;
+}
