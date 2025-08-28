@@ -197,6 +197,7 @@ const CalendarCard: React.FC = () => {
         addTimeSlot,
         removeTimeSlot,
         setCalendarsEnabled,
+        removeCalendar
     } = useModeration();
 
     const enabled = data.calendarsEnabled;
@@ -208,6 +209,7 @@ const CalendarCard: React.FC = () => {
 
     const [bulk, setBulk] = React.useState<{ open: boolean; calId?: string; activeDays?: any[] }>({ open: false });
 
+    const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
 
     const handleAddCalendar = () => {
         const id = createCalendar({ name: "Nombre Calendario", assignee: "" });
@@ -232,14 +234,12 @@ const CalendarCard: React.FC = () => {
 
     return (
         <GlassCard className="relative overflow-hidden">
-            {/* Decorative glow */}
             <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-emerald-400/30 blur-3xl" />
             <SectionTitle
                 title="Turnos y Citas (opcional)"
                 subtitle="Define calendarios por profesional, días activos y horarios disponibles."
             />
 
-            {/* Switch */}
             <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm text-neutral-600 dark:text-neutral-300/80">
                     Activá para configurar calendarios de atención. Si lo desactivás, no se mostrarán en tu asistente.
@@ -253,7 +253,6 @@ const CalendarCard: React.FC = () => {
                 </div>
             ) : (
                 <>
-                    {/* Actions */}
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">Calendarios</h4>
                         <button
@@ -312,6 +311,49 @@ const CalendarCard: React.FC = () => {
                                             );
                                         })}
                                     </div>
+                                </div>
+
+                                <div className="mt-4 flex items-center justify-end">
+                                    {confirmDeleteId === cal.id ? (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                                                ¿Eliminar este calendario?
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => { removeCalendar(cal.id); setConfirmDeleteId(null); }}
+                                                className="px-3 h-9 rounded-lg text-sm text-white 
+                                                    bg-gradient-to-b from-emerald-600 to-emerald-700 
+                                                    hover:from-emerald-600/90 hover:to-emerald-700/90
+                                                    ring-1 ring-inset ring-emerald-400/30"
+                                            >
+                                                Sí, eliminar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setConfirmDeleteId(null)}
+                                                className="px-3 h-9 rounded-lg text-sm 
+                                                    bg-white/60 dark:bg-neutral-800/60 
+                                                    border border-neutral-300/60 dark:border-neutral-700/60 
+                                                    hover:border-emerald-400/50"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfirmDeleteId(cal.id)}
+                                            className="px-4 h-10 rounded-xl text-sm 
+                                                text-emerald-700 dark:text-emerald-300 
+                                                bg-white/60 dark:bg-neutral-900/40 
+                                                border border-emerald-400/30 
+                                                hover:bg-emerald-400/10 hover:border-emerald-400/50"
+                                            aria-label="Eliminar calendario"
+                                        >
+                                            Eliminar calendario
+                                        </button>
+                                    )}
                                 </div>
 
                                 {cal.activeDays.length > 0 && (
