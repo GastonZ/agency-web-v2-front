@@ -1,3 +1,5 @@
+import type { Calendar } from "../../context/ModerationContext";
+
 export type ModerationCampaignCreateResponse = { id: string };
 export type ModerationCampaignUpdateResponse = { id: string };
 
@@ -83,6 +85,8 @@ export type AssistantSettingsPayload = {
   respondOnlyRelatedTo?: string; // API expects a single string
   humanEscalation?: string[];    // array of items
   escalationContactNumber?: string; // "+NN NNNNNNNNN"
+
+  calendars?: Calendar[]
 };
 
 export type SearchParams = {

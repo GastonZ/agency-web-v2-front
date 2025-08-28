@@ -111,6 +111,7 @@ const Moderation: React.FC = () => {
                 allowedTopics: data.allowedTopics || [],
                 escalationItems: data.escalationItems || [],
                 escalationPhone: data.escalationPhone,
+                calendars: data.calendars
             });
             setSaving(true);
             try {

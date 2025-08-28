@@ -2,6 +2,7 @@ import api from "./api/api";
 import type { AxiosResponse } from "axios";
 import { getUserId, mapAgeGroups, mapGender, mapNSE, prune } from '../utils/helper'
 import type { ModerationCampaignCreateResponse, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse } from './types/moderation-types'
+import type { Calendar } from "../context/ModerationContext";
 
 function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boolean }) {
   const userId = getUserId();
@@ -89,6 +90,8 @@ export function mapAssistantSettingsFromContext(data: {
   allowedTopics: string[];   // we will join to a single string
   escalationItems: string[];
   escalationPhone?: string;
+
+  calendars?: Calendar[]
 }): AssistantSettingsPayload {
   // You mentioned voiceConfig is a JSON string. Use voiceUrl as an example source.
   const voiceConfig =
@@ -106,6 +109,7 @@ export function mapAssistantSettingsFromContext(data: {
       (data.allowedTopics || []).length ? data.allowedTopics.join(", ") : undefined,
     humanEscalation: (data.escalationItems || []).length ? data.escalationItems : undefined,
     escalationContactNumber: data.escalationPhone || undefined,
+    calendars: (data.calendars?.length ?? 0) > 0 ? data.calendars : undefined
   });
 }
 
