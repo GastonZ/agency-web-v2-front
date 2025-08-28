@@ -5,6 +5,7 @@ import KnowHowFileImport from "../components/stepThreeComponents/KnowHowFileImpo
 import QAEditor from "../components/stepThreeComponents/QAEditor";
 import ScopeCard from "../components/stepThreeComponents/ScopeCard";
 import EscalationCard from "../components/stepThreeComponents/EscalationCard";
+import CalendarCard from "../components/stepThreeComponents/CalendarCard";
 
 export const StepThreeTop: React.FC = () => {
   return (
@@ -24,6 +25,8 @@ export const StepThreeBottom: React.FC = () => {
       </div>
       <ScopeCard />
       <EscalationCard />
+
+      <CalendarCard />
     </div>
   );
 };
@@ -39,6 +42,7 @@ const StepThree: React.FC = () => {
       </div>
       <ScopeCard />
       <EscalationCard />
+      <CalendarCard />
     </div>
   );
 };

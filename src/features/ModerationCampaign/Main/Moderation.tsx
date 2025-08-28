@@ -137,6 +137,9 @@ const Moderation: React.FC = () => {
         setCurrent((c) => Math.min(3, c + 1));
     }, [saveCurrentStep]);
 
+    console.log(data);
+    
+
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
