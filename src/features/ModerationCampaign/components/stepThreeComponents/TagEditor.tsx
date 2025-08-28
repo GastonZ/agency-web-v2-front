@@ -6,7 +6,7 @@ const TagEditor: React.FC<{
   items: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
-}> = ({ label, items, onChange, placeholder = "Escribe y presiona Enter…" }) => {
+}> = ({ label, items, onChange, placeholder = "Escribe y agrega…" }) => {
   const [draft, setDraft] = React.useState("");
 
   const add = (val: string) => {
@@ -20,10 +20,7 @@ const TagEditor: React.FC<{
   const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
 
   const onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      add(draft);
-    } else if (e.key === "Backspace" && !draft && items.length) {
+    if (e.key === "Backspace" && !draft && items.length) {
       remove(items.length - 1);
     }
   };
@@ -37,7 +34,7 @@ const TagEditor: React.FC<{
           "bg-white/70 dark:bg-neutral-950/40 px-2 py-2",
         ].join(" ")}
       >
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {items.map((t, i) => (
             <span
               key={`${t}-${i}`}
@@ -54,13 +51,23 @@ const TagEditor: React.FC<{
               </button>
             </span>
           ))}
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={placeholder}
-            className="flex-1 min-w-[140px] bg-transparent outline-none text-sm px-2 py-1 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
-          />
+
+          <div className="flex items-center gap-2">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={placeholder}
+              className="flex-1 min-w-[140px] bg-transparent outline-none text-sm px-2 py-1 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+            />
+            <button
+              type="button"
+              onClick={() => add(draft)}
+              className="px-3 py-1 text-sm rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
+            >
+              Agregar
+            </button>
+          </div>
         </div>
       </div>
     </div>
