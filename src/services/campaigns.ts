@@ -1,7 +1,7 @@
 import api from "./api/api";
 import type { AxiosResponse } from "axios";
 import { getUserId, mapAgeGroups, mapGender, mapNSE, prune } from '../utils/helper'
-import type { ModerationCampaignCreateResponse, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse } from './types/moderation-types'
+import type { ExtractQAResponse, ModerationCampaignCreateResponse, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse } from './types/moderation-types'
 import type { Calendar } from "../context/ModerationContext";
 
 function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boolean }) {
@@ -140,4 +140,21 @@ export async function searchMyModerationCampaigns(
   const userId = getUserId();
   if (!userId) throw new Error("No userId available to list campaigns.");
   return searchModerationCampaigns({ userId, ...overrides });
+}
+
+export async function extractQAFromFile(file: File): Promise<ExtractQAResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res: AxiosResponse<ExtractQAResponse> = await api.post(
+    "moderation-campaigns/upload/file/extract-qa",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data;
 }

@@ -80,11 +80,11 @@ export type AssistantSettingsPayload = {
   assistantName?: string;
   greeting?: string;
   conversationLogic?: string;
-  voiceConfig?: string; // e.g., "{\"voice\":\"es-AR-Standard-A\"}"
+  voiceConfig?: string;
   knowHow?: Array<{ question: string; answer: string }>;
-  respondOnlyRelatedTo?: string; // API expects a single string
-  humanEscalation?: string[];    // array of items
-  escalationContactNumber?: string; // "+NN NNNNNNNNN"
+  respondOnlyRelatedTo?: string;
+  humanEscalation?: string[];
+  escalationContactNumber?: string;
 
   calendars?: Calendar[]
 };
@@ -95,5 +95,6 @@ export type SearchParams = {
   pageSize?: number;
   sortField?: string;        
   sortOrder?: "ASC" | "DESC";
-
 };
+
+export type ExtractQAResponse = { question: string; answer: string }[];
