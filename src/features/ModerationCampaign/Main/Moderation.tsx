@@ -11,7 +11,8 @@ import { toast } from "react-toastify";
 import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus } from "../../../services/campaigns";
 import { saveLastLaunchedModeration } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
-
+import { getModerationCampaignById } from "../../../services/campaigns";
+import { fillContextFromApi } from "../utils/fillContextFromApi";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -26,7 +27,23 @@ const Moderation: React.FC = () => {
 
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
-    const { data, setCampaignId, resetAll } = useModeration();
+    const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant } = useModeration();
+
+    React.useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const fromId = params.get("fromId");
+        if (!fromId) return;
+
+        (async () => {
+            try {
+                const apiItem = await getModerationCampaignById(fromId);
+                fillContextFromApi(apiItem, { setCampaignId, setBasics, setChannels, setAssistant });
+            } catch (e: any) {
+                toast.error(e?.message || "No se pudo cargar la campaña para editar");
+            }
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.search]);
 
     const validateStep = useCallback((index: number) => {
         if (index === 0) {
@@ -45,8 +62,6 @@ const Moderation: React.FC = () => {
     const jumpTo = (i: number) => {
         if (i <= current || validateStep(current)) setCurrent(i);
     };
-
-    /* Creation handler -> */
 
     const saveStepOne = useCallback(async () => {
         if (!validateStep(0)) {
@@ -150,10 +165,8 @@ const Moderation: React.FC = () => {
             try {
                 setSaving(true);
 
-                // 1) activar en backend
                 await updateModerationCampaignStatus(data.campaignId, "active");
 
-                // 2) guardar info mínima para la siguiente pantalla
                 const channels = Array.isArray(data.channels) ? data.channels : [];
                 saveLastLaunchedModeration({
                     id: data.campaignId,
@@ -161,10 +174,8 @@ const Moderation: React.FC = () => {
                     savedAt: Date.now(),
                 });
 
-                // 3) resetear wizard/context
                 resetAll();
 
-                // 4) ir a statistics
                 navigate(`/my_moderation_campaign/${data.campaignId}/statistics`, { replace: true });
             } catch (e: any) {
                 toast.error(e?.message || "No se pudo lanzar la campaña");

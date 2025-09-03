@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { searchMyModerationCampaigns } from "../../../services/campaigns";
 import type { ModerationCampaignItem } from "../../../services/types/moderation-types";
 import OnlineLayout from "../../../layout/OnlineLayout";
+import ActionsButton from "../../../components/features/ActionsButton";
 
 function sortNewestFirst(a: ModerationCampaignItem, b: ModerationCampaignItem) {
     const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
@@ -91,13 +92,10 @@ export default function MyModerationCampaigns() {
                                         <td className="p-3">{date ? new Date(date).toLocaleString() : "—"}</td>
                                         <td className="p-3">{(c.channels || []).join(", ") || "—"}</td>
                                         <td className="p-3">
-                                            <button
-                                                className="rounded-md px-2 py-1 ring-1 ring-emerald-400/30 hover:bg-emerald-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
-                                                onClick={() => navigate(`/my_moderation_campaign/${c.id}/statistics`)}
-                                                title="Ver estadísticas"
-                                            >
-                                                ⋯
-                                            </button>
+                                            <ActionsButton 
+                                                onViewStats={() => navigate(`/my_moderation_campaign/${c.id}/statistics`)}
+                                                onEdit={() => navigate(`/campaign_moderation_creation?fromId=${c.id}`)} 
+                                            />
                                         </td>
                                     </tr>
                                 );
