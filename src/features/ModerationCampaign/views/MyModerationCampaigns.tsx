@@ -64,7 +64,7 @@ export default function MyModerationCampaigns() {
             <div className="space-y-4">
                 <h2 className="text-2xl font-semibold tracking-tight">Mis campañas de moderación</h2>
 
-                <div className="overflow-clip rounded-xl ring-1 ring-emerald-400/20">
+                <div className="ring-1 ring-gray-800">
                     <table className="min-w-full text-[15px] leading-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl">
                         <thead className="bg-white/70 dark:bg-neutral-900/70">
                             <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">

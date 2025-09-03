@@ -17,7 +17,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white text-black dark:bg-neutral-950 dark:text-white flex">
+    <div className="min-h-screen bg-gray-200 text-black dark:bg-neutral-950 dark:text-white flex">
       <div className="hidden lg:block">
         <SidebarNav
           items={defaultNavItems}
