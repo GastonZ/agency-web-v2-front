@@ -10,6 +10,8 @@ import { ToastContainer } from 'react-toastify';
 
 import { ModerationProvider } from '../context/ModerationContext';
 import Moderation from '../features/ModerationCampaign/Main/Moderation';
+import MyModerationCampaigns from '../features/ModerationCampaign/views/MyModerationCampaigns';
+import StatisticsView from '../features/ModerationCampaign/views/StatisticsView';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -40,6 +42,9 @@ const AppRouter: React.FC = () => (
                 >
                     <Route index element={<Moderation />} />
                 </Route>
+
+                <Route path="my_moderation_campaign" element={<MyModerationCampaigns />} />
+                <Route path="my_moderation_campaign/:id/statistics" element={<StatisticsView />} />
 
             </Route>
 

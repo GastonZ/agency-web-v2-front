@@ -14,11 +14,11 @@
 ::-webkit-scrollbar-thumb {
   border-radius: 9999px;
   background: linear-gradient(180deg, rgba(13, 88, 63, 0.8), rgba(12, 61, 46, 0.8));
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 2px solid rgba(255, 255, 255, 0.15);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(16,185,129,1), rgba(5,150,105,1));
+  background: linear-gradient(180deg, rgba(16, 185, 129, 1), rgba(5, 150, 105, 1));
 }
 
 ::-webkit-scrollbar-corner {
@@ -29,4 +29,14 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(30, 163, 119, 0.8) transparent;
+}
+
+.input-date::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+  opacity: 0.9;
+}
+
+.dark .input-date::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.15) contrast(1.1);
+  opacity: 1;
 }

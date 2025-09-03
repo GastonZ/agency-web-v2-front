@@ -118,3 +118,34 @@ export function mapTone(tone?: string, customTone?: string) {
   };
   return map[tone] || tone;
 }
+
+/* Moderation campaign last launch */
+
+const LAST_KEY = "mc:last";
+
+export type LastLaunchedModeration = {
+  id: string;
+  channels: string[];
+  savedAt: number;
+};
+
+export function saveLastLaunchedModeration(data: LastLaunchedModeration) {
+  try {
+    localStorage.setItem(LAST_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+export function getLastLaunchedModeration(): LastLaunchedModeration | null {
+  try {
+    const raw = localStorage.getItem(LAST_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearLastLaunchedModeration() {
+  try {
+    localStorage.removeItem(LAST_KEY);
+  } catch {}
+}

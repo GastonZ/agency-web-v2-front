@@ -142,6 +142,23 @@ export async function searchMyModerationCampaigns(
   return searchModerationCampaigns({ userId, ...overrides });
 }
 
+export async function getModerationCampaignById(id: string) {
+  const res: AxiosResponse<import("./types/moderation-types").ModerationCampaignItem> =
+    await api.get(`moderation-campaigns/${id}`);
+  return res.data;
+}
+
+export async function updateModerationCampaignStatus(
+  id: string,
+  status: "active" | "draft" | "paused"
+) {
+  const res: AxiosResponse<{ id: string; status: string }> = await api.put(
+    `moderation-campaigns/${id}/status`,
+    { status }
+  );
+  return res.data;
+}
+
 export async function extractQAFromFile(file: File): Promise<ExtractQAResponse> {
   const formData = new FormData();
   formData.append("file", file);

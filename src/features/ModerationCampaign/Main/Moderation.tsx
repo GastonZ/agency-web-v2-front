@@ -5,9 +5,12 @@ import { StepperTop, StepControls } from "../stepper/Stepper";
 import { StepOneBottom, StepOneTop } from "../steps/StepOne";
 import StepTwo from "../steps/StepTwo";
 import { StepThreeTop, StepThreeBottom } from "../steps/StepThree";
+import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
-import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels } from "../../../services/campaigns";
+import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus } from "../../../services/campaigns";
+import { saveLastLaunchedModeration } from "../../../utils/helper";
+import { useNavigate } from "react-router-dom";
 
 
 const STEPS = [
@@ -18,10 +21,13 @@ const STEPS = [
 ];
 
 const Moderation: React.FC = () => {
+
+    const navigate = useNavigate();
+
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
-    const { data, setCampaignId } = useModeration();
-    
+    const { data, setCampaignId, resetAll } = useModeration();
+
     const validateStep = useCallback((index: number) => {
         if (index === 0) {
             const hasName = (data.name || "").trim().length > 1;
@@ -135,11 +141,44 @@ const Moderation: React.FC = () => {
     const goNext = useCallback(async () => {
         const ok = await saveCurrentStep();
         if (!ok) return;
+
+        if (current === 3) {
+            if (!data.campaignId) {
+                toast.error("Falta el id de campaña.");
+                return;
+            }
+            try {
+                setSaving(true);
+
+                // 1) activar en backend
+                await updateModerationCampaignStatus(data.campaignId, "active");
+
+                // 2) guardar info mínima para la siguiente pantalla
+                const channels = Array.isArray(data.channels) ? data.channels : [];
+                saveLastLaunchedModeration({
+                    id: data.campaignId,
+                    channels,
+                    savedAt: Date.now(),
+                });
+
+                // 3) resetear wizard/context
+                resetAll();
+
+                // 4) ir a statistics
+                navigate(`/my_moderation_campaign/${data.campaignId}/statistics`, { replace: true });
+            } catch (e: any) {
+                toast.error(e?.message || "No se pudo lanzar la campaña");
+            } finally {
+                setSaving(false);
+            }
+            return;
+        }
+
         setCurrent((c) => Math.min(3, c + 1));
-    }, [saveCurrentStep]);
+    }, [saveCurrentStep, current, data, navigate, resetAll, setSaving]);
 
     console.log(data);
-    
+
 
     return (
         <OnlineLayout>
@@ -178,6 +217,12 @@ const Moderation: React.FC = () => {
                         </>
                     )}
 
+                    {current === 3 && (
+                        <div className="lg:col-span-12">
+                            <StepReview />
+                        </div>
+                    )}
+
                     <div className="lg:col-span-12">
                         <StepControls
                             canPrev={canPrev}
@@ -191,7 +236,7 @@ const Moderation: React.FC = () => {
                                         ? (saving ? "Guardando canales…" : "Siguiente")
                                         : current === 2
                                             ? (saving ? "Guardando asistente…" : "Siguiente")
-                                            : "Finalizar"
+                                            : (saving ? "Lanzando..." : "🚀 Lanzar campaña")
                             }
                         />
                     </div>

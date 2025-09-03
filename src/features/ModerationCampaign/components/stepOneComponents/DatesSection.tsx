@@ -16,6 +16,7 @@ const DatesSection: React.FC = () => {
           <Label htmlFor="dateStart">Fecha inicio</Label>
           <TextInput
             id="dateStart"
+            className="input-date h-11 w-full rounded-lg bg-white/70 dark:bg-neutral-900/70 ring-1 ring-emerald-400/20 px-3 text-sm"
             type="date"
             value={fromISODate(data.dates.start)}
             onChange={(e) => setDates(e.target.value, data.dates.end)}
@@ -25,6 +26,7 @@ const DatesSection: React.FC = () => {
           <Label htmlFor="dateEnd">Fecha fin</Label>
           <TextInput
             id="dateEnd"
+            className="input-date h-11 w-full rounded-lg bg-white/70 dark:bg-neutral-900/70 ring-1 ring-emerald-400/20 px-3 text-sm"
             type="date"
             value={fromISODate(data.dates.end)}
             onChange={(e) => setDates(data.dates.start, e.target.value)}
