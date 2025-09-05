@@ -73,6 +73,8 @@ const Moderation: React.FC = () => {
         try {
             if (!data.campaignId) {
                 const res = await createModerationCampaignFromStepOne(data);
+                console.log(res);
+                
                 setCampaignId(res.id);
                 toast.success("Campaña creada con éxito.");
             } else {
@@ -95,6 +97,7 @@ const Moderation: React.FC = () => {
             return false;
         }
         if (current === 3) return true;
+
 
         if (!data.campaignId && current > 0) {
             toast.error("Falta crear la campaña en el Paso 1.");
@@ -165,7 +168,7 @@ const Moderation: React.FC = () => {
             try {
                 setSaving(true);
 
-                await updateModerationCampaignStatus(data.campaignId, "active");
+                await updateModerationCampaignStatus(data.campaignId, "draft");
 
                 const channels = Array.isArray(data.channels) ? data.channels : [];
                 saveLastLaunchedModeration({

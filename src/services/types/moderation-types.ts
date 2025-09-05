@@ -98,3 +98,5 @@ export type SearchParams = {
 };
 
 export type ExtractQAResponse = { question: string; answer: string }[];
+
+export type CampaignStatus = "draft" |  "active" | "inactive" | "archived";

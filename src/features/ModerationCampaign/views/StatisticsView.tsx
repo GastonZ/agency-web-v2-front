@@ -4,6 +4,8 @@ import { getModerationCampaignById } from "../../../services/campaigns";
 import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../../utils/helper";
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { MessageSquare, ClipboardList, CalendarRange } from "lucide-react";
+import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
+import { getUserId } from "../../../utils/helper";
 
 export default function StatisticsView() {
     const { id } = useParams<{ id: string }>();
@@ -11,6 +13,8 @@ export default function StatisticsView() {
     const [error, setError] = React.useState<string | null>(null);
     const [campaign, setCampaign] = React.useState<any>(null);
     const [channelsToConfigure, setChannelsToConfigure] = React.useState<string[]>([]);
+    const userId = getUserId() || "";
+    const [openWhatsAppSetup, setOpenWhatsAppSetup] = React.useState(false);
 
     React.useEffect(() => {
         let mounted = true;
@@ -36,6 +40,12 @@ export default function StatisticsView() {
         })();
         return () => { mounted = false; };
     }, [id]);
+
+    const hasWhatsApp = React.useMemo(() => {
+        const arr = (channelsToConfigure?.length ? channelsToConfigure : campaign?.channels) ?? [];
+        return arr.some((c: string) => (c || "").toLowerCase().includes("whats"));
+    }, [channelsToConfigure, campaign]);
+
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-neutral-950">
@@ -98,15 +108,25 @@ export default function StatisticsView() {
                                     </span>
                                 ))}
                             </div>
-                            <div className="mt-4">
-                                <button
-                                    className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
-                                    disabled
-                                    title="Próximamente"
-                                >
-                                    Configurar cuentas
-                                </button>
+                            <div className="mt-4 flex gap-2">
+                                {hasWhatsApp ? (
+                                    <button
+                                        className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
+                                        onClick={() => setOpenWhatsAppSetup(true)}
+                                    >
+                                        Configurar WhatsApp
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="rounded-xl px-5 h-11 ring-1 ring-neutral-400/30 bg-neutral-500/10 text-[15px]"
+                                        disabled
+                                        title="No hay WhatsApp entre los canales"
+                                    >
+                                        Configurar cuentas
+                                    </button>
+                                )}
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -145,6 +165,43 @@ export default function StatisticsView() {
                     <Link to="/my_moderation_campaign" className="text-emerald-600 hover:underline">← Volver a mis campañas</Link>
                 </div>
             </div>
+
+            {/* Configurar WhatsApp (solo si el canal está habilitado y el usuario lo abrió) */}
+            {hasWhatsApp && openWhatsAppSetup && (
+                <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
+                    <div className="flex items-start gap-3 mb-3">
+                        <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
+                            <MessageSquare className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-[15px] font-semibold leading-tight">Configurar WhatsApp</h3>
+                                <button
+                                    className="text-xs px-3 py-1 rounded bg-neutral-200/70 dark:bg-neutral-800/70"
+                                    onClick={() => setOpenWhatsAppSetup(false)}
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+
+                            {!userId ? (
+                                <div className="mt-3 text-sm text-amber-600">
+                                    No se encontró <code>aiaUserId</code>. Iniciá sesión para continuar.
+                                </div>
+                            ) : (
+                                <div className="mt-4">
+                                    <WhatsappQrPanel
+                                        userId={userId}
+                                        campaignId={id!}
+                                        socketUrl={import.meta.env.VITE_API_URL}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
         </OnlineLayout>
     );

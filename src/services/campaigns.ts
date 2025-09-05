@@ -1,7 +1,7 @@
 import api from "./api/api";
 import type { AxiosResponse } from "axios";
 import { getUserId, mapAgeGroups, mapGender, mapNSE, prune } from '../utils/helper'
-import type { ExtractQAResponse, ModerationCampaignCreateResponse, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse } from './types/moderation-types'
+import type { ExtractQAResponse, ModerationCampaignCreateResponse, CampaignStatus, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse } from './types/moderation-types'
 import type { Calendar } from "../context/ModerationContext";
 
 function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boolean }) {
@@ -150,7 +150,7 @@ export async function getModerationCampaignById(id: string) {
 
 export async function updateModerationCampaignStatus(
   id: string,
-  status: "active" | "draft" | "paused"
+  status: CampaignStatus
 ) {
   const res: AxiosResponse<{ id: string; status: string }> = await api.put(
     `moderation-campaigns/${id}/status`,
@@ -175,3 +175,4 @@ export async function extractQAFromFile(file: File): Promise<ExtractQAResponse> 
 
   return res.data;
 }
+
