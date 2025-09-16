@@ -1,7 +1,7 @@
 import api from "./api/api";
 import type { AxiosResponse } from "axios";
 import { getUserId, mapAgeGroups, mapGender, mapNSE, prune } from '../utils/helper'
-import type { ExtractQAResponse, ModerationCampaignCreateResponse, CampaignStatus, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse } from './types/moderation-types'
+import type { ExtractedQA, ModerationCampaignCreateResponse, CampaignStatus, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse, ActivateWhatsappBotResponse } from './types/moderation-types'
 import type { Calendar } from "../context/ModerationContext";
 
 function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boolean }) {
@@ -30,8 +30,6 @@ function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boole
     },
     communicationTone: ctxData.customTone ? 'other' : ctxData.tone,
     communicationToneOther: ctxData.customTone,
-    startAt: ctxData.dates.start || undefined,
-    endAt: ctxData.dates.end || undefined,
   });
 }
 
@@ -158,21 +156,30 @@ export async function updateModerationCampaignStatus(
   );
   return res.data;
 }
+/* Extract Q&A FROM FILE  */
 
-export async function extractQAFromFile(file: File): Promise<ExtractQAResponse> {
-  const formData = new FormData();
-  formData.append("file", file);
+export async function extractQAFromFile(file: File): Promise<ExtractedQA[]> {
+  const form = new FormData();
+  form.append("file", file);
 
-  const res: AxiosResponse<ExtractQAResponse> = await api.post(
+  const res: AxiosResponse<ExtractedQA[]> = await api.put(
     "moderation-campaigns/upload/file/extract-qa",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } }
   );
 
-  return res.data;
+  const data = Array.isArray(res.data) ? res.data : [];
+  return data
+    .filter((row: any) => row && typeof row.question === "string" && typeof row.answer === "string")
+    .map((row: any) => ({ question: row.question, answer: row.answer }));
 }
 
+
+export async function activateWhatsappBot(
+  id: string
+): Promise<ActivateWhatsappBotResponse> {
+  const res: AxiosResponse<ActivateWhatsappBotResponse> = await api.put(
+    `moderation-campaigns/${id}/activate-whatsapp-bot`
+  );
+  return res.data;
+}

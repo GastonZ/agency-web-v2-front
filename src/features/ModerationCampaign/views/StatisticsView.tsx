@@ -142,7 +142,6 @@ export default function StatisticsView() {
                         </div>
                         <dl className="grid md:grid-cols-2 gap-3 text-[15px] leading-6">
                             <div><dt className="opacity-70">Objetivo</dt><dd>{campaign.objective || "—"}</dd></div>
-                            <div><dt className="opacity-70">Rango</dt><dd>{campaign.startAt || "—"} → {campaign.endAt || "—"}</dd></div>
                             <div><dt className="opacity-70">Lead</dt><dd>{campaign.leadDefinition || "—"}</dd></div>
                             <div><dt className="opacity-70">Canales</dt><dd>{(campaign.channels || []).join(", ") || "—"}</dd></div>
                         </dl>
@@ -194,6 +193,7 @@ export default function StatisticsView() {
                                         userId={userId}
                                         campaignId={id!}
                                         socketUrl={import.meta.env.VITE_API_URL}
+                                        campaignStatus={campaign.status}
                                     />
                                 </div>
                             )}

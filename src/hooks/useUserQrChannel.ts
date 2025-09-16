@@ -1,3 +1,4 @@
+// src/hooks/useUserQrChannel.ts
 import { useEffect, useRef, useState, useCallback } from "react";
 import { initSocket, getSocket } from "../services/socket/socket";
 
@@ -6,82 +7,124 @@ export type QrPayload = { data: string; [k: string]: any };
 type UseUserQrChannelOpts = {
   userId: string;
   socketUrl?: string;
-  token?: string; // opcional
+  token?: string;
+  autoStart?: boolean; // NEW (default true)
 };
 
-// ⚠️ Sugerencia: por defecto apuntar al WS real (9000).
-// Si preferís, pasalo por prop desde el padre.
 export function useUserQrChannel({
   userId,
   socketUrl = "http://localhost:9000",
   token,
+  autoStart = true,
 }: UseUserQrChannelOpts) {
   const [connected, setConnected] = useState(false);
   const [qr, setQr] = useState<QrPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const subscribedOnce = useRef(false);
+  const listenersAttached = useRef(false);
 
   const resetQr = useCallback(() => setQr(null), []);
 
-  useEffect(() => {
-    if (!userId) return;
+  // shared handlers (stable)
+  const onConnect = useCallback(() => {
+    setConnected(true);
+    setError(null);
+    // subscribe once per mount
+    const socket = getSocket();
+    if (socket && !subscribedOnce.current && userId) {
+      socket.emit("subscribe-user", { event: "subscribe-user", userId });
+      subscribedOnce.current = true;
+    }
+  }, [userId]);
 
-    const socket = initSocket({ url: socketUrl, token });
+  const onDisconnect = useCallback(() => setConnected(false), []);
+  const onConnectError = useCallback((err: any) => {
+    setError(err?.message ?? "Fallo de conexión");
+    setConnected(false);
+  }, []);
 
-    const doSubscribe = () => {
-      if (!subscribedOnce.current) {
-        socket.emit("subscribe-user", { event: "subscribe-user", userId });
-        subscribedOnce.current = true;
-      }
-    };
+  const onQrGenerated = useCallback((payload: any) => {
+    // Be tolerant with shapes; store string in .data
+    const maybe =
+      (typeof payload === "string" ? payload : null) ??
+      payload?.data ??
+      payload?.qr ??
+      payload?.qrcode ??
+      payload?.code ??
+      payload?.value ??
+      null;
 
-    const onConnect = () => {
-      setConnected(true);
-      setError(null);
-      doSubscribe();
-    };
-    const onDisconnect = () => setConnected(false);
-    const onConnectError = (err: any) => {
-      setError(err?.message ?? "Fallo de conexión");
-      setConnected(false);
-    };
+    if (typeof maybe === "string") {
+      setQr({ data: maybe, ...((typeof payload === "object" && payload) || {}) });
+    } else {
+      setQr({ data: "", ...((typeof payload === "object" && payload) || {}) });
+    }
+  }, []);
 
-    const onQrGenerated = (payload: any) => {
-      // Log de depuración, para ver exactamente qué llega
-      // (lo pediste para confirmar si viene en el evento)
-      console.debug("[socket] qr-generated payload:", payload);
-
-      // Tolerante a distintas claves
-      const maybe =
-        (typeof payload === "string" ? payload : null) ??
-        payload?.data ??
-        payload?.qr ??
-        payload?.qrcode ??
-        payload?.code ??
-        payload?.value ??
-        null;
-
-      if (typeof maybe === "string") {
-        setQr({ data: maybe, ...((typeof payload === "object" && payload) || {}) });
-      } else {
-        // si no pudimos extraer string, igual guardamos el payload crudo
-        setQr({ data: "", ...((typeof payload === "object" && payload) || {}) });
-      }
-    };
-
+  const attachListeners = useCallback((socket: any) => {
+    if (listenersAttached.current || !socket) return;
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("connect_error", onConnectError);
     socket.on("qr-generated", onQrGenerated);
+    listenersAttached.current = true;
+  }, [onConnect, onDisconnect, onConnectError, onQrGenerated]);
+
+  const detachListeners = useCallback((socket: any) => {
+    if (!listenersAttached.current || !socket) return;
+    socket.off("connect", onConnect);
+    socket.off("disconnect", onDisconnect);
+    socket.off("connect_error", onConnectError);
+    socket.off("qr-generated", onQrGenerated);
+    listenersAttached.current = false;
+  }, [onConnect, onDisconnect, onConnectError, onQrGenerated]);
+
+  // NEW: start on demand
+  const startSocket = useCallback(async () => {
+    if (!userId) throw new Error("userId requerido para conectar el socket");
+    const socket = initSocket({ url: socketUrl, token }); // creates (or returns) the singleton
+    attachListeners(socket);
+
+    if (socket.connected) {
+      onConnect(); // ensure subscribe-user fired if needed
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const ok = () => { socket.off("connect", ok); resolve(); };
+      const ko = (err: any) => { socket.off("connect_error", ko); reject(err); };
+      socket.once("connect", ok);
+      socket.once("connect_error", ko);
+      socket.connect();
+    });
+  }, [userId, socketUrl, token, attachListeners, onConnect]);
+
+  // optional auto start (backwards compatible)
+  useEffect(() => {
+    if (!autoStart) return;
+    let mounted = true;
+
+    (async () => {
+      try {
+        await startSocket();
+      } catch (e) {
+        // ignore; error state is set by onConnectError
+      }
+    })();
 
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("connect_error", onConnectError);
-      socket.off("qr-generated", onQrGenerated);
+      const socket = getSocket();
+      detachListeners(socket);
       subscribedOnce.current = false;
     };
-  }, [userId, socketUrl, token]);
+  }, [autoStart, startSocket, detachListeners]);
 
-  return { connected, qr, error, resetQr, getSocket };
+  const disconnect = useCallback(() => {
+    const socket = getSocket();
+    if (!socket) return;
+    socket.disconnect();
+  }, []);
+
+  return { connected, qr, error, resetQr, startSocket, disconnect, getSocket };
 }

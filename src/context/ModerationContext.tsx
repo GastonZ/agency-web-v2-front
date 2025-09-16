@@ -119,7 +119,6 @@ export interface ModerationCampaign {
   audience: Audience;
   tone: ToneOption;
   customTone?: string;
-  dates: CampaignDates;
   channels: Channel[];
 
   assistant: AssistantConfig;
@@ -156,7 +155,6 @@ export const DEFAULT_CAMPAIGN: ModerationCampaign = {
   },
   tone: "informal",
   customTone: "",
-  dates: { start: undefined, end: undefined },
   channels: [],
   assistant: {
     name: "",
@@ -251,7 +249,6 @@ function reviveFromPersist(raw: any): ModerationCampaign {
           ...(parsed?.audience?.demographic ?? {}),
         },
       },
-      dates: { ...base.dates, ...(parsed?.dates ?? {}) },
       assistant: {
         ...base.assistant,
         ...(parsed?.assistant ?? {}),
@@ -332,6 +329,7 @@ interface ModerationContextValue {
 
   // Calendar
   setCalendarsEnabled: (v: boolean) => void;
+  setCalendars: (calendars: Calendar[]) => void;
   addTimeSlotsBulk: (
     id: string,
     days: DayOfWeek[],
@@ -488,6 +486,12 @@ export const ModerationProvider: React.FC<{
 
   const setCalendarsEnabled = React.useCallback<ModerationContextValue["setCalendarsEnabled"]>((v) => {
     setData((prev) => ({ ...prev, calendarsEnabled: !!v }));
+  }, []);
+
+    const setCalendars = React.useCallback<ModerationContextValue["setCalendars"]>((calendars) => {
+    // reutilizamos reviveCalendars para sanear estructura por si el backend no viene 100% alineado
+    const sane = reviveCalendars(calendars as any);
+    setData((prev) => ({ ...prev, calendars: sane }));
   }, []);
 
   const addTimeSlotsBulk = React.useCallback<ModerationContextValue["addTimeSlotsBulk"]>((id, days, range, stepMinutes) => {
@@ -662,6 +666,7 @@ export const ModerationProvider: React.FC<{
     setEscalationItems,
     setEscalationPhone,
     setCalendarsEnabled,
+    setCalendars,
     addTimeSlotsBulk,
     createCalendar,
     updateCalendarMeta,
@@ -695,6 +700,7 @@ export const ModerationProvider: React.FC<{
     setEscalationItems,
     setEscalationPhone,
     setCalendarsEnabled,
+    setCalendars,
     addTimeSlotsBulk,
     createCalendar,
     updateCalendarMeta,
@@ -726,7 +732,6 @@ export function useModeration(): ModerationContextValue {
 // ==========================
 export const selectors = {
   isToneOther: (data: ModerationCampaign) => data.tone === "other",
-  hasDates: (data: ModerationCampaign) => Boolean(data.dates.start || data.dates.end),
   hasChannels: (data: ModerationCampaign) => data.channels.length > 0,
   hasVoice: (data: ModerationCampaign) => Boolean(data.assistant.voiceFile || data.assistant.voiceUrl),
 };

@@ -13,6 +13,7 @@ import { saveLastLaunchedModeration } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
+import EditModeBanner from "../utils/EditModeBanner"; 
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -27,7 +28,7 @@ const Moderation: React.FC = () => {
 
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
-    const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant } = useModeration();
+    const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
 
     React.useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -37,7 +38,13 @@ const Moderation: React.FC = () => {
         (async () => {
             try {
                 const apiItem = await getModerationCampaignById(fromId);
-                fillContextFromApi(apiItem, { setCampaignId, setBasics, setChannels, setAssistant });
+                fillContextFromApi(apiItem, {
+                    setCampaignId, setBasics, setChannels,
+                    setAssistant,
+                    clearQA, addQA,
+                    setAllowedTopics, setEscalationItems, setEscalationPhone,
+                    setCalendarsEnabled, setCalendars,
+                });
             } catch (e: any) {
                 toast.error(e?.message || "No se pudo cargar la campaña para editar");
             }
@@ -48,9 +55,8 @@ const Moderation: React.FC = () => {
     const validateStep = useCallback((index: number) => {
         if (index === 0) {
             const hasName = (data.name || "").trim().length > 1;
-            const hasStart = !!data.dates?.start;
-            const hasEnd = !!data.dates?.end;
-            return hasName && hasStart && hasEnd;
+
+            return hasName
         }
         return true;
     }, [data]);
@@ -74,7 +80,7 @@ const Moderation: React.FC = () => {
             if (!data.campaignId) {
                 const res = await createModerationCampaignFromStepOne(data);
                 console.log(res);
-                
+
                 setCampaignId(res.id);
                 toast.success("Campaña creada con éxito.");
             } else {
@@ -168,7 +174,7 @@ const Moderation: React.FC = () => {
             try {
                 setSaving(true);
 
-                await updateModerationCampaignStatus(data.campaignId, "draft");
+                await updateModerationCampaignStatus(data.campaignId, "active");
 
                 const channels = Array.isArray(data.channels) ? data.channels : [];
                 saveLastLaunchedModeration({
@@ -191,9 +197,6 @@ const Moderation: React.FC = () => {
         setCurrent((c) => Math.min(3, c + 1));
     }, [saveCurrentStep, current, data, navigate, resetAll, setSaving]);
 
-    console.log(data);
-
-
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
@@ -201,6 +204,7 @@ const Moderation: React.FC = () => {
                     <StepperTop steps={STEPS} current={current} onStepClick={jumpTo} />
                 </div>
 
+                <EditModeBanner />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                     <div className="lg:col-span-5">
                         <AgencyChatbot className="w-full h-[420px]" />
@@ -250,7 +254,7 @@ const Moderation: React.FC = () => {
                                         ? (saving ? "Guardando canales…" : "Siguiente")
                                         : current === 2
                                             ? (saving ? "Guardando asistente…" : "Siguiente")
-                                            : (saving ? "Lanzando..." : "🚀 Lanzar campaña")
+                                            : (saving ? "Creando..." : "🚀 Crear campaña")
                             }
                         />
                     </div>

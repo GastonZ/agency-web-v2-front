@@ -74,7 +74,6 @@ export const PunkButton = React.forwardRef<HTMLButtonElement, PunkButtonProps>(
           fullWidth && "w-full",
           className
         )}
-        disabled={isDisabled}
         {...props}
       >
         {loading && (

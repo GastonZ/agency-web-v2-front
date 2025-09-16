@@ -109,9 +109,8 @@ export default function CampaignCreation({
                             const isOpen = expanded === card.id;
 
                             return (
-                                <motion.button
+                                <motion.div
                                     key={card.id}
-                                    type="button"
                                     onClick={() => select(card.id)}
                                     onKeyDown={(e) => { if (e.key === "Enter") select(card.id); }}
                                     initial={{ opacity: 0, y: 8 }}
@@ -218,7 +217,7 @@ export default function CampaignCreation({
                                             </PunkButton>
                                         </Link>
                                     </div>
-                                </motion.button>
+                                </motion.div>
                             );
                         })}
                     </div>

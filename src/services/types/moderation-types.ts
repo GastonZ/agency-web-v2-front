@@ -73,7 +73,6 @@ export type StepOneCtx = {
   };
   tone?: string;
   customTone?: string;
-  dates: { start?: string; end?: string };
 };
 
 export type AssistantSettingsPayload = {
@@ -100,3 +99,17 @@ export type SearchParams = {
 export type ExtractQAResponse = { question: string; answer: string }[];
 
 export type CampaignStatus = "draft" |  "active" | "inactive" | "archived";
+
+export type ExtractedQA = { question: string; answer: string };
+
+export type ActivateWhatsappBotResponse = {
+  success: boolean;
+  message: string;
+  campaignId: string;
+  agentId: string;
+  agentName: string;
+  userId: string;
+  campaignName: string;
+  channels: string[];
+  qrGenerated: boolean;
+};
