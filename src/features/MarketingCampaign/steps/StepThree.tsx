@@ -1,94 +1,63 @@
 import * as React from "react";
-import { GlassCard, SectionTitle, Label, TextInput, TextArea } from "../../ModerationCampaign/components/Primitives"
-import InfluencerCarousel, { type CatalogInfluencer } from "../components/InfluencerCarousel";
+import { GlassCard, SectionTitle, Label, TextArea } from "../../ModerationCampaign/components/Primitives";
+import InfluencerCarousel from "../components/InfluencerCarousel";
+import { useMarketing } from "../../../context/MarketingContext";
+import { fetchInfluencers } from "../../../services/influencer";
+import type { InfluencerItem } from "../../../services/types/influencer-types";
 
 export const InfluencerTypes = {
-  OWN: "own",
+  OWN: "own_account",
   CATALOG: "catalog",
   VIRTUAL_AI: "virtual_ai",
 } as const;
 export type InfluencerType = typeof InfluencerTypes[keyof typeof InfluencerTypes];
-
-export type VirtualAgentConfig = {
-  description: string;
-  referenceImage?: File | null;
-  appearance?: string;
-  style?: string;
-  personality?: string;
-  languageAccent?: string;
-};
-
-type Props = {
-  initialType?: InfluencerType;
-  initialCatalogId?: string | null;
-  initialVirtual?: Partial<VirtualAgentConfig>;
-  onChange?: (state: {
-    influencerType: InfluencerType;
-    catalogId: string | null;
-    virtualAgent: VirtualAgentConfig | null;
-  }) => void;
-};
-
-const dummyCatalog: CatalogInfluencer[] = [
-  {
-    id: "inf_1",
-    name: "Luna Vega",
-    avatar: "https://i1.sndcdn.com/artworks-a97bKtSqgVNU2sM9-0enDuQ-t1080x1080.jpg",
-    niches: ["lifestyle", "fitness"],
-    followers: "120k",
-    description: "Creadora lifestyle con foco en hábitos saludables y rutinas.",
-  },
-  {
-    id: "inf_2",
-    name: "Tomás Ferro",
-    avatar: "https://i1.sndcdn.com/artworks-a97bKtSqgVNU2sM9-0enDuQ-t1080x1080.jpg",
-    niches: ["tech", "gaming"],
-    followers: "95k",
-    description: "Tech/gaming reviews con estilo cercano y educativo.",
-  },
-  {
-    id: "inf_3",
-    name: "Nadia Sol",
-    avatar: "https://i1.sndcdn.com/artworks-a97bKtSqgVNU2sM9-0enDuQ-t1080x1080.jpg",
-    niches: ["moda", "beauty"],
-    followers: "210k",
-    description: "Moda y beauty; tutoriales rápidos y tendencias.",
-  },
-];
 
 const appearanceOptions = ["Realista", "Anime", "Low-poly"] as const;
 const styleOptions = ["Profesional", "Amigable", "Irónico"] as const;
 const personalityOptions = ["Serena", "Enérgica", "Extrovertida"] as const;
 const languageAccentOptions = ["Español (AR)", "Español (MX)", "Inglés (US)"] as const;
 
-const StepThree: React.FC<Props> = ({
-  initialType = InfluencerTypes.OWN,
-  initialCatalogId = null,
-  initialVirtual,
-  onChange,
-}) => {
-  const [influencerType, setInfluencerType] = React.useState<InfluencerType>(initialType);
-  const [catalogId, setCatalogId] = React.useState<string | null>(initialCatalogId);
-  const [virtualAgent, setVirtualAgent] = React.useState<VirtualAgentConfig>({
-    description: initialVirtual?.description || "",
-    referenceImage: null,
-    appearance: initialVirtual?.appearance || appearanceOptions[0],
-    style: initialVirtual?.style || styleOptions[0],
-    personality: initialVirtual?.personality || personalityOptions[0],
-    languageAccent: initialVirtual?.languageAccent || languageAccentOptions[0],
+const StepThree: React.FC = () => {
+  const {
+    data,
+    setInfluencerType,
+    setCatalogInfluencer
+    // setVirtualAgent, // si lo definís más adelante en el context
+  } = useMarketing();
+
+  const [influencers, setInfluencers] = React.useState<InfluencerItem[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Virtual agent (por ahora local, si querés persistirlo sumamos setters)
+  const [virtualAgent, setVirtualAgentLocal] = React.useState({
+    description: "",
+    referenceImage: null as File | null,
+    appearance: appearanceOptions[0],
+    style: styleOptions[0],
+    personality: personalityOptions[0],
+    languageAccent: languageAccentOptions[0],
   });
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    onChange?.({
-      influencerType,
-      catalogId: influencerType === InfluencerTypes.CATALOG ? catalogId : null,
-      virtualAgent:
-        influencerType === InfluencerTypes.VIRTUAL_AI
-          ? virtualAgent
-          : null,
-    });
-  }, [influencerType, catalogId, virtualAgent, onChange]);
+    let alive = true;
+    (async () => {
+      try {
+        setError(null);
+        setLoading(true);
+        const list = await fetchInfluencers();
+        if (!alive) return;
+        setInfluencers(list);
+      } catch (e: any) {
+        if (!alive) return;
+        setError(e?.message || "No se pudieron cargar los influencers");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   React.useEffect(() => {
     if (virtualAgent.referenceImage) {
@@ -105,7 +74,7 @@ const StepThree: React.FC<Props> = ({
     title: string;
     subtitle: string;
   }> = ({ id, title, subtitle }) => {
-    const active = influencerType === id;
+    const active = data.influencerType === id;
     return (
       <button
         type="button"
@@ -123,55 +92,53 @@ const StepThree: React.FC<Props> = ({
     );
   };
 
+  const handleCatalogSelect = (id: string) => {
+    const it = influencers.find((x) => x.id === id);
+    setCatalogInfluencer(id, it?.notes || it?.bio || "");
+  };
+
   return (
     <div className="space-y-4">
       {/* Selector de tipo */}
       <GlassCard>
         <SectionTitle title="Tipo de influencer" subtitle="Elegí una sola opción" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <OptionCard
-            id={InfluencerTypes.OWN}
-            title="Propio"
-            subtitle="Usarás un influencer/cuenta propia."
-          />
-          <OptionCard
-            id={InfluencerTypes.CATALOG}
-            title="Catálogo"
-            subtitle="Seleccioná desde un listado de influencers."
-          />
-          <OptionCard
-            id={InfluencerTypes.VIRTUAL_AI}
-            title="Virtual IA"
-            subtitle="Crearemos un agente con identidad propia."
-          />
+          <OptionCard id={"own_account"} title="Propio" subtitle="Usarás un influencer/cuenta propia." />
+          <OptionCard id={"catalog"} title="Catálogo" subtitle="Seleccioná desde un listado de influencers." />
+          <OptionCard id={"virtual_ai"} title="Virtual IA" subtitle="Crearemos un agente con identidad propia." />
         </div>
       </GlassCard>
 
-      {/* Mensaje para “Propio” */}
-      {influencerType === InfluencerTypes.OWN && (
+      {/* Mensaje para Propio */}
+      {data.influencerType === "own_account" && (
         <GlassCard>
           <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-400/30">
-            <p className="text-sm">
-              Al finalizar la creación vas a poder configurar y conectar tu cuenta/influencer propio.
-            </p>
+            <p className="text-sm">Al finalizar vas a poder conectar tu cuenta/influencer propio.</p>
           </div>
         </GlassCard>
       )}
 
-      {/* Catálogo con carrusel */}
-      {influencerType === InfluencerTypes.CATALOG && (
+      {/* Catálogo */}
+      {data.influencerType === "catalog" && (
         <GlassCard>
-          <SectionTitle title="Catálogo" subtitle="Elegí un influencer sugerido (demo)" />
-          <InfluencerCarousel
-            items={dummyCatalog}
-            selectedId={catalogId || undefined}
-            onSelect={(id) => setCatalogId(id)}
-          />
+          <SectionTitle title="Catálogo" subtitle="Elegí un influencer sugerido" />
+          {loading && <div className="text-sm opacity-80">Cargando…</div>}
+          {error && <div className="text-sm text-red-400">{error}</div>}
+          {!loading && !error && influencers.length > 0 && (
+            <InfluencerCarousel
+              items={influencers}
+              selectedId={data.selectedInfluencerId || undefined}
+              onSelect={handleCatalogSelect}
+            />
+          )}
+          {!loading && !error && influencers.length === 0 && (
+            <div className="text-sm opacity-80">No hay influencers disponibles.</div>
+          )}
         </GlassCard>
       )}
 
-      {/* Virtual IA: configuración del agente */}
-      {influencerType === InfluencerTypes.VIRTUAL_AI && (
+      {/* Virtual IA (local) */}
+      {data.influencerType === "virtual_ai" && (
         <GlassCard>
           <SectionTitle title="Configurar agente virtual" subtitle="Definí rasgos y referencia visual (opcional)" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,7 +148,7 @@ const StepThree: React.FC<Props> = ({
                 rows={4}
                 placeholder="Ej: Presentadora carismática, tono amigable, foco en moda sostenible…"
                 value={virtualAgent.description}
-                onChange={(e) => setVirtualAgent((p) => ({ ...p, description: e.target.value }))}
+                onChange={(e) => setVirtualAgentLocal((p) => ({ ...p, description: e.target.value }))}
               />
             </div>
 
@@ -196,8 +163,8 @@ const StepThree: React.FC<Props> = ({
                   accept="image/*"
                   className="hidden"
                   onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    setVirtualAgent((p) => ({ ...p, referenceImage: f || null }));
+                    const f = e.target.files?.[0] || null;
+                    setVirtualAgentLocal((p) => ({ ...p, referenceImage: f }));
                     e.currentTarget.value = "";
                   }}
                 />
@@ -210,55 +177,49 @@ const StepThree: React.FC<Props> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* selects rápidas */}
+              {/* Apariencia */}
               <div>
                 <Label>Apariencia</Label>
                 <select
                   className="mt-1 w-full h-11 rounded-xl px-3 md:px-4 bg-white/70 dark:bg-neutral-950/40 border border-neutral-300/70 dark:border-neutral-700/70 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400/50"
                   value={virtualAgent.appearance}
-                  onChange={(e) => setVirtualAgent((p) => ({ ...p, appearance: e.target.value }))}
+                  onChange={(e) => setVirtualAgentLocal((p) => ({ ...p, appearance: e.target.value }))}
                 >
-                  {appearanceOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
+                  {appearanceOptions.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
-
+              {/* Estilo */}
               <div>
                 <Label>Estilo</Label>
                 <select
                   className="mt-1 w-full h-11 rounded-xl px-3 md:px-4 bg-white/70 dark:bg-neutral-950/40 border border-neutral-300/70 dark:border-neutral-700/70 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400/50"
                   value={virtualAgent.style}
-                  onChange={(e) => setVirtualAgent((p) => ({ ...p, style: e.target.value }))}
+                  onChange={(e) => setVirtualAgentLocal((p) => ({ ...p, style: e.target.value }))}
                 >
-                  {styleOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
+                  {styleOptions.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
-
+              {/* Personalidad */}
               <div>
                 <Label>Personalidad</Label>
                 <select
                   className="mt-1 w-full h-11 rounded-xl px-3 md:px-4 bg-white/70 dark:bg-neutral-950/40 border border-neutral-300/70 dark:border-neutral-700/70 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400/50"
                   value={virtualAgent.personality}
-                  onChange={(e) => setVirtualAgent((p) => ({ ...p, personality: e.target.value }))}
+                  onChange={(e) => setVirtualAgentLocal((p) => ({ ...p, personality: e.target.value }))}
                 >
-                  {personalityOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
+                  {personalityOptions.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
-
+              {/* Idioma */}
               <div>
                 <Label>Idioma y acento</Label>
                 <select
                   className="mt-1 w-full h-11 rounded-xl px-3 md:px-4 bg-white/70 dark:bg-neutral-950/40 border border-neutral-300/70 dark:border-neutral-700/70 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400/50"
                   value={virtualAgent.languageAccent}
-                  onChange={(e) => setVirtualAgent((p) => ({ ...p, languageAccent: e.target.value }))}
+                  onChange={(e) => setVirtualAgentLocal((p) => ({ ...p, languageAccent: e.target.value }))}
                 >
-                  {languageAccentOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
+                  {languageAccentOptions.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
             </div>

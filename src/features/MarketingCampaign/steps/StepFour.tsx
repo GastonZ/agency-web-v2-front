@@ -1,45 +1,50 @@
-// src/features/MarketingCampaign/steps/StepFour.tsx
 import * as React from "react";
 import ContactSourcesSection from "../components/ContactSourcesSection";
 import BudgetSection from "../components/BudgetSection";
-import type { Channel } from "../../../services/types/marketing-types";
+import { useMarketing } from "../../../context/MarketingContext";
 
-type Props = {
-  initialFiles?: File[];
-  initialPlatforms?: Channel[];
-  initialBudget?: number;
-  onChange?: (state: {
-    contactFiles: File[];
-    platforms: Channel[];
-    budget: number;
-  }) => void;
+export type StepFourHandle = {
+  getSelectedDocs: () => File[];
+  clearSelectedDocs: () => void;
 };
 
-const StepFour: React.FC<Props> = ({
-  initialFiles = [],
-  initialPlatforms = [],
-  initialBudget = 2000,
-  onChange,
-}) => {
-  const [contactFiles, setContactFiles] = React.useState<File[]>(initialFiles);
-  const [platforms, setPlatforms] = React.useState<Channel[]>(initialPlatforms);
-  const [budget, setBudget] = React.useState<number>(initialBudget);
+const StepFour = React.forwardRef<StepFourHandle>((_, ref) => {
+  const {
+    data,
+    setPlatforms,
+    addConnectedAccount,
+    removeConnectedAccount,
+    setMinFollowers,
+    setAdvertisingBudget,
+  } = useMarketing();
 
-  React.useEffect(() => {
-    onChange?.({ contactFiles, platforms, budget });
-  }, [contactFiles, platforms, budget, onChange]);
+  // archivos locales (pendientes de subir)
+  const [docs, setDocs] = React.useState<File[]>([]);
+  React.useImperativeHandle(ref, () => ({
+    getSelectedDocs: () => docs,
+    clearSelectedDocs: () => setDocs([]),
+  }), [docs]);
 
   return (
     <div className="space-y-4">
       <ContactSourcesSection
-        files={contactFiles}
-        onFilesChange={setContactFiles}
-        platforms={platforms}
+        files={docs}
+        onFilesChange={setDocs}
+        platforms={data.channelsContacts.platforms}
         onPlatformsChange={setPlatforms}
+        connectedAccounts={data.channelsContacts.connectedSocialAccounts}
+        onAddAccount={addConnectedAccount}
+        onRemoveAccount={removeConnectedAccount}
+        minFollowers={data.channelsContacts.minFollowers}
+        onMinFollowersChange={setMinFollowers}
       />
-      <BudgetSection value={budget} onChange={setBudget} />
+      <BudgetSection
+        value={data.channelsContacts.advertisingBudget}
+        onChange={setAdvertisingBudget}
+      />
     </div>
   );
-};
+});
+StepFour.displayName = "StepFour";
 
 export default StepFour;

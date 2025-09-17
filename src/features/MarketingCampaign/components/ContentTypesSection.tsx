@@ -3,18 +3,18 @@ import * as React from "react";
 import { GlassCard, SectionTitle } from "../../ModerationCampaign/components/Primitives";
 
 export const ContentTypes = {
-  IMAGES: "images",
+  IMAGENES: "imagenes",
   VIDEOS: "videos",
   PODCASTS: "podcasts",
-  CAROUSELS: "carousels",
+  CARRUSELES: "carruseles",
 } as const;
 export type ContentType = typeof ContentTypes[keyof typeof ContentTypes];
 
 const OPTIONS: { key: ContentType; label: string }[] = [
-  { key: ContentTypes.IMAGES, label: "Imágenes" },
+  { key: ContentTypes.IMAGENES, label: "Imágenes" },
   { key: ContentTypes.VIDEOS, label: "Videos" },
   { key: ContentTypes.PODCASTS, label: "Podcasts" },
-  { key: ContentTypes.CAROUSELS, label: "Carruseles" },
+  { key: ContentTypes.CARRUSELES, label: "Carruseles" },
 ];
 
 type Props = {

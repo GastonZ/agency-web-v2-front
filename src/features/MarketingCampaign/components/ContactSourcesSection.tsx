@@ -9,26 +9,38 @@ type Props = {
 
   platforms: Channel[];                          // ["instagram","facebook","whatsapp","email","x"]
   onPlatformsChange: (next: Channel[]) => void;
+
+  connectedAccounts: string[];
+  onAddAccount: (acc: string) => void;
+  onRemoveAccount: (acc: string) => void;
+
+  minFollowers: number;
+  onMinFollowersChange: (n: number) => void;
 };
 
 const ACCEPT = [
-  ".csv",".xls",".xlsx",".vcf",".json",
+  ".csv", ".xls", ".xlsx", ".vcf", ".json",
   "text/csv",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/vcard","text/x-vcard",
+  "text/vcard", "text/x-vcard",
   "application/json",
 ].join(",");
 
-const PLATFORM_OPTIONS: Channel[] = ["instagram","facebook","whatsapp","email","x"];
+const PLATFORM_OPTIONS: Channel[] = ["instagram", "facebook", "whatsapp", "email", "x"];
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes/1024).toFixed(1)} KB`;
-  return `${(bytes/(1024*1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const ContactSourcesSection: React.FC<Props> = ({ files, onFilesChange, platforms, onPlatformsChange }) => {
+const ContactSourcesSection: React.FC<Props> = ({ files, onFilesChange, platforms, onPlatformsChange, onAddAccount, connectedAccounts, minFollowers, onMinFollowersChange, onRemoveAccount }) => {
+
+
+  const [accInput, setAccInput] = React.useState("");
+
+
   const onSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = e.target.files;
     if (!list || list.length === 0) return;
@@ -47,6 +59,13 @@ const ContactSourcesSection: React.FC<Props> = ({ files, onFilesChange, platform
     const set = new Set(platforms || []);
     set.has(p) ? set.delete(p) : set.add(p);
     onPlatformsChange(Array.from(set) as Channel[]);
+  };
+
+  const addAcc = () => {
+    const v = accInput.trim();
+    if (!v) return;
+    onAddAccount(v);
+    setAccInput("");
   };
 
   return (
@@ -96,6 +115,53 @@ const ContactSourcesSection: React.FC<Props> = ({ files, onFilesChange, platform
               </Chip>
             );
           })}
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <Label>Cuentas conectadas</Label>
+        <div className="flex gap-2 mt-2">
+          <input
+            className="flex-1 w-full h-11 rounded-xl px-3 md:px-4 bg-white/70 dark:bg-neutral-950/40 border border-neutral-300/70 dark:border-neutral-700/70 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400/50"
+            placeholder="@mi_empresa_instagram"
+            value={accInput}
+            onChange={(e) => setAccInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAcc(); } }}
+          />
+          <button
+            type="button"
+            onClick={addAcc}
+            className="h-11 px-3 rounded-xl bg-emerald-600 text-white"
+          >
+            Añadir
+          </button>
+        </div>
+
+        {connectedAccounts.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {connectedAccounts.map((acc) => (
+              <Chip key={acc} active className="select-none" onClick={() => onRemoveAccount(acc)} ariaLabel={`Quitar ${acc}`}>
+                {acc} ✕
+              </Chip>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Filtro: seguidores mínimos */}
+      <div className="mt-6">
+        <Label>Seguidores mínimos</Label>
+        <div className="flex items-center gap-3 mt-1">
+          <input
+            type="number"
+            min={0}
+            step={100}
+            value={minFollowers}
+            onChange={(e) => onMinFollowersChange(Number(e.target.value))}
+            className="w-44 h-11 rounded-xl px-3 md:px-4 bg-white/70 dark:bg-neutral-950/40 border border-neutral-300/70 dark:border-neutral-700/70 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400/50"
+            placeholder="1000"
+          />
+          <span className="text-sm opacity-70">Usaremos este mínimo al buscar nuevos contactos.</span>
         </div>
       </div>
     </GlassCard>

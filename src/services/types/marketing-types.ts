@@ -48,7 +48,6 @@ export type MarketingCampaignCreateRequest = {
   communicationTone?: string;        // mismo set que Moderation (formal, informal, etc.)
   communicationToneOther?: string;
   channels?: Channel[];
-  status?: "draft" | "active" | "inactive";
 };
 
 export type MarketingCampaignCreateResponse = { id: string };
@@ -75,7 +74,6 @@ export type MarketingStepOneCtx = {
   tone?: string;                // communicationTone
   customTone?: string;          // communicationToneOther
   channels?: Channel[];
-  status?: "draft" | "active" | "inactive";
 };
 
 /** ===== Builder: mapea UI -> API ===== */
@@ -112,6 +110,23 @@ export function buildMarketingCreatePayload(
     communicationTone: ctx.tone || "informal",
     communicationToneOther: ctx.customTone || "",
     channels: ctx.channels || [],
-    status: ctx.status || "draft",
   }) as MarketingCampaignCreateRequest;
 }
+
+export type DocUploadResult = {
+  fileName: string;
+  originalName?: string;
+  documentUrl?: string;
+  size?: number;
+  status: "success" | "error";
+  error?: string | null;
+};
+
+export type DocUploadResponse = {
+  totalFiles: number;
+  successCount: number;
+  errorCount: number;
+  overallStatus: "success" | "partial_success" | "error";
+  message?: string;
+  results: DocUploadResult[];
+};

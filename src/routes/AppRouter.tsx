@@ -13,6 +13,7 @@ import Moderation from '../features/ModerationCampaign/Main/Moderation';
 import MyModerationCampaigns from '../features/ModerationCampaign/views/MyModerationCampaigns';
 import StatisticsView from '../features/ModerationCampaign/views/StatisticsView';
 import Marketing from '../features/MarketingCampaign/main/Marketing';
+import { MarketingProvider } from '../context/MarketingContext';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -47,7 +48,9 @@ const AppRouter: React.FC = () => (
                 <Route 
                     path="/campaign_marketing_creation/*"
                     element={
-                        <Outlet />
+                        <MarketingProvider storageKey="campaign:marketing:draft">
+                            <Outlet />
+                        </MarketingProvider>
                     } >
                     <Route index element={<Marketing />} />    
                 </Route>
