@@ -161,7 +161,7 @@ export default function StatisticsView() {
                 </div>
 
                 <div className="pt-2">
-                    <Link to="/my_moderation_campaign" className="text-emerald-600 hover:underline">← Volver a mis campañas</Link>
+                    <Link to="/my_campaigns" className="text-emerald-600 hover:underline">← Volver a mis campañas</Link>
                 </div>
             </div>
 

@@ -130,3 +130,20 @@ export type DocUploadResponse = {
   message?: string;
   results: DocUploadResult[];
 };
+
+export type MarketingCampaignItem = {
+  id: string;
+  name: string;
+  status?: string;
+  channels?: string[];
+  selectedChannels?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type MarketingCampaignSearchResponse = {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: MarketingCampaignItem[];
+};

@@ -20,6 +20,9 @@ import { toast } from "react-toastify";
 import StepThree from "../steps/StepThree";
 import StepFour, { type StepFourHandle } from "../steps/StepFour";
 import MarketingSummary from "../views/MarketingSummary";
+import { useLocation } from "react-router-dom";
+import { getMarketingCampaignById } from "../../../services/marketingCampaigns";
+import { fillContextFromApiMarketing } from "../utils/fillContextFromApi";
 
 const steps = [
   { id: 1, title: "Datos" },
@@ -34,16 +37,81 @@ const Marketing: React.FC = () => {
   const [busy, setBusy] = React.useState(false);
   const twoRef = React.useRef<StepTwoHandle>(null);
   const fourRef = React.useRef<StepFourHandle>(null);
+  const location = useLocation();
 
+const {
+  data,
+  setCampaignId,
+  setReferenceImages,
+  setPersistedImages,
+  clearPendingReferenceImages,
+  setReferenceDocuments,
 
-  const {
-    data,
-    setCampaignId,
-    setReferenceImages,
-    setPersistedImages,
-    clearPendingReferenceImages,
-    setReferenceDocuments
-  } = useMarketing();
+  // Paso 1
+  setBasics,
+  setChannels,
+  setAudience,
+  setGeo,              // <- lo necesitamos para hidratar geo
+  setTone,
+
+  // Paso 2
+  setTopics,
+  setContentTypes,
+  setPublishingSchedule,
+
+  // Paso 3
+  setInfluencerType,
+  setCatalogInfluencer, // <- existe en el contexto
+
+  // Paso 4
+  setPlatforms,
+  addConnectedAccount,  // <- lo usamos si quisieras, el mapper ya lo llama internamente
+  setMinFollowers,
+  setAdvertisingBudget,
+} = useMarketing();
+
+React.useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const fromId = params.get("fromId");
+  if (!fromId) return;
+
+  (async () => {
+    try {
+      const apiItem = await getMarketingCampaignById(fromId);
+
+      fillContextFromApiMarketing(apiItem, {
+        setCampaignId,
+        // Paso 1
+        setBasics,
+        setGeo,
+        setAudience,
+        setTone,
+        setChannels,
+        // Paso 2
+        setTopics,
+        setContentTypes,
+        setPersistedImages,
+        setReferenceImages,
+        setPublishingSchedule,
+        // Paso 3
+        setInfluencerType,
+        setCatalogInfluencer,
+        // Paso 4
+        setPlatforms,
+        setAdvertisingBudget,
+        setReferenceDocuments,
+        addConnectedAccount,
+        setMinFollowers,
+      });
+
+      setCurrent(0);
+      toast.success("Campaña cargada para edición");
+    } catch (e: any) {
+      toast.error(e?.message || "No se pudo cargar la campaña de marketing para editar");
+    }
+  })();
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [location.search]);
 
   const canPrev = current > 0 && !busy;
   const canNext = !busy;

@@ -1,9 +1,11 @@
 import api from "./api/api";
 import type { AxiosResponse } from "axios";
 import { prune } from "../utils/helper";
-import type { MarketingCampaignCreateRequest, MarketingStepOneCtx, MarketingCampaignCreateResponse, DocUploadResponse } from "./types/marketing-types";
+import type { MarketingCampaignCreateRequest, MarketingStepOneCtx, MarketingCampaignCreateResponse, DocUploadResponse, MarketingCampaignItem, MarketingCampaignSearchResponse } from "./types/marketing-types";
 import { buildMarketingCreatePayload } from "./types/marketing-types";
 import type { Channel } from "../context/MarketingContext";
+import { getUserId } from "../utils/helper";
+import type { SearchParams } from "./types/moderation-types";
 
 
 export async function createMarketingCampaign(
@@ -104,4 +106,21 @@ export async function updateMarketingCampaignStatus(
 ) {
   const { data } = await api.put(`marketing-campaigns/${id}/status`, { status });
   return data;
+}
+
+export async function searchMyMarketingCampaigns(
+  overrides?: Omit<SearchParams, "userId">
+): Promise<MarketingCampaignSearchResponse> {
+  const userId = getUserId();
+  if (!userId) throw new Error("No userId available to list campaigns.");
+
+  const { data } = await api.get(`marketing-campaigns/search`, {
+    params: { userId, ...(overrides || {}) },
+  });
+  return data as MarketingCampaignSearchResponse;
+}
+
+export async function getMarketingCampaignById(id: string): Promise<MarketingCampaignItem> {
+  const { data } = await api.get(`marketing-campaigns/${id}`);
+  return data as MarketingCampaignItem;
 }

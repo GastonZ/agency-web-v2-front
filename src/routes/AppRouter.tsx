@@ -14,6 +14,7 @@ import MyModerationCampaigns from '../features/ModerationCampaign/views/MyModera
 import StatisticsView from '../features/ModerationCampaign/views/StatisticsView';
 import Marketing from '../features/MarketingCampaign/main/Marketing';
 import { MarketingProvider } from '../context/MarketingContext';
+import CampaignsTable from '../pages/CampaignsTable';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -55,7 +56,7 @@ const AppRouter: React.FC = () => (
                     <Route index element={<Marketing />} />    
                 </Route>
 
-                <Route path="my_moderation_campaign" element={<MyModerationCampaigns />} />
+                <Route path="my_campaigns" element={<CampaignsTable />} />
                 <Route path="my_moderation_campaign/:id/statistics" element={<StatisticsView />} />
 
             </Route>

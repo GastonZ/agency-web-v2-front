@@ -38,7 +38,7 @@ const CARDS: CardSpec[] = [
             "Seguimiento y remarketing integrados",
         ],
         badge: "Leads",
-        goto: '/'
+        goto: '/campaign_marketing_creation'
     },
     {
         id: "moderation",
