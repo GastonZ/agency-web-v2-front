@@ -23,6 +23,7 @@ import MarketingSummary from "../views/MarketingSummary";
 import { useLocation } from "react-router-dom";
 import { getMarketingCampaignById } from "../../../services/marketingCampaigns";
 import { fillContextFromApiMarketing } from "../utils/fillContextFromApi";
+import MarketingEditModeBanner from "../utils/MarketingEditModeBanner";
 
 const steps = [
   { id: 1, title: "Datos" },
@@ -39,79 +40,79 @@ const Marketing: React.FC = () => {
   const fourRef = React.useRef<StepFourHandle>(null);
   const location = useLocation();
 
-const {
-  data,
-  setCampaignId,
-  setReferenceImages,
-  setPersistedImages,
-  clearPendingReferenceImages,
-  setReferenceDocuments,
+  const {
+    data,
+    setCampaignId,
+    setReferenceImages,
+    setPersistedImages,
+    clearPendingReferenceImages,
+    setReferenceDocuments,
 
-  // Paso 1
-  setBasics,
-  setChannels,
-  setAudience,
-  setGeo,              // <- lo necesitamos para hidratar geo
-  setTone,
+    // Paso 1
+    setBasics,
+    setChannels,
+    setAudience,
+    setGeo,              // <- lo necesitamos para hidratar geo
+    setTone,
 
-  // Paso 2
-  setTopics,
-  setContentTypes,
-  setPublishingSchedule,
+    // Paso 2
+    setTopics,
+    setContentTypes,
+    setPublishingSchedule,
 
-  // Paso 3
-  setInfluencerType,
-  setCatalogInfluencer, // <- existe en el contexto
+    // Paso 3
+    setInfluencerType,
+    setCatalogInfluencer, // <- existe en el contexto
 
-  // Paso 4
-  setPlatforms,
-  addConnectedAccount,  // <- lo usamos si quisieras, el mapper ya lo llama internamente
-  setMinFollowers,
-  setAdvertisingBudget,
-} = useMarketing();
+    // Paso 4
+    setPlatforms,
+    addConnectedAccount,  // <- lo usamos si quisieras, el mapper ya lo llama internamente
+    setMinFollowers,
+    setAdvertisingBudget,
+  } = useMarketing();
 
-React.useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const fromId = params.get("fromId");
-  if (!fromId) return;
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const fromId = params.get("fromId");
+    if (!fromId) return;
 
-  (async () => {
-    try {
-      const apiItem = await getMarketingCampaignById(fromId);
+    (async () => {
+      try {
+        const apiItem = await getMarketingCampaignById(fromId);
 
-      fillContextFromApiMarketing(apiItem, {
-        setCampaignId,
-        // Paso 1
-        setBasics,
-        setGeo,
-        setAudience,
-        setTone,
-        setChannels,
-        // Paso 2
-        setTopics,
-        setContentTypes,
-        setPersistedImages,
-        setReferenceImages,
-        setPublishingSchedule,
-        // Paso 3
-        setInfluencerType,
-        setCatalogInfluencer,
-        // Paso 4
-        setPlatforms,
-        setAdvertisingBudget,
-        setReferenceDocuments,
-        addConnectedAccount,
-        setMinFollowers,
-      });
+        fillContextFromApiMarketing(apiItem, {
+          setCampaignId,
+          // Paso 1
+          setBasics,
+          setGeo,
+          setAudience,
+          setTone,
+          setChannels,
+          // Paso 2
+          setTopics,
+          setContentTypes,
+          setPersistedImages,
+          setReferenceImages,
+          setPublishingSchedule,
+          // Paso 3
+          setInfluencerType,
+          setCatalogInfluencer,
+          // Paso 4
+          setPlatforms,
+          setAdvertisingBudget,
+          setReferenceDocuments,
+          addConnectedAccount,
+          setMinFollowers,
+        });
 
-      setCurrent(0);
-      toast.success("Campaña cargada para edición");
-    } catch (e: any) {
-      toast.error(e?.message || "No se pudo cargar la campaña de marketing para editar");
-    }
-  })();
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [location.search]);
+        setCurrent(0);
+        toast.success("Campaña cargada para edición");
+      } catch (e: any) {
+        toast.error(e?.message || "No se pudo cargar la campaña de marketing para editar");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   const canPrev = current > 0 && !busy;
   const canNext = !busy;
@@ -309,8 +310,8 @@ React.useEffect(() => {
           <div className="lg:col-span-5 flex">
             <AgencyChatbot className="w-full h-[420px]" />
           </div>
-
           <div className="lg:col-span-7 space-y-4">
+            <MarketingEditModeBanner />
             <StepperTop steps={steps} current={current} onStepClick={(i) => setCurrent(i)} />
             {current === 0 && <StepOne />}
             {current === 1 && <StepTwo ref={twoRef} />}

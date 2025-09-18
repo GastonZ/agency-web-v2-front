@@ -2,13 +2,9 @@ import * as React from "react";
 import { useModeration } from "../../../context/ModerationContext";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 
-/**
- * Shows only in EDIT mode (when campaignId is present).
- * Lets the user clear the current data and start a brand new campaign.
- */
 type Props = {
   className?: string;
-  onStartNew?: () => void; // optional hook to navigate elsewhere if you want
+  onStartNew?: () => void;
 };
 
 const EditModeBanner: React.FC<Props> = ({ className }) => {

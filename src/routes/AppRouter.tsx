@@ -10,11 +10,11 @@ import { ToastContainer } from 'react-toastify';
 
 import { ModerationProvider } from '../context/ModerationContext';
 import Moderation from '../features/ModerationCampaign/Main/Moderation';
-import MyModerationCampaigns from '../features/ModerationCampaign/views/MyModerationCampaigns';
 import StatisticsView from '../features/ModerationCampaign/views/StatisticsView';
 import Marketing from '../features/MarketingCampaign/main/Marketing';
 import { MarketingProvider } from '../context/MarketingContext';
 import CampaignsTable from '../pages/CampaignsTable';
+import MarketingStatisticsView from '../features/MarketingCampaign/views/MarketingStatisticsView';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -57,6 +57,7 @@ const AppRouter: React.FC = () => (
                 </Route>
 
                 <Route path="my_campaigns" element={<CampaignsTable />} />
+                <Route path="my_marketing_campaign/:id/statistics" element={<MarketingStatisticsView />} />
                 <Route path="my_moderation_campaign/:id/statistics" element={<StatisticsView />} />
 
             </Route>

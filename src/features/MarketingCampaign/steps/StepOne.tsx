@@ -85,9 +85,7 @@ const StepOne: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-        <button onClick={() => resetAll()}>
-            resetear XD
-        </button>
+
       <GlassCard>
         <SectionTitle title="Datos de la campaña" subtitle="Define lo básico para iniciar tu campaña" />
 
