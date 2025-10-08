@@ -15,6 +15,8 @@ import Marketing from '../features/MarketingCampaign/main/Marketing';
 import { MarketingProvider } from '../context/MarketingContext';
 import CampaignsTable from '../pages/CampaignsTable';
 import MarketingStatisticsView from '../features/MarketingCampaign/views/MarketingStatisticsView';
+import { ListeningProvider } from '../context/ListeningContext';
+import SocialListening from '../features/SocialListeningCampaign/Main/SocialListening';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -54,6 +56,17 @@ const AppRouter: React.FC = () => (
                         </MarketingProvider>
                     } >
                     <Route index element={<Marketing />} />    
+                </Route>
+
+                <Route
+                    path="/campaign_listening_creation/*"
+                    element={
+                        <ListeningProvider storageKey="campaign:listening:draft">
+                            <Outlet />
+                        </ListeningProvider>
+                    } >
+                    <Route index element={<SocialListening />} />
+
                 </Route>
 
                 <Route path="my_campaigns" element={<CampaignsTable />} />
