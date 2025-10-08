@@ -4,6 +4,7 @@ import { Mic } from "lucide-react";
 import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { useNavigationTools } from "../../AIconversational/voice/tools/useNavigationTools";
 import { useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
+import { useWebTools } from "../../AIconversational/voice/tools/useWebTools";
 import { tools } from "../../AIconversational/voice/toolsSchema";
 
 type Props = {
@@ -20,13 +21,18 @@ export default function AgencyChatbot({
     const { isSessionActive, handleStartStopClick, sendTextMessage, registerFunction, status, currentVolume } =
         useWebRTCAudio("ash", tools as any);
 
-    const { goToCampaignSelection, goToMyCampaigns } = useNavigationTools();
+    const { goToCampaignSelection, goToMyCampaigns, goToListeningCreation, goToMarketingCreation, goToModerationCreation } = useNavigationTools();
     const { changeTheme } = useThemeTool();
+    const { launchWebsite } = useWebTools()
 
     React.useEffect(() => {
         registerFunction("goToCampaignSelection", goToCampaignSelection);
         registerFunction("goToMyCampaigns", goToMyCampaigns);
+        registerFunction("goToMarketingCreation", goToMarketingCreation)            
+        registerFunction("goToModerationCreation", goToModerationCreation)        
+        registerFunction("goToListeningCreation", goToListeningCreation)        
         registerFunction("changeTheme", changeTheme);
+        registerFunction("launchWebsite", launchWebsite);
     }, [registerFunction, goToCampaignSelection, goToMyCampaigns]);
 
     const glowScale = isSessionActive ? 1 + Math.min(currentVolume * 2.5, 0.25) : 1;
