@@ -1,40 +1,70 @@
+// src/components/AgencyChatbot.tsx
 import * as React from "react";
 import { motion } from "framer-motion";
 import { Mic } from "lucide-react";
 import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
-import { useNavigationTools } from "../../AIconversational/voice/tools/useNavigationTools";
-import { useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
-import { useWebTools } from "../../AIconversational/voice/tools/useWebTools";
-import { tools } from "../../AIconversational/voice/toolsSchema";
+import { navTools, useNavigationTools } from "../../AIconversational/voice/tools/useNavigationTools";
+import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 
-type Props = {
-    className?: string;
-    placeholder?: string;
+export type ToolSpec = {
+    type: "function";
+    name: string;
+    description: string;
+    parameters: {
+        type: "object";
+        properties?: Record<string, any>;
+        required?: string[] | readonly string[];
+        additionalProperties?: boolean;
+    };
+};
+
+type AgencyChatbotProps = {
+    extraTools?: ToolSpec[];
+    onRegisterTools?: (register: (name: string, fn: Function) => void) => void;
 };
 
 export default function AgencyChatbot({
-    className = "",
-    placeholder = "Decime a dónde ir… (p.ej. “ver mis campañas”)",
-}: Props) {
-    const [text, setText] = React.useState("");
-
-    const { isSessionActive, handleStartStopClick, sendTextMessage, registerFunction, status, currentVolume } =
-        useWebRTCAudio("ash", tools as any);
+    extraTools = [],
+    onRegisterTools,
+}: AgencyChatbotProps) {
+    // 1) SÓLO SCHEMAS en baseTools
+    const baseTools: ToolSpec[] = React.useMemo(
+        () => [...navTools, ...uiTools],
+        []
+    );
+    const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
+    const {
+        isSessionActive,
+        handleStartStopClick,
+        sendTextMessage,
+        registerFunction,
+        status,
+        currentVolume,
+        conversation, // 👈 lo vamos a renderizar
+    } = useWebRTCAudio("ash", tools as any);
 
     const { goToCampaignSelection, goToMyCampaigns, goToListeningCreation, goToMarketingCreation, goToModerationCreation } = useNavigationTools();
     const { changeTheme } = useThemeTool();
-    const { launchWebsite } = useWebTools()
 
+    // permitir que el padre registre funciones (ej: las del Moderation context)
     React.useEffect(() => {
         registerFunction("goToCampaignSelection", goToCampaignSelection);
         registerFunction("goToMyCampaigns", goToMyCampaigns);
-        registerFunction("goToMarketingCreation", goToMarketingCreation)            
-        registerFunction("goToModerationCreation", goToModerationCreation)        
-        registerFunction("goToListeningCreation", goToListeningCreation)        
+        registerFunction("goToListeningCreation", goToListeningCreation);
+        registerFunction("goToMarketingCreation", goToMarketingCreation);
+        registerFunction("goToModerationCreation", goToModerationCreation);
         registerFunction("changeTheme", changeTheme);
-        registerFunction("launchWebsite", launchWebsite);
-    }, [registerFunction, goToCampaignSelection, goToMyCampaigns]);
+    }, [
+        registerFunction,
+        goToCampaignSelection, goToMyCampaigns, goToListeningCreation, goToMarketingCreation, goToModerationCreation,
+        changeTheme
+    ]);
 
+    React.useEffect(() => {
+        if (onRegisterTools) onRegisterTools(registerFunction);
+    }, [onRegisterTools, registerFunction]);
+
+    const [text, setText] = React.useState("");
     const glowScale = isSessionActive ? 1 + Math.min(currentVolume * 2.5, 0.25) : 1;
     const glowOpacity = isSessionActive ? Math.min(0.7 + currentVolume * 1.2, 1) : 0.7;
 
@@ -44,20 +74,10 @@ export default function AgencyChatbot({
                 "relative w-full h-[460px]",
                 "rounded-2xl border shadow-sm overflow-hidden",
                 "bg-white/80 dark:bg-neutral-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/60",
-                "border-neutral-200 dark:border-neutral-800",
-                className,
+                "border-neutral-200 dark:border-neutral-800"
             ].join(" ")}
         >
-            <div
-                className="absolute inset-0"
-                style={{
-                    background:
-                        "radial-gradient(120% 120% at 10% 10%, rgba(99,102,241,0.10) 0%, transparent 50%), radial-gradient(120% 120% at 90% 90%, rgba(16,185,129,0.10) 0%, transparent 50%)",
-                }}
-                aria-hidden
-            />
-
-            {/* Glow dinámico */}
+            {/* BG glow */}
             <div className="absolute inset-0 grid place-items-center pointer-events-none">
                 <motion.div
                     className="rounded-full blur-2xl"
@@ -81,9 +101,26 @@ export default function AgencyChatbot({
                 {isSessionActive ? "Escuchando…" : "Listo"} <span className="opacity-60 ml-2">({status || "idle"})</span>
             </div>
 
-            {/* Label */}
             <div className="absolute top-3 right-3 text-xs tracking-wider text-neutral-500 dark:text-neutral-400 select-none">
                 AgencIAChatbot
+            </div>
+
+            {/* HISTORIAL */}
+            <div className="absolute inset-x-3 top-10 bottom-16 overflow-y-auto space-y-2 pr-1">
+                {conversation.map((m) => (
+                    <div
+                        key={m.id}
+                        className={[
+                            "max-w-[85%] px-0 py-0 rounded-lg text-sm",
+                            "whitespace-pre-wrap leading-relaxed",
+                            m.role === "user"
+                                ? "ml-auto text-emerald-300"
+                                : "mr-auto text-neutral-200",
+                        ].join(" ")}
+                    >
+                        {m.text}
+                    </div>
+                ))}
             </div>
 
             {/* Input + Mic */}
@@ -107,11 +144,10 @@ export default function AgencyChatbot({
                     type="text"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    placeholder={placeholder}
+                    placeholder={''}
                     className="flex-1 bg-transparent h-10 text-sm outline-none text-neutral-900 dark:text-neutral-50 placeholder:text-neutral-400"
                     autoComplete="off"
                 />
-
                 <button
                     type="button"
                     onClick={handleStartStopClick}

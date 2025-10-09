@@ -13,7 +13,8 @@ import { saveLastLaunchedModeration } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
-import EditModeBanner from "../utils/EditModeBanner"; 
+import EditModeBanner from "../utils/EditModeBanner";
+import { useModerationTools, moderationTools } from "../../../AIconversational/voice/schemas/moderationToolsSchema";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -25,6 +26,8 @@ const STEPS = [
 const Moderation: React.FC = () => {
 
     const navigate = useNavigate();
+
+    const { getModerationOverview, explainModerationField, updateModerationBasics } = useModerationTools();
 
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
@@ -207,7 +210,14 @@ const Moderation: React.FC = () => {
                 <EditModeBanner />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                     <div className="lg:col-span-5">
-                        <AgencyChatbot className="w-full h-[420px]" />
+                        <AgencyChatbot
+                            extraTools={moderationTools as any}
+                            onRegisterTools={(register) => {
+                                register("getModerationOverview", getModerationOverview);
+                                register("explainModerationField", explainModerationField);
+                                register("updateModerationBasics", updateModerationBasics);
+                            }}
+                        />
                     </div>
 
                     {current === 0 && (
