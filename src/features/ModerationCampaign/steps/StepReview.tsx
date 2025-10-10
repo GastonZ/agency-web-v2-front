@@ -89,19 +89,6 @@ export default function StepReview() {
 
             <motion.div variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}>
                 <Section
-                    icon={<CalendarRange className="h-4 w-4" />}
-                    title="Rango temporal"
-                    subtitle="Inicio y fin de la campaña"
-                >
-                    <ul className="grid gap-2 text-[15px] leading-6">
-                        <Row label="Inicio" value={dates?.start || "—"} />
-                        <Row label="Fin" value={dates?.end || "—"} />
-                    </ul>
-                </Section>
-            </motion.div>
-
-            <motion.div variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}>
-                <Section
                     icon={<Megaphone className="h-4 w-4" />}
                     title="Canales"
                     subtitle="Dónde moderaremos"

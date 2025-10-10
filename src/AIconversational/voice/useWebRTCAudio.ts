@@ -73,10 +73,10 @@ export default function useWebRTCAudio(voice: string, tools: Tool[]) {
 
         const payload = {
             model,
-            voice: voice || "alloy",
+            voice: "sage",
             modalities: ["audio", "text"],
             instructions:
-                "Respondé en español. Si el usuario pide navegar o cambiar el tema, llamá la tool correspondiente. Confirmá brevemente después de ejecutar.",
+                "Tu nombre es Alma, presentate y respondé en español. Si el usuario pide navegar o cambiar el tema, llamá la tool correspondiente. Confirmá brevemente después de ejecutar.",
             tool_choice: "auto",
             speed,
             temperature,

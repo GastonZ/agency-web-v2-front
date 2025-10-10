@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
                     {/* Chatbot */}
                     <div className="lg:col-span-5 flex">
                         <AgencyChatbot placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
-                            className="w-full h-[420px]" />
+                            mode="classic" />
                     </div>
 
                     <div className="lg:col-span-7 flex">
