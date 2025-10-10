@@ -14,7 +14,12 @@ import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
 import EditModeBanner from "../utils/EditModeBanner";
-import { useModerationTools, moderationTools } from "../../../AIconversational/voice/schemas/moderationToolsSchema";
+import { moderationSchemas } from "../../../AIconversational/voice/schemas/moderationSchemas";
+import { useModerationBasicsTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationBasicsTools";
+import { useModerationGeoTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationGeoTools";
+import { useModerationAudienceTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationAudienceTools";
+import { useModerationToneTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationToneTools";
+import { useModerationChannelsTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationChannelsTools";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -27,7 +32,12 @@ const Moderation: React.FC = () => {
 
     const navigate = useNavigate();
 
-    const { getModerationOverview, explainModerationField, updateModerationBasics } = useModerationTools();
+    const { getModerationOverview, explainModerationField, updateModerationBasics } = useModerationBasicsTools();
+    const { updateModerationGeoByName } = useModerationGeoTools();
+    const { updateModerationAudienceCultural } = useModerationAudienceTools();
+    const { updateModerationToneChoice } = useModerationToneTools();
+    const { setModerationChannels, addModerationChannel, removeModerationChannel, describeModerationChannels } =
+        useModerationChannelsTools();
 
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
@@ -211,11 +221,18 @@ const Moderation: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                     <div className="lg:col-span-5">
                         <AgencyChatbot
-                            extraTools={moderationTools as any}
+                            extraTools={moderationSchemas as any}
                             onRegisterTools={(register) => {
                                 register("getModerationOverview", getModerationOverview);
                                 register("explainModerationField", explainModerationField);
                                 register("updateModerationBasics", updateModerationBasics);
+                                register("updateModerationGeoByName", updateModerationGeoByName);
+                                register("updateModerationAudienceCultural", updateModerationAudienceCultural);
+                                register("updateModerationToneChoice", updateModerationToneChoice);
+                                register("setModerationChannels", setModerationChannels);
+                                register("addModerationChannel", addModerationChannel);
+                                register("removeModerationChannel", removeModerationChannel);
+                                register("describeModerationChannels", describeModerationChannels);
                             }}
                         />
                     </div>

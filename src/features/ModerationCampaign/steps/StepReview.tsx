@@ -6,10 +6,8 @@ import {
     Users,
     CalendarRange,
     MessageSquare,
-    Sparkles,
 } from "lucide-react";
 import { useModeration } from "../../../context/ModerationContext";
-import OnlineLayout from "../../../layout/OnlineLayout";
 
 const Section: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string; children: React.ReactNode }> = ({ icon, title, subtitle, children }) => (
     <div className="rounded-xl p-4 md:p-6 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-xl ring-1 ring-emerald-400/20">
