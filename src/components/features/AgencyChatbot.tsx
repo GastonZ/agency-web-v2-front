@@ -2,7 +2,7 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { Mic, ArrowUpToLine, X, Maximize2 } from "lucide-react";
 import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
-import { navTools, useNavigationTools } from "../../AIconversational/voice/tools/useNavigationTools";
+import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 
 export type ToolSpec = {
@@ -30,7 +30,6 @@ export default function AgencyChatbot({
     onRegisterTools,
     placeholder = "",
 }: AgencyChatbotProps) {
-    // 1) SCHEMAS
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
 
@@ -42,7 +41,10 @@ export default function AgencyChatbot({
         status,
         currentVolume,
         conversation,
-    } = useWebRTCAudio("ash", tools as any);
+    } = useWebRTCAudio("ash", tools as any, {
+        autoStart: true,
+        startDelayMs: 120,
+    });
 
     const {
         goToCampaignSelection,
@@ -150,7 +152,7 @@ export default function AgencyChatbot({
                         className={[
                             "max-w-[85%] px-0 py-0 rounded-lg text-sm",
                             "whitespace-pre-wrap leading-relaxed",
-                            m.role === "user" ? "ml-auto text-emerald-300" : "mr-auto text-neutral-200",
+                            m.role === "user" ? "ml-auto text-emerald-300" : "mr-auto text-black dark:text-neutral-200",
                         ].join(" ")}
                     >
                         {m.text}
@@ -260,8 +262,7 @@ export default function AgencyChatbot({
                     {bubbleOpen ? (
                         <div className="relative h-full w-full flex items-center justify-between px-3">
                             {/* Mic toggle */}
-                            <button
-                                type="button"
+                            <div
                                 onClick={(e) => { e.stopPropagation(); handleStartStopClick(); }}
                                 className={[
                                     "inline-flex items-center justify-center rounded-full",
@@ -273,18 +274,17 @@ export default function AgencyChatbot({
                                 title={isSessionActive ? "Detener micrófono" : "Hablar con IA"}
                             >
                                 <Mic className="h-5 w-5" />
-                            </button>
+                            </div>
 
                             {/* Agrandar => abre overlay con panel grande */}
-                            <button
-                                type="button"
+                            <div
                                 onClick={(e) => { e.stopPropagation(); setOverlayOpen(true); }}
                                 className="inline-flex items-center justify-center h-10 px-3 rounded-lg text-sm border border-white/20 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40"
                                 title="Agrandar panel"
                             >
                                 <Maximize2 className="h-4 w-4" />
                                 <span className="ml-2">Agrandar</span>
-                            </button>
+                            </div>
                         </div>
                     ) : (
                         <div className="absolute inset-0 grid place-items-center">

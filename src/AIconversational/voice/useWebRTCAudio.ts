@@ -46,7 +46,12 @@ function mask(t?: string) {
     return t.slice(0, 4) + "…(masked)…" + t.slice(-6);
 }
 
-export default function useWebRTCAudio(voice: string, tools: Tool[]) {
+type UseRtcOpts = {
+    autoStart?: boolean;     // <-- NUEVO: auto-iniciar en mount
+    startDelayMs?: number;   // <-- NUEVO: pequeño delay opcional
+};
+
+export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseRtcOpts) {
     const [status, setStatus] = useState("");
     const [isSessionActive, setIsSessionActive] = useState(false);
     const [conversation, setConversation] = useState<ConversationItem[]>([]);
@@ -58,6 +63,8 @@ export default function useWebRTCAudio(voice: string, tools: Tool[]) {
     const analyserRef = useRef<AnalyserNode | null>(null);
     const volumeIntervalRef = useRef<number | null>(null);
     const functionRegistry = useRef<Record<string, Function>>({});
+
+    const startedRef = useRef(false);
 
     // ===== token efímero: replica la POC (payload completo a /realtime/sessions) =====
     async function getEphemeralToken(): Promise<string> {
@@ -377,6 +384,21 @@ export default function useWebRTCAudio(voice: string, tools: Tool[]) {
             console.error("onDataMessage parse error", e);
         }
     }
+
+    useEffect(() => {
+        if (!opts?.autoStart || startedRef.current) return;
+        startedRef.current = true;
+
+        const id = window.setTimeout(() => {
+            startSession().catch(err => {
+                console.error("[RTC] autoStart error:", err);
+                setStatus(`Error: ${err?.message ?? err}`);
+            });
+        }, Math.max(0, opts?.startDelayMs ?? 0));
+
+        return () => clearTimeout(id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [opts?.autoStart, opts?.startDelayMs]);
 
     useEffect(() => () => stopSession(), []);
 

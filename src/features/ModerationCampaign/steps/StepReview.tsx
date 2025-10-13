@@ -4,7 +4,6 @@ import {
     ClipboardList,
     Megaphone,
     Users,
-    CalendarRange,
     MessageSquare,
 } from "lucide-react";
 import { useModeration } from "../../../context/ModerationContext";
@@ -34,7 +33,6 @@ const Row: React.FC<{ label: string; value?: React.ReactNode }> = ({ label, valu
 export default function StepReview() {
     const { data } = useModeration();
     const channels = data.channels ?? [];
-    const dates = data.dates ?? {};
     const audience = data?.audience ?? {};
 
     return (
@@ -71,15 +69,6 @@ export default function StepReview() {
                         <Row label="Geo" value={
                             audience?.geo
                                 ? `${audience.geo.country || audience.geo?.countryCode || "—"} ${audience.geo.city ? `· ${audience.geo.city}` : ""}`
-                                : "—"
-                        } />
-                        <Row label="Demografía" value={
-                            audience?.demographic
-                                ? [
-                                    audience.demographic.gender && `Género: ${audience.demographic.gender}`,
-                                    (audience.demographic.ageGroups?.length ? `Edades: ${audience.demographic.ageGroups.join(", ")}` : null),
-                                    (audience.demographic.socioeconomic?.length ? `NSE: ${audience.demographic.socioeconomic.join(", ")}` : null),
-                                ].filter(Boolean).join(" · ")
                                 : "—"
                         } />
                         <Row label="Tono" value={data?.customTone ? `Otro (${data.customTone})` : (data?.tone || "—")} />
