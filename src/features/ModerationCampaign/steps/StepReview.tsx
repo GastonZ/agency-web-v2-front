@@ -98,10 +98,6 @@ export default function StepReview() {
                         <p className="text-[15px] opacity-70">No hay canales seleccionados.</p>
                     )}
 
-                    {/* <div className="mt-3 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm">
-                        <Sparkles className="h-4 w-4" />
-                        Revisá que coincidan con tus cuentas reales.
-                    </div> */}
                 </Section>
             </motion.div>
         </motion.div>
