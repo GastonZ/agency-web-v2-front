@@ -32,11 +32,11 @@ const EditModeBanner: React.FC<Props> = ({ className }) => {
 
       <div className="flex-1">
         <div className="text-sm md:text-base font-medium text-amber-800 dark:text-amber-100">
-          You’re editing this campaign
+          Estás editando esta campaña
         </div>
         <div className="text-xs md:text-sm text-amber-800/80 dark:text-amber-200/80">
-          <span className="font-medium">{data.name || "Untitled campaign"}</span>
-          {" — If you prefer, you can clear everything and start a new one."}
+          <span className="font-medium">{data.name || "Campaña sin titulo"}</span>
+          {" — Si lo prefieres, puedes limpiar todo y empezar una nueva"}
         </div>
       </div>
 
@@ -52,7 +52,7 @@ const EditModeBanner: React.FC<Props> = ({ className }) => {
         title="Start a new campaign"
       >
         <RotateCcw className="h-4 w-4" />
-        Start new
+        Empezar nueva
       </button>
     </div>
   );

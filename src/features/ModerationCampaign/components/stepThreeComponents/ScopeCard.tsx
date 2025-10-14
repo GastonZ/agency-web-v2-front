@@ -7,7 +7,7 @@ const ScopeCard: React.FC = () => {
   const { data, setAllowedTopics } = useModeration();
   return (
     <GlassCard>
-      <SectionTitle title="Ámbito permitido (opcional)" subtitle="Responder únicamente consultas relacionadas a…" />
+      <SectionTitle title="Temas permitidos (opcional)" subtitle="Responder únicamente consultas relacionadas a…" />
       <TagEditor
         label="Temas permitidos"
         items={data.allowedTopics}

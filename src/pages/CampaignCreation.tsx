@@ -12,6 +12,7 @@ import { PunkButton } from "../components/ui/PunkButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/Tooltip";
 import { cn } from "../utils/helper";
 import OnlineLayout from "../layout/OnlineLayout";
+import AgencyChatbot from "../components/features/AgencyChatbot";
 
 type CampaignType = "marketing" | "moderation" | "listening";
 
@@ -91,7 +92,7 @@ export default function CampaignCreation({
                     aria-label="Create a campaign"
                     className="relative w-full h-full"
                 >
-
+                    <AgencyChatbot mode="floating"/>
                     <header className="mb-6 flex items-center justify-between">
                         <div>
                             <h1 className="text-xl font-semibold tracking-tight">Nueva campaña</h1>

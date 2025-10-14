@@ -12,7 +12,7 @@ const QAEditor: React.FC = () => {
     addQA({ question: q.trim(), answer: a.trim() });
     setQ(""); setA("");
   };
-
+  
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

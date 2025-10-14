@@ -3,8 +3,6 @@ import {
   Home,
   Settings,
   Folder,
-  ChevronLeft,
-  ChevronRight,
   X,
   Factory
 } from "lucide-react";
