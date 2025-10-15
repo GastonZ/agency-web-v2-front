@@ -12,10 +12,10 @@
   "hero": {
     "badge": "Since 2020 offering the best stability",
     "stability": "Proven stability",
-    "title": "The A.I. that listens to your audience",
-    "subtitle": "From surveys and virtual assistants on WhatsApp, Facebook, Instagram and Web, to social listening and marketing, we help you understand and connect with your audience intelligently.",
+    "title": "The A.I. that understands and builds with you",
+    "subtitle": "Chat with the platform, define your objectives and let artificial intelligence configure the rest: surveys, virtual assistants and strategies ready to launch.",
     "description": "Connect better with your audience and automate processes in weeks, not months.",
-    "cta": "Schedule a call",
+    "cta": "Explore conversational interface",
     "trust": "They trust us",
     "clients": {
       "municipalities": "Municipalities",
@@ -26,6 +26,7 @@
   },
   "whoWeAre": {
     "badge": "Who we are",
+    "title": "We transform data into intelligent decisions",
     "mainQuote": "\"We leverage public and social data to better understand your audience and use strategic AI to transform how governments, companies and organizations communicate\"",
     "operationalText": "We reduce operational burden through",
     "quote": "We leverage public and social data to better understand your audience and use strategic AI to transform how governments, companies and organizations communicate",
@@ -45,6 +46,16 @@
     "title": "Real impact on your organization",
     "description": "We transform the way governments, companies and organizations communicate with their audiences. Measurable results from day one.",
     "features": [
+      {
+        "title": "360° conversational interface to create and manage campaigns",
+        "description": "Design your campaigns, virtual assistants and AI influencers by chatting with the platform. Instead of complicated forms and panels, Datacivis guides you step by step through a conversational interface that understands your language and configures everything for you. You can create in minutes:",
+        "benefits": [
+          "Complete campaign strategies (objectives, audience, message, dates)",
+          "Customized virtual influencers with style, tone and personality",
+          "Automated channels and flows (WhatsApp, Facebook, Instagram, X, Email)",
+          "Ad configuration, segmentation and contact sources"
+        ]
+      },
       {
         "title": "Faster decisions with reliable data",
         "description": "Make strategic decisions with public and social data processed in real time.",
@@ -82,11 +93,11 @@
     "items": [
       {
         "title": "Real-time surveys",
-        "description": "Automate surveys and get public and reliable information to make decisions without delays."
+        "description": "Automate surveys and get public and reliable information to make decisions without delays. You can generate them directly from the conversational interface or reuse historical data."
       },
       {
         "title": "Virtual assistants on all channels",
-        "description": "Serve your community on WhatsApp, Facebook, Instagram and Web with intelligent assistants available 24/7."
+        "description": "Serve your community on WhatsApp, Facebook, Instagram and Web with intelligent 24/7 assistants, automatically created according to the rules you define in the configuration conversation."
       },
       {
         "title": "Intelligent social listening",
@@ -94,7 +105,7 @@
       },
       {
         "title": "Strategic marketing with A.I.",
-        "description": "We transform public data into more effective campaigns, generating content automatically, publishing and sending impactful messages with measurable results."
+        "description": "We transform public data into effective campaigns: the platform generates content, advertising and distribution based on what you configured with your voice or text. Real impact, no technical curve."
       }
     ]
   },
@@ -217,7 +228,7 @@
     "badge": "Start now",
     "title": "Transform your organization with strategic AI",
     "description": "Connect better with your audience and automate processes in weeks, not months.",
-    "button": "Schedule a call",
+    "button": "Try interactive demo",
     "limitedOffer": "Limited offer: Cost-free implementation + 3 months of premium support for the first 10 clients of the month."
   },
   "faq": {

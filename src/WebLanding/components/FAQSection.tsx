@@ -20,7 +20,7 @@ export default function FAQSection() {
     <section
       id="faq"
       aria-labelledby="faq-title"
-      className="relative w-full border-t border-white/10"
+      className="relative w-full border-t border-gray-200"
     >
       <div className="mx-auto max-w-4xl py-16 sm:py-20 md:py-24 px-3 sm:px-4 md:px-6 lg:px-8">
         <motion.header
@@ -30,7 +30,7 @@ export default function FAQSection() {
           viewport={{ once: true, amount: 0.3 }}
           className="text-center mb-12 sm:mb-16"
         >
-          <Badge variant="outline" className="mb-4 sm:mb-6 bg-[#090909]/50 border-white/20 text-white/90 rounded-none px-3 sm:px-4 md:px-6 py-1 sm:py-1.5 md:py-2 text-xs sm:text-sm md:text-base font-medium">
+          <Badge variant="outline" className="mb-4 sm:mb-6 bg-white border-gray-200 text-gray-800 rounded-full px-6 py-2 text-sm font-medium shadow-sm">
             {t('faq.badge')}
           </Badge>
           <motion.h2
@@ -39,11 +39,11 @@ export default function FAQSection() {
             transition={{ duration: 0.6, ease: "easeOut" }}
             viewport={{ once: true, amount: 0.3 }}
             id="faq-title"
-            className="font-heading bg-gradient-to-b from-white from-[55%] to-white/50 bg-clip-text text-transparent text-3xl md:text-5xl tracking-tight font-semibold mb-4"
+            className="font-heading bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent text-3xl md:text-5xl tracking-tight font-semibold mb-4"
           >
             {t('faq.title')}
           </motion.h2>
-          <p className="text-white/70 max-w-2xl mx-auto text-sm sm:text-base md:text-lg leading-relaxed">
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base md:text-lg leading-relaxed">
             {t('faq.description')}
           </p>
         </motion.header>
@@ -56,29 +56,29 @@ export default function FAQSection() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
               viewport={{ once: true, amount: 0.3 }}
-              className="border border-white/10 bg-[#090909]/20 backdrop-blur-sm hover:bg-[#090909]/30 transition-colors"
+              className="border-2 border-gray-300 bg-gray-50 backdrop-blur-sm hover:bg-white transition-colors"
             >
               <button
                 onClick={() => toggleFAQ(index)}
                 className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between group"
               >
-                <motion.h3 
+                <motion.h3
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   viewport={{ once: true, amount: 0.3 }}
-                  className="text-white text-sm sm:text-base md:text-lg font-medium pr-4 group-hover:text-white/90 transition-colors">
+                  className="text-gray-900 text-sm sm:text-base md:text-lg font-medium pr-4 group-hover:text-gray-800 transition-colors">
                   {faq.question}
                 </motion.h3>
                 <div className="flex-shrink-0">
                   {openIndex === index ? (
-                    <ChevronUp className="w-5 h-5 text-white/70" />
+                    <ChevronUp className="w-5 h-5 text-gray-600" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-white/70" />
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
                   )}
                 </div>
               </button>
-              
+
               {openIndex === index && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -88,7 +88,7 @@ export default function FAQSection() {
                   className="overflow-hidden"
                 >
                   <div className="px-4 sm:px-6 pb-4 sm:pb-5">
-                    <p className="text-white/70 text-sm sm:text-base leading-relaxed">
+                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
                       {faq.answer}
                     </p>
                   </div>

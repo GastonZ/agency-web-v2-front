@@ -11,6 +11,7 @@ import ComparativaSection from "./components/ComparativaSection"
 import CTAFinalSection from "./components/CTAFinalSection"
 import Footer from "./components/Footer"
 import HeroGrid from "./components/HeroGrid"
+import HeroConversational from "./components/HeroConversational"
 
 export default function DatacivisLanding() {
   return (
@@ -23,7 +24,7 @@ export default function DatacivisLanding() {
       <div className="relative z-10">
         <Header />
         <main className="font-body">
-          <HeroGrid />
+          <HeroConversational />
           <WhoWeAre />
           <Benefits />
           <Features />

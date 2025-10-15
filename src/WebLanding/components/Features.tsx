@@ -84,7 +84,7 @@ export default function Features() {
     <section
       id="caracteristicas"
       aria-labelledby="features-title"
-      className="relative w-full"
+      className="relative w-full bg-white"
     >
       <div className="mx-auto max-w-7xl">
         <motion.header
@@ -100,7 +100,7 @@ export default function Features() {
             transition={{ duration: 0.6, ease: "easeOut" }}
             viewport={{ once: true, amount: 0.3 }}
           >
-            <Badge variant="outline" className="bg-[#090909]/50 border-white/20 text-white/90 rounded-none px-4 md:px-6 py-1.5 md:py-2 text-sm md:text-base font-medium mt-8 sm:mt-12 md:mt-16">
+            <Badge variant="outline" className="bg-white border-gray-200 text-gray-800 rounded-full px-6 py-2 text-sm font-medium shadow-sm mt-8 sm:mt-12 md:mt-16">
               {t('features.badge')}
             </Badge>
           </motion.div>
@@ -115,8 +115,8 @@ export default function Features() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
               viewport={{ once: true, amount: 0.3 }}
-              className={`relative p-4 sm:p-6 md:p-8 border-t border-white/10 bg-[#090909]/20 backdrop-blur-sm ${
-                index % 2 === 0 ? 'md:border-r border-white/10' : ''
+              className={`relative p-4 sm:p-6 md:p-8 border-t border-gray-200 bg-gray-50 hover:bg-white transition-colors ${
+                index % 2 === 0 ? 'md:border-r border-gray-200' : ''
               }`}
             >
               <div className="py-6 sm:py-8">
@@ -126,22 +126,22 @@ export default function Features() {
                 </div>
 
                             {/* Título */}
-                            <motion.h3 
+                            <motion.h3
                               initial={{ opacity: 0, y: 20 }}
                               whileInView={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.6, ease: "easeOut" }}
                               viewport={{ once: true, amount: 0.3 }}
-                              className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 md:mb-4 tracking-tight font-heading bg-gradient-to-b from-white from-[55%] to-white/50 bg-clip-text text-transparent">
+                              className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 md:mb-4 tracking-tight font-heading bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent">
                               {feature.title}
                             </motion.h3>
 
                             {/* Descripción */}
-                            <motion.p 
+                            <motion.p
                               initial={{ opacity: 0, y: 20 }}
                               whileInView={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
                               viewport={{ once: true, amount: 0.3 }}
-                              className="text-white/70 text-xs sm:text-sm md:text-base leading-relaxed">
+                              className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed font-medium">
                               {feature.description}
                             </motion.p>
               </div>

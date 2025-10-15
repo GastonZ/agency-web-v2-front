@@ -12,7 +12,7 @@ const FeaturesSection = () => {
               />
               <span className="text-base text-[#a1a1a1] font-normal">AI Rag</span>
             </div>
-            <h3
+            <h3 
               className="text-white text-2xl font-bold leading-8 tracking-[-0.96px] mb-4">
               Launch smarter apps in no time.
             </h3>
@@ -37,7 +37,7 @@ const FeaturesSection = () => {
               />
               <span className="text-base text-[#a1a1a1] font-normal">Vector API</span>
             </div>
-            <h3 
+            <h3
               className="text-white text-2xl font-bold leading-8 tracking-[-0.96px] mb-4">
               Built to scale, ready to impress.
             </h3>
