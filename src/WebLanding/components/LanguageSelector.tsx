@@ -74,11 +74,10 @@ const LanguageSelector = () => {
                   <button
                     key={lang.code}
                     onClick={() => handleLanguageChange(lang.code)}
-                    className={`w-full flex items-center gap-4 px-3 py-3 text-base font-medium rounded-lg transition-all duration-200 ${
-                      language === lang.code
+                    className={`w-full flex items-center gap-4 px-3 py-3 text-base font-medium rounded-lg transition-all duration-200 ${language === lang.code
                         ? 'bg-white/10 text-white'
                         : 'text-white/70 hover:bg-white/5 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <span className="text-xl">{lang.flag}</span>
                     <span className="flex-1 text-left">{lang.name}</span>

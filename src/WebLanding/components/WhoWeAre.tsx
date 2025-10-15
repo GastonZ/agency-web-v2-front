@@ -105,7 +105,7 @@ export default function WhoWeAre() {
         <section
             id="quienes-somos"
             aria-labelledby="who-we-are-title"
-            className="relative w-full border-t border-[#1F1F1F]"
+            className="relative w-full border-t border-gray-200"
             itemScope
             itemType="https://schema.org/Organization"
         >
@@ -118,10 +118,22 @@ export default function WhoWeAre() {
                     viewport={{ once: true, amount: 0.3 }}
                     className="flex justify-center"
                 >
-                        <Badge variant="outline" className="mb-3 sm:mb-4 md:mb-6 bg-[#090909]/50 border-white/20 text-white/90 rounded-none px-3 sm:px-4 md:px-6 py-1 sm:py-1.5 md:py-2 text-xs sm:text-sm md:text-base font-medium">
+                        <Badge variant="outline" className="mb-3 sm:mb-4 md:mb-6 bg-white border-gray-200 text-gray-800 rounded-full px-6 py-2 text-sm font-medium shadow-sm">
                             {t('whoWeAre.badge')}
                         </Badge>
                 </motion.div>
+                
+                {/* H2 principal para accesibilidad */}
+                <motion.h2
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    id="who-we-are-title"
+                    className="font-heading bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent text-3xl md:text-5xl tracking-tight font-semibold mb-4 text-center"
+                >
+                    {t('whoWeAre.title')}
+                </motion.h2>
                 {/* Frase principal con pills como en tu diseño */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -130,7 +142,7 @@ export default function WhoWeAre() {
                     viewport={{ once: true, amount: 0.3 }}
                     className="mt-6 sm:mt-8 md:mt-10 lg:mt-12 text-center font-heading"
                 >
-                        <div className="mx-auto max-w-xs sm:max-w-xl md:max-w-2xl text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl tracking-tight text-white/90 leading-relaxed px-2 sm:px-4">
+                        <div className="mx-auto max-w-xs sm:max-w-xl md:max-w-2xl text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl tracking-tight text-gray-700 leading-relaxed px-2 sm:px-4">
                             {t('whoWeAre.mainQuote')}
                         </div>
 
@@ -139,7 +151,7 @@ export default function WhoWeAre() {
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
                         viewport={{ once: true, amount: 0.3 }}
-                        className="mt-4 sm:mt-6 md:mt-8 flex flex-col items-center gap-2 sm:gap-3 text-white/80"
+                        className="mt-4 sm:mt-6 md:mt-8 flex flex-col items-center gap-2 sm:gap-3 text-gray-600"
                     >
                         <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-base lg:text-lg flex-wrap justify-center">
                             <StarIcon />
@@ -162,7 +174,7 @@ export default function WhoWeAre() {
                                     </span>
 
                                     {/* Pista */}
-                                    <span className="words-roller block bg-gradient-to-b from-white from-[55%] to-[#999] bg-clip-text text-transparent">
+                                    <span className="words-roller block bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent">
                                         {t('whoWeAre.automation.options').map((option: any, index: number) => (
                                             <span key={index} className="block whitespace-nowrap h-[var(--roller-h)]">{option}</span>
                                         ))}
@@ -172,7 +184,7 @@ export default function WhoWeAre() {
                             </Pill>
 
                         </div>
-                        <p className="mt-4 sm:mt-6 max-w-xs sm:max-w-2xl md:max-w-3xl text-xs sm:text-sm leading-relaxed text-white/50 px-2 sm:px-4 font-body">
+                        <p className="mt-4 sm:mt-6 max-w-xs sm:max-w-2xl md:max-w-3xl text-xs sm:text-sm leading-relaxed text-gray-500 px-2 sm:px-4 font-body">
                             {t('whoWeAre.disclaimer')}
                         </p>
                     </motion.div>

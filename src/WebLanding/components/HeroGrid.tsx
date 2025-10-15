@@ -12,7 +12,7 @@ const HeroGrid = () => {
       {/* Grid de fondo - Solo en la parte superior del Hero */}
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full max-w-7xl h-[600px] z-0 bg-[#090909]">
         {/* Grid con CSS puro - solo en la parte superior */}
-        <div 
+        <div
           className="absolute inset-0 opacity-45"
           style={{
             backgroundImage: `
@@ -23,42 +23,42 @@ const HeroGrid = () => {
             backgroundPosition: '0 0, 0 0'
           }}
         />
-        
+
         {/* Múltiples rayos de luz */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
           className="absolute inset-0 overflow-hidden">
-          
+
           {/* Rayo principal - diagonal */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.25 }}
             transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
             className="absolute top-0 left-0 w-full h-full light-ray" />
-          
+
           {/* Rayo secundario - más a la derecha */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.25 }}
             transition={{ duration: 1.5, ease: "easeOut", delay: 0.6 }}
             className="absolute top-0 left-0 w-full h-full light-ray-2" />
-          
+
           {/* Rayo terciario - más abajo */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.25 }}
             transition={{ duration: 1.5, ease: "easeOut", delay: 0.9 }}
             className="absolute top-0 left-0 w-full h-full light-ray-3" />
-          
+
           {/* Rayo cuarto - aún más a la derecha */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.20 }}
             transition={{ duration: 1.5, ease: "easeOut", delay: 1.2 }}
             className="absolute top-0 left-0 w-full h-full light-ray-4" />
-          
+
           {/* Partículas flotantes alrededor de todos los rayos */}
           <FloatingParticles />
         </motion.div>
@@ -66,8 +66,8 @@ const HeroGrid = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-[#090909] via-[#090909]/60 to-transparent"></div>
       </div>
 
-              {/* Hero content */}
-              <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center max-w-4xl mx-auto">
+      {/* Hero content */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center max-w-4xl mx-auto">
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -81,7 +81,7 @@ const HeroGrid = () => {
         </motion.div>
 
         {/* Main title */}
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
@@ -91,7 +91,7 @@ const HeroGrid = () => {
         </motion.h1>
 
         {/* Description */}
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
@@ -101,23 +101,24 @@ const HeroGrid = () => {
         </motion.p>
 
         {/* CTA Button */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
           className="mb-12"
         >
-            <Button
-              size="lg"
-              className="bg-white text-black hover:bg-gray-100 font-medium px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base"
-            >
-              Agenda una llamada
-              <img src="/arrow-icon.svg" alt="Arrow" className="w-3 h-3 sm:w-4 sm:h-4" />
-            </Button>
+          <Button
+            size="lg"
+            className="bg-white text-black hover:bg-gray-100 font-medium px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base"
+            aria-label="Agendar una llamada con el equipo de Datacivis"
+          >
+            {t('hero.cta')}
+            <img src="/arrow-icon.svg" alt="Flecha hacia la derecha" className="w-3 h-3 sm:w-4 sm:h-4" />
+          </Button>
         </motion.div>
 
       </div>
-      
+
       {/* Carrusel de tecnologías */}
       <div className="w-full border-t border-white/10">
         <TechCarousel />
