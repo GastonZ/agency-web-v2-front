@@ -17,6 +17,8 @@ import CampaignsTable from '../pages/CampaignsTable';
 import MarketingStatisticsView from '../features/MarketingCampaign/views/MarketingStatisticsView';
 import { ListeningProvider } from '../context/ListeningContext';
 import SocialListening from '../features/SocialListeningCampaign/Main/SocialListening';
+import DatacivisLanding from '../WebLanding';
+import { I18nProvider } from '../WebLanding/lib/i18n';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -48,14 +50,14 @@ const AppRouter: React.FC = () => (
                     <Route index element={<Moderation />} />
                 </Route>
 
-                <Route 
+                <Route
                     path="/campaign_marketing_creation/*"
                     element={
                         <MarketingProvider storageKey="campaign:marketing:draft">
                             <Outlet />
                         </MarketingProvider>
                     } >
-                    <Route index element={<Marketing />} />    
+                    <Route index element={<Marketing />} />
                 </Route>
 
                 <Route
@@ -74,7 +76,9 @@ const AppRouter: React.FC = () => (
                 <Route path="my_moderation_campaign/:id/statistics" element={<StatisticsView />} />
 
             </Route>
-
+            <Route path='/landing-datacivis' element={<I18nProvider>
+                <DatacivisLanding />
+            </I18nProvider>} />
             {/* (opcional) 404 */}
             <Route path="*" element={<NotFound />} />
         </Routes>
