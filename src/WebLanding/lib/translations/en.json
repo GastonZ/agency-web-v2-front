@@ -217,13 +217,6 @@
       }
     ]
   },
-  "footer": {
-    "about": "About us",
-    "benefits": "Benefits",
-    "features": "Features", 
-    "useCases": "Use cases",
-    "testimonials": "Testimonials"
-  },
   "cta": {
     "badge": "Start now",
     "title": "Transform your organization with strategic AI",

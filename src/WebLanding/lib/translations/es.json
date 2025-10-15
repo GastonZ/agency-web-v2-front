@@ -217,13 +217,6 @@
       }
     ]
   },
-  "footer": {
-    "about": "Quiénes somos",
-    "benefits": "Beneficios", 
-    "features": "Características",
-    "useCases": "Casos de uso",
-    "testimonials": "Testimonios"
-  },
   "cta": {
     "badge": "Comenzá ahora",
     "title": "Transformá tu organización con IA estratégica",

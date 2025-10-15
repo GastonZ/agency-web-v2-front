@@ -77,7 +77,7 @@ export default function StatisticsView() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">{campaign.name}</h2>
-                        <p className="text-sm opacity-70">ID: {campaign.id}</p>
+                        {/* <p className="text-sm opacity-70">ID: {campaign.id}</p> */}
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ring-1 ${(() => {
                         const v = (campaign.status || "").toLowerCase();

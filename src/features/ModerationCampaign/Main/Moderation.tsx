@@ -313,7 +313,7 @@ const Moderation: React.FC = () => {
                 <EditModeBanner />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                     <div className="lg:col-span-5">
-                        <AgencyChatbot
+   {/*                      <AgencyChatbot
                             mode="floating"
                             extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any)]}
                             onRegisterTools={(register) => {
@@ -395,7 +395,7 @@ const Moderation: React.FC = () => {
                                 register("addModerationTimeSlotsBulk", addModerationTimeSlotsBulk);
                                 register("removeModerationTimeSlot", removeModerationTimeSlot);
                             }}
-                        />
+                        /> */}
                     </div>
 
                     {current === 0 && (
