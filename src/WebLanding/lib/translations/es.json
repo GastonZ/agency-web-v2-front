@@ -1,0 +1,283 @@
+{
+  "header": {
+    "contact": "Contactar"
+  },
+  "nav": {
+    "home": "Inicio",
+    "features": "Características",
+    "benefits": "Beneficios",
+    "testimonials": "Testimonios",
+    "faq": "Preguntas"
+  },
+  "hero": {
+    "badge": "Desde 2020 ofreciendo la mejor estabilidad",
+    "stability": "Estabilidad comprobada",
+    "title": "La I.A. que te entiende y construye con vos",
+    "subtitle": "Conversá con la plataforma, definí tus objetivos y dejá que la inteligencia artificial configure el resto: encuestas, asistentes virtuales y estrategias listas para lanzar.",
+    "description": "Conectá mejor con tu audiencia y automatizá procesos en semanas, no meses.",
+    "cta": "Explorar la interfaz conversacional",
+    "trust": "Confían en nosotros",
+    "clients": {
+      "municipalities": "Municipios",
+      "companies": "Empresas",
+      "cooperatives": "Cooperativas",
+      "organizations": "Organizaciones"
+    }
+  },
+  "whoWeAre": {
+    "badge": "Quienes somos",
+    "title": "Transformamos datos en decisiones inteligentes",
+    "mainQuote": "\"Aprovechamos los datos públicos y sociales para comprender mejor a tu audiencia y utilizamos IA estratégica para transformar cómo gobiernos, empresas y organizaciones se comunican\"",
+    "operationalText": "Reducimos la carga operativa a través de",
+    "quote": "Aprovechamos los datos públicos y sociales para comprender mejor a tu audiencia y utilizamos IA estratégica para transformar cómo gobiernos, empresas y organizaciones se comunican",
+    "automation": {
+      "prefix": "Reducimos la carga operativa a través de",
+      "options": [
+        "automatización inteligente",
+        "procesos optimizados", 
+        "flujos automatizados",
+        "sistemas inteligentes"
+      ]
+    },
+    "disclaimer": "* Trabajamos únicamente con datos públicos, agregados y anonimizados, en cumplimiento de la Ley 25.326 de Protección de Datos Personales."
+  },
+  "benefits": {
+    "badge": "Beneficios",
+    "title": "Impacto real en tu organización",
+    "description": "Transformamos la forma en que gobiernos, empresas y organizaciones se comunican con sus audiencias. Resultados medibles desde el primer día.",
+    "features": [
+      {
+        "title": "Interfaz conversacional 360° para crear y gestionar campañas",
+        "description": "Diseñá tus campañas, asistentes virtuales e influencers de IA conversando con la plataforma. En lugar de formularios y paneles complicados, Datacivis te guía paso a paso mediante una interfaz conversacional que entiende tu lenguaje y configura todo por vos. Podés crear en minutos:",
+        "benefits": [
+          "Estrategias completas de campaña (objetivos, público, mensaje, fechas)",
+          "Influencers virtuales personalizados con estilo, tono y personalidad",
+          "Canales y flujos automatizados (WhatsApp, Facebook, Instagram, X, Email)",
+          "Configuración de pauta, segmentación y fuentes de contacto"
+        ]
+      },
+      {
+        "title": "Decisiones más rápidas con datos confiables",
+        "description": "Tomá decisiones estratégicas con datos públicos y sociales procesados en tiempo real.",
+        "benefits": [
+          "Análisis en tiempo real",
+          "Métricas trazables y confiables",
+          "Dashboards personalizados",
+          "Alertas automáticas"
+        ]
+      },
+      {
+        "title": "Automatizamos tareas repetitivas",
+        "description": "Reducimos la carga operativa eliminando tareas repetitivas. Más tiempo para la estrategia, menos para lo manual.",
+        "benefits": [
+          "Reducción del 70% en tareas manuales",
+          "Flujos automatizados 24/7",
+          "Integración con sistemas existentes",
+          "Liberación de recursos humanos"
+        ]
+      },
+      {
+        "title": "Marketing basado en datos, no en suposiciones",
+        "description": "Convertí la información en campañas más efectivas. Segmentá audiencias, medí impacto y optimizá tu comunicación en tiempo real.",
+        "benefits": [
+          "Segmentación de audiencias",
+          "Optimización en tiempo real",
+          "Métricas de impacto claras",
+          "Comunicación personalizada"
+        ]
+      }
+    ]
+  },
+  "features": {
+    "badge": "Características",
+    "items": [
+      {
+        "title": "Encuestas en tiempo real",
+        "description": "Automatizá encuestas y obtené información pública y confiable para tomar decisiones sin demoras. Podés generarlas directamente desde la interfaz conversacional o reutilizar datos históricos."
+      },
+      {
+        "title": "Asistentes virtuales en todos los canales",
+        "description": "Atendé a tu comunidad en WhatsApp, Facebook, Instagram y Web con asistentes inteligentes 24/7, creados automáticamente según las reglas que definís en la conversación de configuración."
+      },
+      {
+        "title": "Escucha social inteligente",
+        "description": "Analizamos la conversación pública en redes y medios para que comprendas a tu audiencia y detectes oportunidades a tiempo."
+      },
+      {
+        "title": "Marketing estratégico con I.A.",
+        "description": "Transformamos datos públicos en campañas efectivas: la plataforma genera contenido, pauta y distribución basándose en lo que configuraste con tu voz o texto. Impacto real, sin curva técnica."
+      }
+    ]
+  },
+  "comparison": {
+    "badge": "Comparativa",
+    "title": "Por qué elegir Datacivis vs la competencia",
+    "description": "Descubrí las ventajas que nos hacen únicos en el mercado de soluciones de IA para organizaciones.",
+    "features": {
+      "realtime_data": "Datos en tiempo real",
+      "full_automation": "Automatización completa",
+      "multichannel": "Integración multicanal",
+      "compliance": "Cumplimiento Ley 25.326",
+      "support": "Soporte 24/7",
+      "implementation": "Implementación en 2-4 semanas",
+      "pricing": "Pricing transparente",
+      "training": "Capacitación incluida"
+    },
+    "competitor": "Competencia",
+    "competitor_details": {
+      "partial": "Parcial",
+      "business_hours": "Horario comercial",
+      "months": "3-6 meses",
+      "additional_cost": "Costo adicional"
+    },
+    "cta": "¿Todavía tenés dudas? Compará por vos mismo.",
+    "demo": "Ver demo personalizada"
+  },
+  "tech": {
+    "title": "Tecnologías que impulsan nuestra plataforma"
+  },
+  "footer": {
+    "navigation": {
+      "about": "Quiénes somos",
+      "benefits": "Beneficios",
+      "features": "Características",
+      "use_cases": "Casos de uso",
+      "testimonials": "Testimonios"
+    },
+    "contact": "hola@datacivis.com"
+  },
+  "language_selector": {
+    "label": "Seleccionar idioma"
+  },
+  "useCases": {
+    "badge": "Casos de uso",
+    "title": "Soluciones para cada sector",
+    "description": "Descubrí cómo organizaciones como la tuya están transformando su comunicación con Datacivis.",
+    "items": [
+      {
+        "title": "Municipios",
+        "description": "Automatización de consultas ciudadanas y gestión de servicios públicos",
+        "metric": "70%",
+        "metricLabel": "menos consultas telefónicas"
+      },
+      {
+        "title": "Empresas",
+        "description": "Atención al cliente automatizada y análisis de mercado",
+        "metric": "40%",
+        "metricLabel": "más conversiones"
+      },
+      {
+        "title": "Cooperativas",
+        "description": "Gestión de socios y servicios financieros personalizados",
+        "metric": "24/7",
+        "metricLabel": "disponibilidad"
+      },
+      {
+        "title": "Organizaciones",
+        "description": "Asistentes especializados para instituciones del sector",
+        "metric": "100%",
+        "metricLabel": "cumplimiento legal"
+      }
+    ]
+  },
+  "testimonials": {
+    "badge": "Testimonios",
+    "title": "Lo que dicen nuestros clientes",
+    "description": "Conocé las experiencias reales de organizaciones que ya transformaron su comunicación con Datacivis.",
+    "items": [
+      {
+        "name": "María González",
+        "role": "Directora de Comunicación",
+        "company": "Municipio de San Martín",
+        "content": "Implementamos Datacivis y en 30 días ya teníamos respuestas automáticas funcionando 24/7. La ciudadanía está más satisfecha y nuestro equipo puede enfocarse en tareas estratégicas."
+      },
+      {
+        "name": "Carlos Rodríguez",
+        "role": "Gerente de Operaciones",
+        "company": "Cooperativa El Progreso",
+        "content": "La automatización de encuestas nos permitió reducir el tiempo de procesamiento de 3 días a 2 horas. Los datos llegan limpios y listos para tomar decisiones."
+      },
+      {
+        "name": "Ana Martínez",
+        "role": "Jefa de Atención al Cliente",
+        "company": "Empresa de Servicios Públicos",
+        "content": "El chatbot maneja el 80% de las consultas sin intervención humana. La calidad de las respuestas es excelente y los usuarios no notan la diferencia."
+      },
+      {
+        "name": "Roberto Silva",
+        "role": "Director de Tecnología",
+        "company": "Organización No Gubernamental",
+        "content": "La escucha social nos ayuda a entender mejor las necesidades de nuestra comunidad. Los reportes son claros y accionables."
+      },
+      {
+        "name": "Laura Fernández",
+        "role": "Coordinadora de Proyectos",
+        "company": "Fundación Social",
+        "content": "La segmentación de audiencias nos permitió personalizar nuestros mensajes. Ahora nuestras campañas tienen un 60% más de engagement."
+      }
+    ]
+  },
+  "footer": {
+    "about": "Quiénes somos",
+    "benefits": "Beneficios", 
+    "features": "Características",
+    "useCases": "Casos de uso",
+    "testimonials": "Testimonios"
+  },
+  "cta": {
+    "badge": "Comenzá ahora",
+    "title": "Transformá tu organización con IA estratégica",
+    "description": "Conectá mejor con tu audiencia y automatizá procesos en semanas, no meses.",
+    "button": "Probar demo interactiva",
+    "limitedOffer": "Oferta limitada: Implementación sin costo + 3 meses de soporte premium para los primeros 10 clientes del mes."
+  },
+  "faq": {
+    "badge": "Preguntas frecuentes",
+    "title": "Despejamos las dudas que frenan tu decisión",
+    "description": "Resolvemos las preguntas más comunes para que puedas tomar la mejor decisión para tu organización.",
+    "items": [
+      {
+        "question": "¿Cómo protegemos la privacidad de los datos?",
+        "answer": "Trabajamos con datos públicos, agregados y/o anonimizados. Cumplimos la Ley 25.326 y nunca tratamos información personal identificable sin consentimiento. Contamos con controles de acceso, cifrado en tránsito y registros de auditoría."
+      },
+      {
+        "question": "¿Cuánto tarda la implementación?",
+        "answer": "Entre 2 y 4 semanas según el alcance. Incluye relevamiento, configuración, entrenamiento de modelos y capacitaciones cortas para tu equipo."
+      },
+      {
+        "question": "¿Se integra con nuestros sistemas actuales?",
+        "answer": "Sí. Integramos vía API/Webhooks con CRMs, ERPs, contact centers, formularios y canales (web/WhatsApp/email). Si necesitás un conector específico, lo evaluamos en el kickoff."
+      },
+      {
+        "question": "¿Qué resultados puedo esperar?",
+        "answer": "Depende del caso, pero nuestros clientes típicamente logran: −70% de consultas telefónicas repetitivas, +40% en conversiones cualificadas, y disponibilidad 24/7 en atención. Te compartimos métricas esperadas en la demo según tu sector."
+      },
+      {
+        "question": "¿Qué incluye el soporte?",
+        "answer": "Soporte técnico 24/7, monitoreo, mejoras continuas y un éxito del cliente asignado durante los primeros 3 meses (sin costo). Luego, planes de soporte según el uso."
+      },
+      {
+        "question": "¿Cómo se entrena la IA con nuestro contexto?",
+        "answer": "Subimos guías, FAQs, documentos y flujos. La IA aprende patrones (no memoriza datos sensibles) y se actualiza sin fricción cuando cambian procesos o políticas."
+      },
+      {
+        "question": "¿Dónde se alojan los datos?",
+        "answer": "Cloud segura con cifrado y backups. Si tu política lo requiere, evaluamos opciones on-premise o regiones específicas."
+      },
+      {
+        "question": "¿Tiene costo oculto?",
+        "answer": "No. El presupuesto incluye implementación, capacitación, soporte inicial y funcionalidades acordadas. Cualquier extra se cotiza por escrito antes de avanzar."
+      },
+      {
+        "question": "¿Qué pasa si mi equipo no es técnico?",
+        "answer": "No hace falta. Hacemos la configuración end-to-end y dejamos tableros simples para que tu equipo vea métricas y haga ajustes básicos."
+      },
+      {
+        "question": "¿Podemos hacer una prueba piloto?",
+        "answer": "Sí. Ofrecemos pilotos acotados con objetivos claros y criterios de éxito medibles. Lo definimos en una llamada y avanzamos rápido."
+      }
+    ]
+  }
+}
+
+

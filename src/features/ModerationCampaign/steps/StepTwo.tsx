@@ -3,6 +3,7 @@ import { GlassCard, SectionTitle } from "../components/Primitives";
 import { useModeration, CHANNELS } from "../../../context/ModerationContext";
 import { ChannelCard } from "../components/stepTwoComponents/ChannelCard";
 import { SelectedSummary } from "../components/stepTwoComponents/SelectedSummary";
+import { CHANNEL_STATUS } from "../../../AIconversational/voice/tools/ModerationTools/channelAvailability";
 
 const StepTwo: React.FC = () => {
   const { data, setChannels } = useModeration();
@@ -26,6 +27,7 @@ const StepTwo: React.FC = () => {
             <ChannelCard
               key={ch}
               channel={ch}
+              available={CHANNEL_STATUS[ch] === "available"}
               active={Boolean(data.channels?.includes(ch))}
               onToggle={() => toggleChannel(ch)}
             />

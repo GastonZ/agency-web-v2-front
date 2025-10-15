@@ -13,7 +13,21 @@ import { saveLastLaunchedModeration } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
-import EditModeBanner from "../utils/EditModeBanner"; 
+import EditModeBanner from "../utils/EditModeBanner";
+import { moderationSchemas } from "../../../AIconversational/voice/schemas/moderationSchemas";
+import { useModerationBasicsTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationBasicsTools";
+import { useModerationGeoTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationGeoTools";
+import { useModerationAudienceTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationAudienceTools";
+import { useModerationToneTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationToneTools";
+import { useModerationChannelsTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationChannelsTools";
+import { validationSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/validation.schema";
+import { useModerationValidationTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationValidationTools";
+import { assistantSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/assistant.schema";
+import { useModerationAssistantTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationAssistantTools";
+import { communicationSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/communication.schema";
+import { useModerationCommsTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationCommsTools";
+import { calendarSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/calendar.schema";
+import { useModerationCalendarTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationCalendarTools";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -25,6 +39,42 @@ const STEPS = [
 const Moderation: React.FC = () => {
 
     const navigate = useNavigate();
+
+    const { getModerationOverview, explainModerationField, updateModerationBasics } = useModerationBasicsTools();
+    const { updateModerationGeoByName } = useModerationGeoTools();
+    const { updateModerationAudienceCultural } = useModerationAudienceTools();
+    const { updateModerationToneChoice } = useModerationToneTools();
+    const { setModerationChannels, addModerationChannel, removeModerationChannel, describeModerationChannels } =
+        useModerationChannelsTools();
+    const { checkModerationStepStatus } = useModerationValidationTools();
+    const {
+        setModerationAssistantConfig,
+        explainAssistantVoiceFormat,
+        explainKnowledgeBaseUpload,
+        addModerationQAPair,
+        updateModerationQAMatch,
+        removeModerationQAMatch
+    } = useModerationAssistantTools();
+    const {
+        addModerationAllowedTopics,
+        removeModerationAllowedTopics,
+        listModerationAllowedTopics,
+        addModerationEscalationCases,
+        removeModerationEscalationCases,
+        listModerationEscalationCases,
+        setModerationContactNumber,
+        getModerationContactNumber,
+    } = useModerationCommsTools();
+    const {
+        explainAndEnableCalendars,
+        createModerationCalendar,
+        updateModerationCalendarMeta,
+        removeModerationCalendar,
+        toggleModerationCalendarDay,
+        addModerationTimeSlot,
+        addModerationTimeSlotsBulk,
+        removeModerationTimeSlot,
+    } = useModerationCalendarTools();
 
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
@@ -52,11 +102,69 @@ const Moderation: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.search]);
 
+    // --- helpers de validación (Paso 1 y Paso 2) ---
+    function missingFromStep0(data: any) {
+        const missing: string[] = [];
+
+        // básicos
+        if (!((data.name || "").trim().length > 1)) missing.push("name");
+        if (!((data.leadDefinition || "").trim().length > 0)) missing.push("leadDefinition");
+        if (!((data.goal || "").trim().length > 0)) missing.push("goal");
+
+        // geo: mínimo país (countryId)
+        const countryId =
+            data?.audience?.geo?.countryId ?? data?.audience?.geo?.country ?? data?.countryId;
+        if (!countryId) missing.push("geo.countryId");
+
+        return missing;
+    }
+
+    function missingFromStep1(data: any) {
+        const arr = Array.isArray(data.channels) ? data.channels : [];
+        return arr.length ? [] : ["channels"];
+    }
+
+    function missingFromStep2(data: any) {
+        const missing: string[] = [];
+
+        const assistantNameOk =
+            !!(data?.assistant?.name && data.assistant.name.trim().length > 0);
+
+        const hasAtLeastOneQA =
+            Array.isArray(data?.knowHow) &&
+            data.knowHow.some(
+                (qa: any) =>
+                    (qa?.question || "").trim().length > 0 &&
+                    (qa?.answer || "").trim().length > 0
+            );
+
+        if (!assistantNameOk) missing.push("assistant.name");
+        if (!hasAtLeastOneQA) missing.push("knowHow");
+
+        return missing;
+    }
+
+    // mapa legible para el usuario
+    /*     function humanizeMissing(keys: string[]) {
+            const map: Record<string, string> = {
+                name: "Nombre de campaña",
+                leadDefinition: "Definición de lead",
+                goal: "Objetivo principal",
+                "geo.countryId": "Ubicación: País",
+                channels: "Seleccionar al menos un canal",
+            };
+            return keys.map(k => map[k] ?? k);
+        } */
+
     const validateStep = useCallback((index: number) => {
         if (index === 0) {
-            const hasName = (data.name || "").trim().length > 1;
-
-            return hasName
+            return missingFromStep0(data).length === 0;
+        }
+        if (index === 1) {
+            return missingFromStep1(data).length === 0;
+        }
+        if (index === 2) {
+            return missingFromStep2(data).length === 0;
         }
         return true;
     }, [data]);
@@ -134,7 +242,6 @@ const Moderation: React.FC = () => {
         }
 
         if (current === 2) {
-            // STEP 3 → assistant settings
             const payload = mapAssistantSettingsFromContext({
                 assistant: data.assistant || {},
                 knowHow: data.knowHow || [],
@@ -160,7 +267,6 @@ const Moderation: React.FC = () => {
     }, [current, data, saveStepOne, validateStep]);
 
     const goPrev = () => setCurrent((c) => Math.max(0, c - 1));
-
 
     const goNext = useCallback(async () => {
         const ok = await saveCurrentStep();
@@ -207,12 +313,94 @@ const Moderation: React.FC = () => {
                 <EditModeBanner />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                     <div className="lg:col-span-5">
-                        <AgencyChatbot className="w-full h-[420px]" />
+                        <AgencyChatbot
+                            mode="floating"
+                            extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any)]}
+                            onRegisterTools={(register) => {
+                                register("getModerationOverview", getModerationOverview);
+                                register("explainModerationField", explainModerationField);
+                                register("updateModerationBasics", updateModerationBasics);
+                                register("updateModerationGeoByName", updateModerationGeoByName);
+                                register("updateModerationAudienceCultural", updateModerationAudienceCultural);
+                                register("updateModerationToneChoice", updateModerationToneChoice);
+                                register("setModerationChannels", setModerationChannels);
+                                register("addModerationChannel", addModerationChannel);
+                                register("removeModerationChannel", removeModerationChannel);
+                                register("describeModerationChannels", describeModerationChannels);
+                                register("checkModerationStepStatus", checkModerationStepStatus);
+                                register("goToNextModerationStep", async () => {
+                                    const ok = await saveCurrentStep();
+                                    if (!ok) {
+                                        const r = checkModerationStepStatus({ step: current });
+                                        return {
+                                            success: false,
+                                            message: "Faltan completar datos antes de continuar.",
+                                            ...r,
+                                        };
+                                    }
+                                    if (current >= 3) {
+                                        return {
+                                            success: false,
+                                            atLastStep: true,
+                                            message:
+                                                "Ya estás en el último paso. Si todo está correcto, podés finalizar la campaña.",
+                                            suggestion:
+                                                "Decime “finalizar campaña” o usá el botón de la UI para activarla.",
+                                        };
+                                    }
+                                    setCurrent((c) => Math.min(3, c + 1));
+                                    return { success: true, advancedTo: Math.min(3, current + 1) };
+                                });
+                                register("goToPrevModerationStep", () => {
+                                    if (current <= 0) {
+                                        return {
+                                            success: false,
+                                            atFirstStep: true,
+                                            message: "Ya estás en el primer paso; no se puede retroceder más.",
+                                        };
+                                    }
+                                    setCurrent((c) => Math.max(0, c - 1));
+                                    return { success: true, movedTo: Math.max(0, current - 1) };
+                                });
+
+                                register("setModerationAssistantConfig", setModerationAssistantConfig);
+                                register("explainAssistantVoiceFormat", explainAssistantVoiceFormat);
+                                register("explainKnowledgeBaseUpload", explainKnowledgeBaseUpload);
+                                register("addModerationQAPair", addModerationQAPair);
+
+                                register("updateModerationQAMatch", updateModerationQAMatch);
+                                register("removeModerationQAMatch", removeModerationQAMatch);
+
+                                // Temas permitidos
+                                register("addModerationAllowedTopics", addModerationAllowedTopics);
+                                register("removeModerationAllowedTopics", removeModerationAllowedTopics);
+                                register("listModerationAllowedTopics", listModerationAllowedTopics);
+
+                                // Escalamiento humano
+                                register("addModerationEscalationCases", addModerationEscalationCases);
+                                register("removeModerationEscalationCases", removeModerationEscalationCases);
+                                register("listModerationEscalationCases", listModerationEscalationCases);
+
+                                // Contacto
+                                register("setModerationContactNumber", setModerationContactNumber);
+                                register("getModerationContactNumber", getModerationContactNumber);
+
+                                // Calendar
+                                register("explainAndEnableCalendars", explainAndEnableCalendars);
+                                register("createModerationCalendar", createModerationCalendar);
+                                register("updateModerationCalendarMeta", updateModerationCalendarMeta);
+                                register("removeModerationCalendar", removeModerationCalendar);
+                                register("toggleModerationCalendarDay", toggleModerationCalendarDay);
+                                register("addModerationTimeSlot", addModerationTimeSlot);
+                                register("addModerationTimeSlotsBulk", addModerationTimeSlotsBulk);
+                                register("removeModerationTimeSlot", removeModerationTimeSlot);
+                            }}
+                        />
                     </div>
 
                     {current === 0 && (
                         <>
-                            <div className="lg:col-span-7">
+                            <div className="lg:col-span-12">
                                 <StepOneTop />
                             </div>
 
@@ -222,11 +410,11 @@ const Moderation: React.FC = () => {
                         </>
                     )}
 
-                    {current === 1 && <div className="lg:col-span-7"><StepTwo /></div>}
+                    {current === 1 && <div className="lg:col-span-12"><StepTwo /></div>}
 
                     {current === 2 && (
                         <>
-                            <div className="lg:col-span-7">
+                            <div className="lg:col-span-12">
                                 <StepThreeTop />
                             </div>
                             <div className="lg:col-span-12">

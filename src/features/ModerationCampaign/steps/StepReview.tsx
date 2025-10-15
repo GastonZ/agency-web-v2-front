@@ -4,12 +4,9 @@ import {
     ClipboardList,
     Megaphone,
     Users,
-    CalendarRange,
     MessageSquare,
-    Sparkles,
 } from "lucide-react";
 import { useModeration } from "../../../context/ModerationContext";
-import OnlineLayout from "../../../layout/OnlineLayout";
 
 const Section: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string; children: React.ReactNode }> = ({ icon, title, subtitle, children }) => (
     <div className="rounded-xl p-4 md:p-6 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-xl ring-1 ring-emerald-400/20">
@@ -36,7 +33,6 @@ const Row: React.FC<{ label: string; value?: React.ReactNode }> = ({ label, valu
 export default function StepReview() {
     const { data } = useModeration();
     const channels = data.channels ?? [];
-    const dates = data.dates ?? {};
     const audience = data?.audience ?? {};
 
     return (
@@ -75,29 +71,7 @@ export default function StepReview() {
                                 ? `${audience.geo.country || audience.geo?.countryCode || "—"} ${audience.geo.city ? `· ${audience.geo.city}` : ""}`
                                 : "—"
                         } />
-                        <Row label="Demografía" value={
-                            audience?.demographic
-                                ? [
-                                    audience.demographic.gender && `Género: ${audience.demographic.gender}`,
-                                    (audience.demographic.ageGroups?.length ? `Edades: ${audience.demographic.ageGroups.join(", ")}` : null),
-                                    (audience.demographic.socioeconomic?.length ? `NSE: ${audience.demographic.socioeconomic.join(", ")}` : null),
-                                ].filter(Boolean).join(" · ")
-                                : "—"
-                        } />
                         <Row label="Tono" value={data?.customTone ? `Otro (${data.customTone})` : (data?.tone || "—")} />
-                    </ul>
-                </Section>
-            </motion.div>
-
-            <motion.div variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}>
-                <Section
-                    icon={<CalendarRange className="h-4 w-4" />}
-                    title="Rango temporal"
-                    subtitle="Inicio y fin de la campaña"
-                >
-                    <ul className="grid gap-2 text-[15px] leading-6">
-                        <Row label="Inicio" value={dates?.start || "—"} />
-                        <Row label="Fin" value={dates?.end || "—"} />
                     </ul>
                 </Section>
             </motion.div>
@@ -124,10 +98,6 @@ export default function StepReview() {
                         <p className="text-[15px] opacity-70">No hay canales seleccionados.</p>
                     )}
 
-                    {/* <div className="mt-3 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm">
-                        <Sparkles className="h-4 w-4" />
-                        Revisá que coincidan con tus cuentas reales.
-                    </div> */}
                 </Section>
             </motion.div>
         </motion.div>
