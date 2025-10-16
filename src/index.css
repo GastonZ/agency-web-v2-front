@@ -52,3 +52,86 @@
 .font-heading {
   font-family: var(--font-heading);
 }
+
+@layer base {
+  :root {
+    --scrollbar-thumb: rgba(0, 0, 0, 0.6);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.8);
+    --scrollbar-border: rgba(255,255,255,0.15);
+    --scrollbar-thumb-grad-a: rgba(13, 88, 63, 0.8);
+    --scrollbar-thumb-grad-b: rgba(12, 61, 46, 0.8);
+    --scrollbar-thumb-grad-a-hover: rgba(16,185,129,1);
+    --scrollbar-thumb-grad-b-hover: rgba(5,150,105,1);
+    --calendar-filter: invert(0);
+    --calendar-opacity: 0.9;
+  }
+  .dark {
+    --scrollbar-thumb: rgba(255, 255, 255, 0.25);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.4);
+    --calendar-filter: invert(1) brightness(1.15) contrast(1.1);
+    --calendar-opacity: 1;
+  }
+}
+
+/* Scrollbar global existente (puede quedarse) */
+@layer utilities {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  /* Body, si querés un ancho diferente: */
+  body::-webkit-scrollbar { width: 8px; }
+}
+
+/* ---- ESTILOS DEL LANDING (scopeados) ---- */
+@layer utilities {
+  /* Scrollbar “cyberpunk green” SOLO dentro del landing */
+  .landing *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .landing *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .landing *::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    /* usa el gradiente del landing */
+    background: linear-gradient(180deg, var(--scrollbar-thumb-grad-a), var(--scrollbar-thumb-grad-b));
+    border: 2px solid var(--scrollbar-border);
+  }
+  .landing *::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--scrollbar-thumb-grad-a-hover), var(--scrollbar-thumb-grad-b-hover));
+  }
+  .landing *::-webkit-scrollbar-corner { background: transparent; }
+
+  /* Firefox dentro del landing */
+  .landing * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(30,163,119,0.8) transparent;
+  }
+
+  /* Date picker icon dentro del landing */
+  .landing .input-date::-webkit-calendar-picker-indicator {
+    filter: var(--calendar-filter);
+    opacity: var(--calendar-opacity);
+  }
+
+  /* Si el landing tenía fuentes propias, usá utilidades en vez de globales: */
+  .landing .font-body { font-family: var(--font-body); }
+  .landing .font-heading { font-family: var(--font-heading); }
+}

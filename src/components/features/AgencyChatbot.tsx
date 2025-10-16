@@ -41,9 +41,11 @@ export default function AgencyChatbot({
         status,
         currentVolume,
         conversation,
-    } = useWebRTCAudio("ash", tools as any, {
+    } = useWebRTCAudio("sage", tools as any, {
         autoStart: true,
         startDelayMs: 120,
+        maxTurns: 10,
+        debugLogs: true
     });
 
     const {

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { internalSummaryTool } from "./internal/internalSummaryTool";
 
 export type Tool = {
     type: "function";
@@ -47,8 +48,10 @@ function mask(t?: string) {
 }
 
 type UseRtcOpts = {
-    autoStart?: boolean;     // <-- NUEVO: auto-iniciar en mount
-    startDelayMs?: number;   // <-- NUEVO: pequeño delay opcional
+    autoStart?: boolean;
+    startDelayMs?: number;
+    maxTurns?: number;
+    debugLogs?: boolean;
 };
 
 export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseRtcOpts) {
@@ -64,7 +67,76 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const volumeIntervalRef = useRef<number | null>(null);
     const functionRegistry = useRef<Record<string, Function>>({});
 
+    const sessionTurnsRef = useRef(0);
+    const shouldRestartRef = useRef(false);
+
+    const isRestartingRef = useRef(false);
+
+    const currentVolumeRef = useRef(0);
+    useEffect(() => { currentVolumeRef.current = currentVolume; }, [currentVolume]);
+
     const startedRef = useRef(false);
+
+    const rollingSummaryRef = useRef<{ text: string; ver: number }>({ text: "", ver: 0 });
+
+    const maxTurns = opts?.maxTurns ?? 2;
+    const debugLogs = !!opts?.debugLogs;
+
+    function waitForRollingSummary(prevVer: number, timeoutMs = 1800): Promise<boolean> {
+        const start = Date.now();
+        return new Promise((resolve) => {
+            const iv = setInterval(() => {
+                if (rollingSummaryRef.current.ver > prevVer) {
+                    clearInterval(iv);
+                    resolve(true);
+                } else if (Date.now() - start > timeoutMs) {
+                    clearInterval(iv);
+                    resolve(false);
+                }
+            }, 60);
+        });
+    }
+
+    useEffect(() => {
+        functionRegistry.current["__setRollingSummary"] = (args: { summary: string }) => {
+            const s = (args?.summary ?? "").trim();
+            if (s) {
+                rollingSummaryRef.current = { text: s, ver: rollingSummaryRef.current.ver + 1 };
+                if (debugLogs) console.info("[summary] stored:", s);
+                return { ok: true };
+            }
+            return { ok: false, error: "Empty summary" };
+        };
+    }, [debugLogs]);
+
+    const logSessionWindow = useCallback((label: string) => {
+        if (!debugLogs) return;
+        const dc = dataChannelRef.current;
+        const pc = pcRef.current;
+
+        const windowTurns = conversation.slice(-maxTurns);
+        const rows = windowTurns.map((t, i) => ({
+            idx: i + Math.max(0, conversation.length - maxTurns) + 1,
+            role: t.role,
+            text: (t.text || "").length > 80 ? (t.text || "").slice(0, 80) + "…" : (t.text || ""),
+            ts: t.timestamp?.slice(11, 19) ?? "",
+            final: !!t.isFinal,
+        }));
+
+        console.groupCollapsed(
+            `%c[Realtime] ${label} – window=${windowTurns.length}/${conversation.length}`,
+            "color:#10b981;font-weight:600"
+        );
+        console.table(rows);
+        console.log("session:", {
+            maxTurns,
+            dataChannel: dc?.readyState,
+            ice: pc?.iceConnectionState,
+            isSessionActive,
+            status,
+        });
+        console.groupEnd();
+    }, [debugLogs, conversation, maxTurns, isSessionActive, status]);
 
     // ===== token efímero: replica la POC (payload completo a /realtime/sessions) =====
     async function getEphemeralToken(): Promise<string> {
@@ -80,7 +152,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
         const payload = {
             model,
-            voice: "sage",
+            voice,
             modalities: ["audio", "text"],
             instructions:
                 "Tu nombre es Alma, presentate y respondé en español. Si el usuario pide navegar o cambiar el tema, llamá la tool correspondiente. Confirmá brevemente después de ejecutar.",
@@ -163,13 +235,48 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
             session: {
                 modalities: ["text", "audio"],
                 input_audio_transcription: { model: "gpt-4o-transcribe" },
-                tools, // 👈 importante: con `type: "function"`
+                tools: [...tools, internalSummaryTool],
             },
         };
         if (REALTIME_DEBUG) {
             console.log("[session.update] tools:", sessionUpdate.session.tools);
         }
         dc.send(JSON.stringify(sessionUpdate));
+    }
+
+    async function waitForDataChannelOpen(timeoutMs = 4000): Promise<RTCDataChannel> {
+        const dc = dataChannelRef.current;
+        if (!dc) throw new Error("DataChannel no inicializado");
+
+        if (dc.readyState === "open") return dc;
+
+        await new Promise<void>((resolve, reject) => {
+            let done = false;
+            const onOpen = () => {
+                if (done) return;
+                done = true;
+                dc.removeEventListener?.("open", onOpen as any);
+                resolve();
+            };
+
+            dc.addEventListener?.("open", onOpen as any);
+
+            const to = setTimeout(() => {
+                if (done) return;
+                done = true;
+                dc.removeEventListener?.("open", onOpen as any);
+                reject(new Error("Timeout esperando DataChannel 'open'"));
+            }, timeoutMs);
+
+            // si ya abrió entre líneas:
+            if (dc.readyState === "open") {
+                clearTimeout(to);
+                dc.removeEventListener?.("open", onOpen as any);
+                resolve();
+            }
+        });
+
+        return dataChannelRef.current!;
     }
 
     async function startSession() {
@@ -236,6 +343,8 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
             setIsSessionActive(true);
             setStatus("Sesión activa ✅");
+            sessionTurnsRef.current = 0;
+            shouldRestartRef.current = false;
         } catch (err: any) {
             console.error("startSession error:", err);
             setStatus(`Error: ${err?.message ?? err}`);
@@ -270,30 +379,124 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         else startSession();
     }
 
-    function sendTextMessage(text: string) {
-        if (!dataChannelRef.current || dataChannelRef.current.readyState !== "open")
+
+    /* ------- */
+
+
+    const getLastTurns = useCallback((n: number) => {
+        const msgs = conversation.slice(-n);
+        return msgs.map(m => ({ role: m.role as "user" | "assistant", text: m.text }));
+    }, [conversation]);
+
+    const restartSessionWithLastTurns = useCallback(async (n: number) => {
+        const last = getLastTurns(Math.max(0, n));
+
+        await stopSession();
+
+        await startSession();
+
+        let dc: RTCDataChannel;
+        try {
+            dc = await waitForDataChannelOpen(5000);
+        } catch (e) {
+            if (debugLogs) console.warn("[restart] DC no abrió a tiempo:", e);
             return;
-        const message = {
+        }
+
+        const summary = (rollingSummaryRef.current.text || "").trim();
+        dc.send(JSON.stringify({
+            type: "session.update",
+            session: {
+                modalities: ["text", "audio"],
+                input_audio_transcription: { model: "gpt-4o-transcribe" },
+                tools: [...tools, internalSummaryTool],
+                ...(summary
+                    ? {
+                        instructions:
+                            `Tu nombre es Alma. Respondé en español.\n` +
+                            `Contexto breve de la conversación previa:\n${summary}\n` +
+                            `Mantené coherencia con ese contexto sin inventar detalles.`,
+                    }
+                    : {}),
+            },
+        }));
+
+        for (const t of last) {
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: { type: "message", role: t.role, content: [{ type: "input_text", text: t.text }] },
+            }));
+        }
+        sessionTurnsRef.current = last.length;
+        shouldRestartRef.current = sessionTurnsRef.current >= maxTurns;
+    }, [getLastTurns, tools, stopSession, startSession, waitForDataChannelOpen, debugLogs, maxTurns]);
+
+
+
+    async function sendTextMessage(text: string) {
+        const clean = (text ?? "").trim();
+        if (!clean) return;
+
+        logSessionWindow("before-send");
+
+        // 1) ventana deslizante: si con este mensaje supero maxTurns, reinicio y rehidrato (maxTurns - 1)
+        const currentLen = Array.isArray(conversation) ? conversation.length : 0;
+
+        const willServerTurns = sessionTurnsRef.current + 1;
+        if (shouldRestartRef.current || willServerTurns > maxTurns) {
+            try {
+                await restartSessionWithLastTurns(Math.max(0, maxTurns - 1));
+                shouldRestartRef.current = false;            // ✅ apagamos la bandera tras reiniciar
+                logSessionWindow("after-restart");
+            } catch (err) {
+                if (debugLogs) console.warn("[send] restart failed, sigo igual:", err);
+            }
+        }
+
+        // 2) asegurar canal abierto (puede haberse recreado)
+        let dc = dataChannelRef.current;
+        if (!dc) return;
+        if (dc.readyState !== "open") {
+            try {
+                dc = await waitForDataChannelOpen(4000);
+            } catch {
+                return;
+            }
+        }
+
+        // 3) enviar mensaje del usuario + pedir respuesta
+        dc.send(JSON.stringify({
             type: "conversation.item.create",
             item: {
                 type: "message",
                 role: "user",
-                content: [{ type: "input_text", text }],
+                content: [{ type: "input_text", text: clean }],
             },
-        };
-        const response = { type: "response.create" };
-        dataChannelRef.current.send(JSON.stringify(message));
-        dataChannelRef.current.send(JSON.stringify(response));
-        setConversation((prev) => [
-            ...prev,
-            {
-                id: crypto.randomUUID(),
-                role: "user",
-                text,
-                isFinal: true,
-                timestamp: new Date().toISOString(),
-            },
-        ]);
+        }));
+        dc.send(JSON.stringify({ type: "response.create" }));
+
+        sessionTurnsRef.current = Math.min(maxTurns, sessionTurnsRef.current + 1);
+        if (sessionTurnsRef.current >= maxTurns) {
+            shouldRestartRef.current = true;               // ✅ marcar reinicio para el próximo turn
+        }
+
+        // 4) actualizar conversación local y recortar ventana
+        setConversation((prev) => {
+            const next = [
+                ...(prev ?? []),
+                {
+                    id: crypto.randomUUID(),
+                    role: "user",
+                    text: clean,
+                    isFinal: true,
+                    timestamp: new Date().toISOString(),
+                },
+            ];
+            // recortar a últimas maxTurns para que el estado local coincida con la ventana lógica
+            return next.length > maxTurns ? next.slice(-maxTurns) : next;
+        });
+
+        logSessionWindow("after-user-append");
     }
 
     function registerFunction(name: string, fn: Function) {
@@ -305,21 +508,27 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
             const msg = JSON.parse(ev.data);
 
             switch (msg.type) {
+                // ===== DELTAS DEL ASSISTANT (crecen carácter a carácter) =====
                 case "response.audio_transcript.delta":
                 case "response.text.delta":
                 case "response.output_text.delta": {
                     const piece = msg.delta ?? "";
-                    setConversation(prev => {
+                    setConversation((prev) => {
                         const last = prev[prev.length - 1];
+
+                        // Si el último ya es del assistant y no está finalizado: concatenar texto
                         if (last && last.role === "assistant" && !last.isFinal) {
                             const updated = [...prev];
                             updated[updated.length - 1] = {
                                 ...last,
-                                text: last.text + piece,
+                                text: (last.text || "") + piece,
                             };
+                            // No recortamos acá porque no aumenta la longitud
                             return updated;
                         }
-                        return [
+
+                        // Primer delta de un nuevo mensaje del assistant → aumenta longitud local
+                        const next = [
                             ...prev,
                             {
                                 id: crypto.randomUUID(),
@@ -328,21 +537,96 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
                                 isFinal: false,
                             },
                         ];
-                    });
-                    break;
-                }
-                case "response.audio_transcript.done":
-                case "response.text.done":
-                case "response.output_text.done": {
-                    setConversation(prev => {
-                        if (!prev.length) return prev;
-                        const updated = [...prev];
-                        updated[updated.length - 1] = { ...updated[updated.length - 1], isFinal: true };
-                        return updated;
+                        const trimmed = next.length > maxTurns ? next.slice(-maxTurns) : next;
+
+                        // 🔹 también cuenta para el límite de la SESIÓN del servidor
+                        sessionTurnsRef.current = Math.min(maxTurns, sessionTurnsRef.current + 1);
+
+                        // Si alcanzó el límite, marcamos reinicio diferido (lo haremos al parar el audio)
+                        if (sessionTurnsRef.current >= maxTurns) {
+                            shouldRestartRef.current = true;
+                            if (debugLogs) {
+                                console.info(
+                                    "[turns] assistant hit limit → will restart on output_audio_buffer.stopped:",
+                                    sessionTurnsRef.current, "/", maxTurns
+                                );
+                            }
+                        } else if (debugLogs) {
+                            console.info("[turns] +assistant →", sessionTurnsRef.current, "/", maxTurns);
+                        }
+
+                        return trimmed;
                     });
                     break;
                 }
 
+                // ===== FIN DE MENSAJE DEL ASSISTANT (texto/transcripción) =====
+                // Sólo marcamos isFinal; NO reiniciamos acá para no cortar el audio.
+                case "response.audio_transcript.done":
+                case "response.text.done":
+                case "response.output_text.done": {
+                    setConversation((prev) => {
+                        if (!prev.length) return prev;
+                        const updated = [...prev];
+                        updated[updated.length - 1] = {
+                            ...updated[updated.length - 1],
+                            isFinal: true,
+                        };
+                        return updated.length > maxTurns ? updated.slice(-maxTurns) : updated;
+                    });
+                    // Log después de que React aplique el estado
+                    setTimeout(() => logSessionWindow?.("assistant-replied"), 0);
+                    break;
+                }
+
+                // ===== AUDIO TTS FINALIZADO (¡evento que viste en logs!) =====
+                case "output_audio_buffer.stopped": {
+                    if (debugLogs) console.info("[audio] output_audio_buffer.stopped");
+
+                    (async () => {
+                        if (shouldRestartRef.current && !isRestartingRef.current) {
+                            try {
+                                isRestartingRef.current = true;
+
+                                // 1) Pedimos al modelo que resuma y lo guarde vía la tool interna
+                                const prevVer = rollingSummaryRef.current.ver;
+                                const dc = dataChannelRef.current;
+                                if (dc && dc.readyState === "open") {
+                                    const prompt =
+                                        "Antes de continuar, sintetiza los últimos mensajes en 1–2 frases claras " +
+                                        "y llama a la función __setRollingSummary({ summary: \"...\" }). " +
+                                        "No devuelvas nada más por voz ni texto.";
+                                    dc.send(JSON.stringify({
+                                        type: "conversation.item.create",
+                                        item: {
+                                            type: "message",
+                                            role: "user",
+                                            content: [{ type: "input_text", text: prompt }],
+                                        },
+                                    }));
+                                    dc.send(JSON.stringify({ type: "response.create" }));
+
+                                    // Esperar a que el modelo guarde el resumen (o que expire el timeout)
+                                    await waitForRollingSummary(prevVer, 1800);
+                                }
+
+                                // 2) Reiniciar con (maxTurns - 1) e inyectar el resumen como instructions
+                                await restartSessionWithLastTurns(Math.max(0, maxTurns - 1));
+                                shouldRestartRef.current = false;
+
+                                if (debugLogs) console.info("[restart] done after output_audio_buffer.stopped (with summary)");
+                            } catch (e) {
+                                if (debugLogs) console.warn("[restart] failed after output_audio_buffer.stopped:", e);
+                            } finally {
+                                isRestartingRef.current = false;
+                            }
+                        }
+                    })();
+
+                    break;
+                }
+
+                // ===== TOOLS / FUNCTION CALLS =====
                 case "response.function_call_arguments.done": {
                     if (REALTIME_DEBUG) {
                         console.log("[AI → function]", msg.name, msg.arguments);
@@ -378,12 +662,16 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
                 }
 
                 default:
+                    if (debugLogs && msg?.type) {
+                        console.debug("[RTC] Unhandled message type:", msg.type, msg);
+                    }
                     break;
             }
         } catch (e) {
             console.error("onDataMessage parse error", e);
         }
     }
+
 
     useEffect(() => {
         if (!opts?.autoStart || startedRef.current) return;
@@ -412,5 +700,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         handleStartStopClick,
         sendTextMessage,
         registerFunction,
+        logSessionWindow
     };
 }

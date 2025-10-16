@@ -144,18 +144,6 @@ const Moderation: React.FC = () => {
         return missing;
     }
 
-    // mapa legible para el usuario
-    /*     function humanizeMissing(keys: string[]) {
-            const map: Record<string, string> = {
-                name: "Nombre de campaña",
-                leadDefinition: "Definición de lead",
-                goal: "Objetivo principal",
-                "geo.countryId": "Ubicación: País",
-                channels: "Seleccionar al menos un canal",
-            };
-            return keys.map(k => map[k] ?? k);
-        } */
-
     const validateStep = useCallback((index: number) => {
         if (index === 0) {
             return missingFromStep0(data).length === 0;
