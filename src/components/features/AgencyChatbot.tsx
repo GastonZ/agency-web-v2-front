@@ -45,7 +45,7 @@ export default function AgencyChatbot({
         autoStart: true,
         startDelayMs: 120,
         maxTurns: 10,
-        debugLogs: true
+        debugLogs: false
     });
 
     const {
