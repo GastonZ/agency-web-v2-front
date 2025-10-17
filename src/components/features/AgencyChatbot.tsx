@@ -1,6 +1,6 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Mic, ArrowUpToLine, X, Maximize2 } from "lucide-react";
+import { Mic, ArrowUpToLine, X, Maximize2, Loader2, Ear } from "lucide-react";
 import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
@@ -72,8 +72,10 @@ export default function AgencyChatbot({
         status,
         currentVolume,
         conversation,
+        isStarting,
+        isThinking
     } = useWebRTCAudio("sage", tools as any, {
-        autoStart: false,
+        autoStart: true,
         startDelayMs: 120,
         debugLogs: false,
         getBootInstructions,
@@ -274,8 +276,52 @@ export default function AgencyChatbot({
 
     return (
         <>
-            {/* Burbuja fija abajo-derecha */}
             <div className="fixed bottom-20 right-20 z-50">
+                <div
+                    className={[
+                        "absolute -top-3 right-[15px] translate-y-[-100%]",
+                        "px-3 py-2 rounded-xl text-[12px] font-medium",
+                        "shadow-sm border",
+                        "bg-white/95 dark:bg-neutral-900/90",
+                        "border-neutral-200 dark:border-neutral-700",
+                        "backdrop-blur supports-[backdrop-filter]:bg-white/80",
+                        "flex items-center gap-2 select-none",
+                        bubbleOpen ? "opacity-0 pointer-events-none" : "opacity-100",
+                    ].join(" ")}
+                >
+
+                    {(!isSessionActive || isStarting) ? (
+                        <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin opacity-90" />
+                            <span>Iniciando…</span>
+                        </>
+                    ) : isThinking ? (
+                        <div className="flex items-center gap-2">
+                            <span className="sr-only">Pensando…</span>
+                            <div className="flex items-center gap-1">
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "120ms" }} />
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "240ms" }} />
+                            </div>
+                            <span>Pensando…</span>
+                        </div>
+                    ) : isTalking ? (
+                        <div className="flex items-center gap-2">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Hablando…</span>
+                        </div>
+                    ) : (
+                        <>
+                            <Ear className="h-3.5 w-3.5 opacity-90" />
+                            <span>Te escucho…</span>
+                        </>
+                    )}
+                    <div
+                        className="absolute -bottom-1 right-3 h-2 w-2 rotate-45
+               bg-white/95 dark:bg-neutral-900/90 border-r border-b
+               border-neutral-200 dark:border-neutral-700"
+                    />
+                </div>
                 <motion.button
                     type="button"
                     onClick={() => setBubbleOpen((v) => !v)}

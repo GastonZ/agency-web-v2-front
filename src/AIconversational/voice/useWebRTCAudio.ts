@@ -59,6 +59,9 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
   const [conversation, setConversation] = useState<ConversationItem[]>([]);
   const [currentVolume, setCurrentVolume] = useState(0);
 
+  const [isStarting, setIsStarting] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
@@ -205,10 +208,10 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       sessionUpdate.session.instructions = extra;
     }
 
-    if (REALTIME_DEBUG) {
+/*     if (REALTIME_DEBUG) {
       console.log("[session.update] tools:", sessionUpdate.session.tools);
       if (extra) console.log("[session.update] boot instructions:\n" + extra);
-    }
+    } */
 
     dc.send(JSON.stringify(sessionUpdate));
   }
@@ -250,6 +253,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
   async function startSession() {
     try {
+      setIsStarting(true);
       setStatus("Pidiendo micrófono…");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioStreamRef.current = stream;
@@ -316,6 +320,8 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       console.error("startSession error:", err);
       setStatus(`Error: ${err?.message ?? err}`);
       stopSession();
+    } finally {
+      setIsStarting(false);
     }
   }
 
@@ -339,6 +345,8 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     audioStreamRef.current = null;
     setIsSessionActive(false);
     setStatus("Sesión detenida");
+    setIsStarting(false);
+    setIsThinking(false);
   }
 
   function handleStartStopClick() {
@@ -350,6 +358,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const clean = (text ?? "").trim();
     if (!clean) return;
 
+    setIsThinking(true);
     logSessionWindow("before-send");
 
     // asegurar canal abierto
@@ -402,6 +411,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         case "response.audio_transcript.delta":
         case "response.text.delta":
         case "response.output_text.delta": {
+          setIsThinking(false);
           const piece = msg.delta ?? "";
           setConversation((prev) => {
             const last = prev[prev.length - 1];
@@ -434,6 +444,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         case "response.audio_transcript.done":
         case "response.text.done":
         case "response.output_text.done": {
+          setIsThinking(false);
           setConversation((prev) => {
             if (!prev.length) return prev;
             const updated = [...prev];
@@ -521,6 +532,8 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     handleStartStopClick,
     sendTextMessage,
     registerFunction,
-    logSessionWindow
+    logSessionWindow,
+    isStarting,
+    isThinking,
   };
 }
