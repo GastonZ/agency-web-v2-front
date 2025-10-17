@@ -1,6 +1,6 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Mic, ArrowUpToLine, X, Maximize2, Loader2, Ear } from "lucide-react";
+import { Mic, ArrowUpToLine, X, Maximize2, Loader2, Ear, ChevronDown, ChevronRight } from "lucide-react";
 import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
@@ -290,12 +290,25 @@ export default function AgencyChatbot({
                     ].join(" ")}
                 >
 
-                    {(!isSessionActive || isStarting) ? (
-                        <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin opacity-90" />
-                            <span>Iniciando…</span>
-                        </>
+                    {!isSessionActive ? (
+                        isStarting ? (
+                            // CARGANDO / ABRIENDO SESIÓN
+                            <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin opacity-90" />
+                                <span>Iniciando…</span>
+                            </>
+                        ) : (
+                            // INACTIVA (sesión detenida)
+                            <div className="flex items-center gap-2">
+                                <span>Inactiva…</span>
+                                <span className="opacity-70">click</span>
+                                <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                                <ChevronRight className="h-3.5 w-3.5 opacity-80" />
+                                <Mic className="h-3.5 w-3.5 opacity-90" />
+                            </div>
+                        )
                     ) : isThinking ? (
+                        // PENSANDO
                         <div className="flex items-center gap-2">
                             <span className="sr-only">Pensando…</span>
                             <div className="flex items-center gap-1">
@@ -306,11 +319,13 @@ export default function AgencyChatbot({
                             <span>Pensando…</span>
                         </div>
                     ) : isTalking ? (
+                        // HABLANDO
                         <div className="flex items-center gap-2">
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             <span>Hablando…</span>
                         </div>
                     ) : (
+                        // LISTA PARA ESCUCHAR
                         <>
                             <Ear className="h-3.5 w-3.5 opacity-90" />
                             <span>Te escucho…</span>
