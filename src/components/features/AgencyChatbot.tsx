@@ -4,6 +4,7 @@ import { Mic, ArrowUpToLine, X, Maximize2, Loader2, Ear, ChevronDown, ChevronRig
 import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
+import { botControlTools, useBotControlTools } from "../../AIconversational/voice/tools/useBotControlTools";
 
 // NUEVO: utilidades de persistencia genérica
 import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
@@ -56,13 +57,15 @@ export default function AgencyChatbot({
 
     onConversationChange,
 }: AgencyChatbotProps) {
-    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools], []);
+    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
         return buildBootInstructions(snap);
     }, [persistNamespace, userId]);
+
+
 
     const {
         isSessionActive,
@@ -73,7 +76,9 @@ export default function AgencyChatbot({
         currentVolume,
         conversation,
         isStarting,
-        isThinking
+        isThinking,
+        startSession,
+        stopSession
     } = useWebRTCAudio("sage", tools as any, {
         autoStart: true,
         startDelayMs: 120,
@@ -88,7 +93,12 @@ export default function AgencyChatbot({
         goToMarketingCreation,
         goToModerationCreation,
     } = useNavigationTools();
+
     const { changeTheme } = useThemeTool();
+    const { deactivateAgent, activateAgent } = useBotControlTools({
+        startSession,
+        stopSession,
+    });
 
     React.useEffect(() => {
         registerFunction("goToCampaignSelection", goToCampaignSelection);
@@ -97,6 +107,8 @@ export default function AgencyChatbot({
         registerFunction("goToMarketingCreation", goToMarketingCreation);
         registerFunction("goToModerationCreation", goToModerationCreation);
         registerFunction("changeTheme", changeTheme);
+        registerFunction("deactivateAgent", deactivateAgent);
+        registerFunction("activateAgent", activateAgent);
     }, [
         registerFunction,
         goToCampaignSelection,
@@ -104,6 +116,8 @@ export default function AgencyChatbot({
         goToListeningCreation,
         goToMarketingCreation,
         goToModerationCreation,
+        deactivateAgent,
+        activateAgent,
         changeTheme,
     ]);
 
