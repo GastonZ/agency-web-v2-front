@@ -14,6 +14,7 @@ const EscalationCard: React.FC = () => {
       <SectionTitle title="Escalamiento humano (opcional)" subtitle="Define pasos e información de contacto" />
       <div className="space-y-4">
         <TagEditor
+          id="escalation"
           label="Ítems / Pasos de escalamiento"
           items={data.escalationItems}
           onChange={setEscalationItems}
@@ -22,6 +23,7 @@ const EscalationCard: React.FC = () => {
         <div>
           <Label>Número de contacto (+NN NNNNNNNNN)</Label>
           <TextInput
+            id="escalationPhone"
             placeholder="+54 91123456789"
             value={data.escalationPhone || ""}
             onChange={(e) => setEscalationPhone(e.target.value)}

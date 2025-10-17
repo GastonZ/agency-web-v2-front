@@ -28,6 +28,7 @@ import { communicationSchema } from "../../../AIconversational/voice/schemas/mod
 import { useModerationCommsTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationCommsTools";
 import { calendarSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/calendar.schema";
 import { useModerationCalendarTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationCalendarTools";
+import { useAutoScrollTools } from "../../../AIconversational/voice/tools/useAutoScrollTools";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -75,6 +76,8 @@ const Moderation: React.FC = () => {
         addModerationTimeSlotsBulk,
         removeModerationTimeSlot,
     } = useModerationCalendarTools();
+
+    const { autoScrollTools, scrollToModerationField, scrollToFieldIfFilled } = useAutoScrollTools();
 
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
@@ -303,19 +306,71 @@ const Moderation: React.FC = () => {
                     <div className="lg:col-span-5">
                         <AgencyChatbot
                             mode="floating"
-                            extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any)]}
+                            extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any), ...(autoScrollTools as any)]}
                             onRegisterTools={(register) => {
                                 register("getModerationOverview", getModerationOverview);
-                                register("explainModerationField", explainModerationField);
-                                register("updateModerationBasics", updateModerationBasics);
-                                register("updateModerationGeoByName", updateModerationGeoByName);
-                                register("updateModerationAudienceCultural", updateModerationAudienceCultural);
-                                register("updateModerationToneChoice", updateModerationToneChoice);
-                                register("setModerationChannels", setModerationChannels);
-                                register("addModerationChannel", addModerationChannel);
-                                register("removeModerationChannel", removeModerationChannel);
+                                register("explainModerationField", (args: { field: "name" | "goal" | "summary" | "leadDefinition" }) => {
+                                    const res = explainModerationField(args);
+                                    try { scrollToModerationField({ field: args.field as any }); } catch { }
+                                    return res;
+                                });
+                                register("updateModerationBasics", (args: {
+                                    name?: string; goal?: string; summary?: string; leadDefinition?: string;
+                                }) => {
+                                    const res = updateModerationBasics(args);
+                                    if (res?.success) {
+                                        const updated: string[] = Array.isArray(res.updated) ? res.updated : [];
+                                        if (updated.length === 1) {
+                                            try {
+                                                scrollToFieldIfFilled({ field: updated[0] as any, payload: data });
+                                            } catch { }
+                                        } else if (updated.length > 1) {
+                                            updated.forEach((f, i) => {
+                                                setTimeout(() => {
+                                                    try { scrollToFieldIfFilled({ field: f as any, payload: data }); } catch { }
+                                                }, i * 300);
+                                            });
+                                        }
+                                    }
+                                    return res;
+                                });
+                                register("updateModerationGeoByName", (args: any) => {
+                                    const out = updateModerationGeoByName(args);
+                                    // scrollea a lo que se “tocó” (si está lleno en data)
+                                    const candidates: Array<{ field: any, path: string[] }> = [
+                                        { field: "audience.geo.country", path: ["audience", "geo", "countryId"] },
+                                        { field: "audience.geo.province", path: ["audience", "geo", "provinceId"] },
+                                        { field: "audience.geo.city", path: ["audience", "geo", "cityId"] },
+                                    ];
+                                    candidates.forEach((c, i) => {
+                                        const value = c.path.reduce((acc: any, k) => acc?.[k], data);
+                                        if (value) setTimeout(() => {
+                                            try { scrollToModerationField({ field: c.field as any }); } catch { }
+                                        }, i * 200);
+                                    });
+                                    return out;
+                                });
+                                register("updateModerationAudienceCultural", (args: any) => {
+                                    const out = updateModerationAudienceCultural(args);
+                                    try { scrollToModerationField({ field: "audience.culture" as any }); } catch { }
+                                    return out;
+                                });
+                                register("updateModerationToneChoice", (args: any) => {
+                                    const out = updateModerationToneChoice(args);
+                                    try { scrollToModerationField({ field: "tone" as any }); } catch { }
+                                    return out;
+                                });
+                                const scrollChannels = () => {
+                                    try { scrollToModerationField({ field: "channels" as any }); } catch { }
+                                };
+                                register("setModerationChannels", (args: any) => { const r = setModerationChannels(args); scrollChannels(); return r; });
+                                register("addModerationChannel", (args: any) => { const r = addModerationChannel(args); scrollChannels(); return r; });
+                                register("removeModerationChannel", (args: any) => { const r = removeModerationChannel(args); scrollChannels(); return r; });
+                                register("describeModerationChannels", (args: any) => { const r = describeModerationChannels(args); scrollChannels(); return r; });
                                 register("describeModerationChannels", describeModerationChannels);
                                 register("checkModerationStepStatus", checkModerationStepStatus);
+                                register("scrollToModerationField", scrollToModerationField);
+                                register("scrollToFieldIfFilled", scrollToFieldIfFilled);
                                 register("goToNextModerationStep", async () => {
                                     const ok = await saveCurrentStep();
                                     if (!ok) {
@@ -351,37 +406,80 @@ const Moderation: React.FC = () => {
                                     return { success: true, movedTo: Math.max(0, current - 1) };
                                 });
 
-                                register("setModerationAssistantConfig", setModerationAssistantConfig);
-                                register("explainAssistantVoiceFormat", explainAssistantVoiceFormat);
-                                register("explainKnowledgeBaseUpload", explainKnowledgeBaseUpload);
-                                register("addModerationQAPair", addModerationQAPair);
+                                register("setModerationAssistantConfig", (args: any) => {
+                                    const res = setModerationAssistantConfig(args);
+                                    // según las props tocadas, scrollear a cada una
+                                    const map: Array<[key: string, field: any, path: string[]]> = [
+                                        ["name", "assistant.name", ["assistant", "name"]],
+                                        ["greeting", "assistant.greeting", ["assistant", "greeting"]],
+                                        ["logic", "assistant.logic", ["assistant", "logic"]],
+                                    ];
+                                    let delay = 0;
+                                    map.forEach(([k, field, path]) => {
+                                        const provided = k in (args || {});
+                                        if (provided) {
+                                            const value = path.reduce((acc: any, kk) => acc?.[kk], data);
+                                            setTimeout(() => {
+                                                try { scrollToFieldIfFilled({ field: field as any, payload: data }); } catch { }
+                                            }, (delay += 200));
+                                        }
+                                    });
+                                    return res;
+                                });
+                                register("explainAssistantVoiceFormat", (args: any) => {
+                                    const r = explainAssistantVoiceFormat(args);
+                                    // lo más cercano a "lógica de conversación"
+                                    try { scrollToModerationField({ field: "assistant.logic" as any }); } catch { }
+                                    return r;
+                                });
 
-                                register("updateModerationQAMatch", updateModerationQAMatch);
-                                register("removeModerationQAMatch", removeModerationQAMatch);
+                                register("explainKnowledgeBaseUpload", (args: any) => {
+                                    const r = explainKnowledgeBaseUpload(args);
+                                    try { scrollToModerationField({ field: "knowHow" as any }); } catch { }
+                                    return r;
+                                });
+
+                                const scrollKnowHow = () => { try { scrollToModerationField({ field: "knowHow" as any }); } catch { } };
+                                register("addModerationQAPair", (args: any) => { const r = addModerationQAPair(args); scrollKnowHow(); return r; });
+                                register("updateModerationQAMatch", (args: any) => { const r = updateModerationQAMatch(args); scrollKnowHow(); return r; });
+                                register("removeModerationQAMatch", (args: any) => { const r = removeModerationQAMatch(args); scrollKnowHow(); return r; });
 
                                 // Temas permitidos
-                                register("addModerationAllowedTopics", addModerationAllowedTopics);
-                                register("removeModerationAllowedTopics", removeModerationAllowedTopics);
-                                register("listModerationAllowedTopics", listModerationAllowedTopics);
+                                const scrollAllowed = () => { try { scrollToModerationField({ field: "allowedTopics" as any }); } catch { } };
+                                register("addModerationAllowedTopics", (args: any) => { const r = addModerationAllowedTopics(args); scrollAllowed(); return r; });
+                                register("removeModerationAllowedTopics", (args: any) => { const r = removeModerationAllowedTopics(args); scrollAllowed(); return r; });
+                                register("listModerationAllowedTopics", (args: any) => { const r = listModerationAllowedTopics(args); scrollAllowed(); return r; });
+
 
                                 // Escalamiento humano
-                                register("addModerationEscalationCases", addModerationEscalationCases);
-                                register("removeModerationEscalationCases", removeModerationEscalationCases);
-                                register("listModerationEscalationCases", listModerationEscalationCases);
+                                const scrollEscalation = () => { try { scrollToModerationField({ field: "escalation" as any }); } catch { } };
+                                register("addModerationEscalationCases", (args: any) => { const r = addModerationEscalationCases(args); scrollEscalation(); return r; });
+                                register("removeModerationEscalationCases", (args: any) => { const r = removeModerationEscalationCases(args); scrollEscalation(); return r; });
+                                register("listModerationEscalationCases", (args: any) => { const r = listModerationEscalationCases(args); scrollEscalation(); return r; });
+
 
                                 // Contacto
-                                register("setModerationContactNumber", setModerationContactNumber);
-                                register("getModerationContactNumber", getModerationContactNumber);
-
+                                register("setModerationContactNumber", (args: any) => {
+                                    const r = setModerationContactNumber(args);
+                                    try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
+                                    return r;
+                                });
+                                register("getModerationContactNumber", (args: any) => {
+                                    const r = getModerationContactNumber(args);
+                                    try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
+                                    return r;
+                                });
                                 // Calendar
-                                register("explainAndEnableCalendars", explainAndEnableCalendars);
-                                register("createModerationCalendar", createModerationCalendar);
-                                register("updateModerationCalendarMeta", updateModerationCalendarMeta);
-                                register("removeModerationCalendar", removeModerationCalendar);
-                                register("toggleModerationCalendarDay", toggleModerationCalendarDay);
-                                register("addModerationTimeSlot", addModerationTimeSlot);
-                                register("addModerationTimeSlotsBulk", addModerationTimeSlotsBulk);
-                                register("removeModerationTimeSlot", removeModerationTimeSlot);
+                                const scrollCalendars = () => { try { scrollToModerationField({ field: "calendars" as any }); } catch { } };
+                                register("explainAndEnableCalendars", (args: any) => { const r = explainAndEnableCalendars(args); scrollCalendars(); return r; });
+                                register("createModerationCalendar", (args: any) => { const r = createModerationCalendar(args); scrollCalendars(); return r; });
+                                register("updateModerationCalendarMeta", (args: any) => { const r = updateModerationCalendarMeta(args); scrollCalendars(); return r; });
+                                register("removeModerationCalendar", (args: any) => { const r = removeModerationCalendar(args); scrollCalendars(); return r; });
+                                register("toggleModerationCalendarDay", (args: any) => { const r = toggleModerationCalendarDay(args); scrollCalendars(); return r; });
+                                register("addModerationTimeSlot", (args: any) => { const r = addModerationTimeSlot(args); scrollCalendars(); return r; });
+                                register("addModerationTimeSlotsBulk", (args: any) => { const r = addModerationTimeSlotsBulk(args); scrollCalendars(); return r; });
+                                register("removeModerationTimeSlot", (args: any) => { const r = removeModerationTimeSlot(args); scrollCalendars(); return r; });
+
                             }}
                         />
                     </div>

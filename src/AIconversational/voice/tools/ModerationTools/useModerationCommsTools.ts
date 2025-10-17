@@ -73,7 +73,7 @@ export function useModerationCommsTools() {
     return { success: true, removed, total: next.length };
   }
 
-  function listModerationAllowedTopics() {
+  function listModerationAllowedTopics(args?: Record<string, any>) {   // <-- agregado args
     const list: string[] = Array.isArray((data as any)?.allowedTopics)
       ? (data as any).allowedTopics
       : [];
@@ -87,8 +87,8 @@ export function useModerationCommsTools() {
     const current: string[] = Array.isArray((data as any)?.escalationItems)
       ? (data as any).escalationItems
       : Array.isArray((data as any)?.escalationCases)
-      ? (data as any).escalationCases
-      : [];
+        ? (data as any).escalationCases
+        : [];
     const next = uniqueMerge(current, items);
     setEscalationItems(next);
     return { success: true, added: items, total: next.length };
@@ -99,23 +99,22 @@ export function useModerationCommsTools() {
     const current: string[] = Array.isArray((data as any)?.escalationItems)
       ? (data as any).escalationItems
       : Array.isArray((data as any)?.escalationCases)
-      ? (data as any).escalationCases
-      : [];
+        ? (data as any).escalationCases
+        : [];
     const next = current.filter((t: string) => !items.includes(norm(t)));
     const removed = current.filter((t: string) => items.includes(norm(t)));
     setEscalationItems(next);
     return { success: true, removed, total: next.length };
   }
 
-  function listModerationEscalationCases() {
+  function listModerationEscalationCases(args?: Record<string, any>) {
     const list: string[] = Array.isArray((data as any)?.escalationItems)
       ? (data as any).escalationItems
       : Array.isArray((data as any)?.escalationCases)
-      ? (data as any).escalationCases
-      : [];
+        ? (data as any).escalationCases
+        : [];
     return { success: true, items: list, total: list.length };
   }
-
   // ------- CONTACTO (teléfono) -------
   function setModerationContactNumber(args: { phone: string; countryCode?: string }) {
     const normalized = normalizePhone(args.phone, args.countryCode);
@@ -123,7 +122,7 @@ export function useModerationCommsTools() {
     return { success: true, contactNumber: normalized };
   }
 
-  function getModerationContactNumber() {
+  function getModerationContactNumber(args?: Record<string, any>) {
     // soporta nombre viejo 'contactNumber' como fallback de lectura
     const phone =
       (data as any)?.escalationPhone ||

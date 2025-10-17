@@ -9,6 +9,7 @@ const ScopeCard: React.FC = () => {
     <GlassCard>
       <SectionTitle title="Temas permitidos (opcional)" subtitle="Responder únicamente consultas relacionadas a…" />
       <TagEditor
+        id="allowedTopics"
         label="Temas permitidos"
         items={data.allowedTopics}
         onChange={setAllowedTopics}

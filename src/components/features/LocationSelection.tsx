@@ -131,9 +131,9 @@ const LocationSelection: React.FC<Props> = ({
       </div>
 
       <div>
-        <Label htmlFor="geoRegion">Provincia/Región</Label>
+        <Label htmlFor="geoProvince">Provincia/Región</Label>
         <select
-          id="geoRegion"
+          id="geoProvince"
           value={selectedStateId}
           onChange={onStateChange}
           disabled={!selectedCountryId || loadingStates}

@@ -13,6 +13,9 @@ const BasicsSection: React.FC = () => {
           <Label htmlFor="campaignName">Nombre de la campaña</Label>
           <TextInput
             id="campaignName"
+            name="name"
+            data-field="name"
+            data-testid="campaign-name"
             placeholder="Ej. Moderación Q4 LATAM"
             value={data.name}
             onChange={(e) => setBasics({ name: e.target.value })}

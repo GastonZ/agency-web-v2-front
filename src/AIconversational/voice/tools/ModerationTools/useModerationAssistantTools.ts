@@ -80,7 +80,7 @@ export function useModerationAssistantTools() {
         };
     }
 
-    function explainAssistantVoiceFormat() {
+    function explainAssistantVoiceFormat(args?: Record<string, any>) {
         return {
             success: true,
             message:
@@ -88,14 +88,13 @@ export function useModerationAssistantTools() {
         };
     }
 
-    function explainKnowledgeBaseUpload() {
+    function explainKnowledgeBaseUpload(args?: Record<string, any>) {
         return {
             success: true,
             message:
                 "La base de conocimiento acepta **CSV**, **TXT**, **Word/DOCX** y **PDF**. El sistema leerá el archivo y generará preguntas y respuestas (Q&A) para que el asistente pueda responder rápido y con contexto.",
         };
     }
-
     function addModerationQAPair(args: { question: string; answer?: string }) {
         const q = (args?.question || "").trim();
         const a = (args?.answer || "").trim();

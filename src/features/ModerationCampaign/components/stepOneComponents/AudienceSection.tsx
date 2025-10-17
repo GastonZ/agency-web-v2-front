@@ -24,9 +24,9 @@ const AudienceSection: React.FC = () => {
       />
 
       <div className="mt-6">
-        <Label htmlFor="culturalSeg">Segmentación cultural / Intereses</Label>
+        <Label htmlFor="audienceCulture">Segmentación cultural / Intereses</Label>
         <TextArea
-          id="culturalSeg"
+          id="audienceCulture"
           rows={3}
           placeholder="Ej. Gamers, tecnología, cultura local…"
           value={data.audience.cultural || ""}

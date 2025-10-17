@@ -2,11 +2,12 @@ import * as React from "react";
 import { Label } from "../Primitives";
 
 const TagEditor: React.FC<{
+  id: string;
   label: string;
   items: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
-}> = ({ label, items, onChange, placeholder = "Escribe y agrega…" }) => {
+}> = ({ id , label, items, onChange, placeholder = "Escribe y agrega…" }) => {
   const [draft, setDraft] = React.useState("");
 
   const add = (val: string) => {
@@ -26,7 +27,7 @@ const TagEditor: React.FC<{
   };
 
   return (
-    <div>
+    <div id={id}>
       <Label>{label}</Label>
       <div
         className={[

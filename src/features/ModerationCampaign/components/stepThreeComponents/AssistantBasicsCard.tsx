@@ -12,6 +12,8 @@ const AssistantBasicsCard: React.FC = () => {
         <div>
           <Label>Nombre del asistente</Label>
           <TextInput
+            id="assistantName"
+            data-field="assistant.name"
             placeholder="Ej. Asistente Marta"
             value={data.assistant.name}
             onChange={(e) => setAssistant({ name: e.target.value })}
@@ -20,6 +22,8 @@ const AssistantBasicsCard: React.FC = () => {
         <div>
           <Label>Saludo inicial</Label>
           <TextInput
+            id="assistantGreeting"
+            data-field="assistant.greeting"
             placeholder="Hola, ¿en qué puedo ayudarte?"
             value={data.assistant.greeting}
             onChange={(e) => setAssistant({ greeting: e.target.value })}
@@ -29,6 +33,8 @@ const AssistantBasicsCard: React.FC = () => {
       <div className="mt-4">
         <Label>Lógica de conversación</Label>
         <TextArea
+          id="assistantLogic"
+          data-field="assistant.logic"
           rows={4}
           placeholder="Si pregunta por precios, responde con…"
           value={data.assistant.conversationLogic}

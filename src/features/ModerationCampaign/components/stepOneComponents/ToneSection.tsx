@@ -12,7 +12,7 @@ const ToneSection: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <SectionTitle title="Tono de comunicación" subtitle="Elige el estilo de voz" />
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div id="tone" className="flex flex-wrap gap-2 mt-2">
             {TONES.map((t) => (
               <Chip key={t} active={data.tone === t} onClick={() => setTone(t as ToneOption)}>
                 {t === "formal"
