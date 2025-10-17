@@ -202,20 +202,11 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     function setupInboundAudio(pc: RTCPeerConnection) {
         const audioEl = document.createElement("audio");
         audioEl.autoplay = true;
-        audioEl.muted = false;
-
         pc.ontrack = (ev) => {
             audioEl.srcObject = ev.streams[0];
 
-            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-            // Por si el contexto arranca “suspended” hasta gesto:
-            const tryResume = () => {
-                if (ctx.state === "suspended") ctx.resume().catch(() => { });
-            };
-            // reintentos suaves
-            document.addEventListener("click", tryResume, { once: true });
-            document.addEventListener("keydown", tryResume, { once: true });
-
+            const ctx = new (window.AudioContext ||
+                (window as any).webkitAudioContext)();
             const src = ctx.createMediaStreamSource(ev.streams[0]);
             const analyzer = ctx.createAnalyser();
             analyzer.fftSize = 256;
@@ -442,8 +433,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
 
     async function sendTextMessage(text: string) {
-        console.log('se llamo a send text message');
-
         const clean = (text ?? "").trim();
         if (!clean) return;
 
@@ -516,9 +505,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     async function onDataMessage(ev: MessageEvent) {
         try {
             const msg = JSON.parse(ev.data);
-
-            console.log(msg);
-
 
             switch (msg.type) {
                 // ===== DELTAS DEL ASSISTANT (crecen carácter a carácter) =====
