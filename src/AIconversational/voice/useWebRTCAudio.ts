@@ -138,7 +138,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         console.groupEnd();
     }, [debugLogs, conversation, maxTurns, isSessionActive, status]);
 
-    // ===== token efímero: replica la POC (payload completo a /realtime/sessions) =====
     async function getEphemeralToken(): Promise<string> {
         const backendUrl = import.meta.env.VITE_API_CONVERSATION
 
