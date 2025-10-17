@@ -5,6 +5,10 @@ import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 
+// NUEVO: utilidades de persistencia genérica
+import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
+import { loadBotSnapshot, buildBootInstructions } from "../../AIconversational/voice/session/persistence";
+
 export type ToolSpec = {
     type: "function";
     name: string;
@@ -22,6 +26,21 @@ type AgencyChatbotProps = {
     extraTools?: ToolSpec[];
     onRegisterTools?: (register: (name: string, fn: Function) => void) => void;
     placeholder?: string;
+
+    persistNamespace: string;
+    userId: string;
+    getBusinessSnapshot?: () => Record<string, any>;
+    getLocalNote?: () => string | undefined;
+
+    onConversationChange?: (
+        conversation: Array<{
+            id: string;
+            role: "user" | "assistant";
+            text: string;
+            isFinal?: boolean;
+            timestamp?: string;
+        }>
+    ) => void;
 };
 
 export default function AgencyChatbot({
@@ -29,9 +48,21 @@ export default function AgencyChatbot({
     extraTools = [],
     onRegisterTools,
     placeholder = "",
+
+    persistNamespace,
+    userId,
+    getBusinessSnapshot,
+    getLocalNote,
+
+    onConversationChange,
 }: AgencyChatbotProps) {
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
+
+    const getBootInstructions = React.useCallback(() => {
+        const snap = loadBotSnapshot(persistNamespace, userId);
+        return buildBootInstructions(snap);
+    }, [persistNamespace, userId]);
 
     const {
         isSessionActive,
@@ -44,7 +75,8 @@ export default function AgencyChatbot({
     } = useWebRTCAudio("sage", tools as any, {
         autoStart: false,
         startDelayMs: 120,
-        debugLogs: false
+        debugLogs: false,
+        getBootInstructions,
     });
 
     const {
@@ -65,22 +97,45 @@ export default function AgencyChatbot({
         registerFunction("changeTheme", changeTheme);
     }, [
         registerFunction,
-        goToCampaignSelection, goToMyCampaigns, goToListeningCreation,
-        goToMarketingCreation, goToModerationCreation, changeTheme
+        goToCampaignSelection,
+        goToMyCampaigns,
+        goToListeningCreation,
+        goToMarketingCreation,
+        goToModerationCreation,
+        changeTheme,
     ]);
 
     React.useEffect(() => {
         if (onRegisterTools) onRegisterTools(registerFunction);
     }, [onRegisterTools, registerFunction]);
 
+    React.useEffect(() => {
+        onConversationChange?.(conversation);
+    }, [conversation, onConversationChange]);
+
+    const business = React.useMemo(
+        () => (typeof getBusinessSnapshot === "function" ? getBusinessSnapshot() : {}),
+        [getBusinessSnapshot]
+    );
+    const localNote = React.useMemo(
+        () => (typeof getLocalNote === "function" ? getLocalNote() : undefined),
+        [getLocalNote]
+    );
+    useBotPersistence({
+        namespace: persistNamespace,
+        userId,
+        conversation,
+        business,
+        localNote,
+        maxHistory: 12,
+    });
+
+    // UI state
     const [text, setText] = React.useState("");
     const glowScale = isSessionActive ? 1 + Math.min(currentVolume * 2.5, 0.25) : 1;
     const glowOpacity = isSessionActive ? Math.min(0.7 + currentVolume * 1.2, 1) : 0.7;
 
-    // Floating mode
-
-
-    // ==== NEW: Observer + bubble state ====
+    // ==== Observer + bubble state ====
     const panelRef = React.useRef<HTMLDivElement | null>(null);
     const [isMostlyHidden, setIsMostlyHidden] = React.useState(false);
     const [bubbleOpen, setBubbleOpen] = React.useState(false);
@@ -89,8 +144,6 @@ export default function AgencyChatbot({
     React.useEffect(() => {
         const el = panelRef.current;
         if (!el) return;
-
-        // Si < 30% visible => mostramos burbuja
         const observer = new IntersectionObserver(
             (entries) => {
                 const entry = entries[0];
@@ -98,7 +151,6 @@ export default function AgencyChatbot({
             },
             { root: null, threshold: [0, 0.25, 0.3, 0.5, 0.75, 1] }
         );
-
         observer.observe(el);
         return () => observer.disconnect();
     }, []);
@@ -107,6 +159,7 @@ export default function AgencyChatbot({
         setBubbleOpen(false);
         panelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, []);
+
 
     const ChatPanel = (
         <div

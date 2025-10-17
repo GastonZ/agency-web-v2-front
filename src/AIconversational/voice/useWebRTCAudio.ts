@@ -50,6 +50,7 @@ type UseRtcOpts = {
   autoStart?: boolean;
   startDelayMs?: number;
   debugLogs?: boolean;
+  getBootInstructions?: () => string | undefined;
 };
 
 export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseRtcOpts) {
@@ -190,17 +191,25 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
   }
 
   function configureDataChannel(dc: RTCDataChannel) {
-    const sessionUpdate = {
+    const sessionUpdate: any = {
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
         input_audio_transcription: { model: "gpt-4o-transcribe" },
-        tools: [...tools], // <-- sin internalSummaryTool
+        tools: [...tools],
       },
     };
+
+    const extra = opts?.getBootInstructions?.();
+    if (extra && typeof extra === "string" && extra.trim().length) {
+      sessionUpdate.session.instructions = extra;
+    }
+
     if (REALTIME_DEBUG) {
       console.log("[session.update] tools:", sessionUpdate.session.tools);
+      if (extra) console.log("[session.update] boot instructions:\n" + extra);
     }
+
     dc.send(JSON.stringify(sessionUpdate));
   }
 
