@@ -29,6 +29,7 @@ import { useModerationCommsTools } from "../../../AIconversational/voice/tools/M
 import { calendarSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/calendar.schema";
 import { useModerationCalendarTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationCalendarTools";
 import { useAutoScrollTools } from "../../../AIconversational/voice/tools/useAutoScrollTools";
+import { getUserId } from "../../../utils/helper";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -306,6 +307,48 @@ const Moderation: React.FC = () => {
                     <div className="lg:col-span-5">
                         <AgencyChatbot
                             mode="floating"
+                            persistNamespace="moderation"
+                            userId={getUserId?.() || "anon"}
+                            getBusinessSnapshot={() => ({
+                                __summary: (() => {
+                                    const name = data?.name || "Sin nombre";
+                                    const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
+                                    const step = stepNames[current] ?? String(current);
+                                    return `Campaña de Moderación “${name}”, paso ${step}.`;
+                                })(),
+                                stepIndex: current,
+                                campaignId: data?.campaignId,
+                                basics: {
+                                    name: data?.name,
+                                    goal: data?.goal,
+                                    summary: data?.summary,
+                                    leadDefinition: data?.leadDefinition,
+                                },
+                                audience: {
+                                    countryId: data?.audience?.geo?.countryCode,
+                                    provinceId: data?.audience?.geo?.regionCode,
+                                    cityId: data?.audience?.geo?.city,
+                                    culture: data?.audience?.cultural,
+                                    tone: data?.tone,
+                                },
+                                channels: Array.isArray(data?.channels) ? data.channels : [],
+                                assistant: {
+                                    name: data?.assistant?.name,
+                                    greeting: data?.assistant?.greeting,
+                                    logic: data?.assistant?.conversationLogic,
+                                    qaCount: Array.isArray(data?.knowHow) ? data.knowHow.length : 0,
+                                    allowedTopicsCount: Array.isArray(data?.allowedTopics) ? data.allowedTopics.length : 0,
+                                    escalationCount: Array.isArray(data?.escalationItems) ? data.escalationItems.length : 0,
+                                    phone: data?.escalationPhone,
+                                    calendarsEnabled: !!data?.calendarsEnabled,
+                                },
+                            })}
+                            getLocalNote={() => {
+                                const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
+                                const step = stepNames[current] ?? String(current);
+                                const name = data?.name || "Sin nombre";
+                                return `Estábamos configurando la campaña “${name}” en ${step}.`;
+                            }}
                             extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any), ...(autoScrollTools as any)]}
                             onRegisterTools={(register) => {
                                 register("getModerationOverview", getModerationOverview);

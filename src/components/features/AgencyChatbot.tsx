@@ -1,9 +1,14 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Mic, ArrowUpToLine, X, Maximize2 } from "lucide-react";
+import { Mic, ArrowUpToLine, X, Maximize2, Loader2, Ear, ChevronDown, ChevronRight } from "lucide-react";
 import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
+import { botControlTools, useBotControlTools } from "../../AIconversational/voice/tools/useBotControlTools";
+
+// NUEVO: utilidades de persistencia genérica
+import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
+import { loadBotSnapshot, buildBootInstructions } from "../../AIconversational/voice/session/persistence";
 
 export type ToolSpec = {
     type: "function";
@@ -22,6 +27,21 @@ type AgencyChatbotProps = {
     extraTools?: ToolSpec[];
     onRegisterTools?: (register: (name: string, fn: Function) => void) => void;
     placeholder?: string;
+
+    persistNamespace: string;
+    userId: string;
+    getBusinessSnapshot?: () => Record<string, any>;
+    getLocalNote?: () => string | undefined;
+
+    onConversationChange?: (
+        conversation: Array<{
+            id: string;
+            role: "user" | "assistant";
+            text: string;
+            isFinal?: boolean;
+            timestamp?: string;
+        }>
+    ) => void;
 };
 
 export default function AgencyChatbot({
@@ -29,9 +49,23 @@ export default function AgencyChatbot({
     extraTools = [],
     onRegisterTools,
     placeholder = "",
+
+    persistNamespace,
+    userId,
+    getBusinessSnapshot,
+    getLocalNote,
+
+    onConversationChange,
 }: AgencyChatbotProps) {
-    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools], []);
+    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
+
+    const getBootInstructions = React.useCallback(() => {
+        const snap = loadBotSnapshot(persistNamespace, userId);
+        return buildBootInstructions(snap);
+    }, [persistNamespace, userId]);
+
+
 
     const {
         isSessionActive,
@@ -41,10 +75,15 @@ export default function AgencyChatbot({
         status,
         currentVolume,
         conversation,
+        isStarting,
+        isThinking,
+        startSession,
+        stopSession
     } = useWebRTCAudio("sage", tools as any, {
-        autoStart: false,
+        autoStart: true,
         startDelayMs: 120,
-        debugLogs: false
+        debugLogs: false,
+        getBootInstructions,
     });
 
     const {
@@ -54,7 +93,12 @@ export default function AgencyChatbot({
         goToMarketingCreation,
         goToModerationCreation,
     } = useNavigationTools();
+
     const { changeTheme } = useThemeTool();
+    const { deactivateAgent, activateAgent } = useBotControlTools({
+        startSession,
+        stopSession,
+    });
 
     React.useEffect(() => {
         registerFunction("goToCampaignSelection", goToCampaignSelection);
@@ -63,24 +107,51 @@ export default function AgencyChatbot({
         registerFunction("goToMarketingCreation", goToMarketingCreation);
         registerFunction("goToModerationCreation", goToModerationCreation);
         registerFunction("changeTheme", changeTheme);
+        registerFunction("deactivateAgent", deactivateAgent);
+        registerFunction("activateAgent", activateAgent);
     }, [
         registerFunction,
-        goToCampaignSelection, goToMyCampaigns, goToListeningCreation,
-        goToMarketingCreation, goToModerationCreation, changeTheme
+        goToCampaignSelection,
+        goToMyCampaigns,
+        goToListeningCreation,
+        goToMarketingCreation,
+        goToModerationCreation,
+        deactivateAgent,
+        activateAgent,
+        changeTheme,
     ]);
 
     React.useEffect(() => {
         if (onRegisterTools) onRegisterTools(registerFunction);
     }, [onRegisterTools, registerFunction]);
 
+    React.useEffect(() => {
+        onConversationChange?.(conversation);
+    }, [conversation, onConversationChange]);
+
+    const business = React.useMemo(
+        () => (typeof getBusinessSnapshot === "function" ? getBusinessSnapshot() : {}),
+        [getBusinessSnapshot]
+    );
+    const localNote = React.useMemo(
+        () => (typeof getLocalNote === "function" ? getLocalNote() : undefined),
+        [getLocalNote]
+    );
+    useBotPersistence({
+        namespace: persistNamespace,
+        userId,
+        conversation,
+        business,
+        localNote,
+        maxHistory: 12,
+    });
+
+    // UI state
     const [text, setText] = React.useState("");
     const glowScale = isSessionActive ? 1 + Math.min(currentVolume * 2.5, 0.25) : 1;
     const glowOpacity = isSessionActive ? Math.min(0.7 + currentVolume * 1.2, 1) : 0.7;
 
-    // Floating mode
-
-
-    // ==== NEW: Observer + bubble state ====
+    // ==== Observer + bubble state ====
     const panelRef = React.useRef<HTMLDivElement | null>(null);
     const [isMostlyHidden, setIsMostlyHidden] = React.useState(false);
     const [bubbleOpen, setBubbleOpen] = React.useState(false);
@@ -89,8 +160,6 @@ export default function AgencyChatbot({
     React.useEffect(() => {
         const el = panelRef.current;
         if (!el) return;
-
-        // Si < 30% visible => mostramos burbuja
         const observer = new IntersectionObserver(
             (entries) => {
                 const entry = entries[0];
@@ -98,7 +167,6 @@ export default function AgencyChatbot({
             },
             { root: null, threshold: [0, 0.25, 0.3, 0.5, 0.75, 1] }
         );
-
         observer.observe(el);
         return () => observer.disconnect();
     }, []);
@@ -107,6 +175,7 @@ export default function AgencyChatbot({
         setBubbleOpen(false);
         panelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, []);
+
 
     const ChatPanel = (
         <div
@@ -221,8 +290,62 @@ export default function AgencyChatbot({
 
     return (
         <>
-            {/* Burbuja fija abajo-derecha */}
             <div className="fixed bottom-20 right-20 z-50">
+                <div
+                    className={[
+                        "absolute -top-3 right-[15px] translate-y-[-100%]",
+                        "px-3 py-2 rounded-xl text-[12px] font-medium",
+                        "shadow-sm border",
+                        "bg-white/95 dark:bg-neutral-900/90",
+                        "border-neutral-200 dark:border-neutral-700",
+                        "backdrop-blur supports-[backdrop-filter]:bg-white/80",
+                        "flex items-center gap-2 select-none",
+                        bubbleOpen ? "opacity-0 pointer-events-none" : "opacity-100",
+                    ].join(" ")}
+                >
+
+                    {!isSessionActive ? (
+                        isStarting ? (
+                            <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin opacity-90" />
+                                <span>Iniciando…</span>
+                            </>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <span>Inactiva…</span>
+                                <span className="opacity-70">click</span>
+                                <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                                <ChevronRight className="h-3.5 w-3.5 opacity-80" />
+                                <Mic className="h-3.5 w-3.5 opacity-90" />
+                            </div>
+                        )
+                    ) : isThinking ? (
+                        <div className="flex items-center gap-2">
+                            <span className="sr-only">Pensando…</span>
+                            <div className="flex items-center gap-1">
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "120ms" }} />
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "240ms" }} />
+                            </div>
+                            <span>Pensando…</span>
+                        </div>
+                    ) : isTalking ? (
+                        <div className="flex items-center gap-2">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Hablando…</span>
+                        </div>
+                    ) : (
+                        <>
+                            <Ear className="h-3.5 w-3.5 opacity-90" />
+                            <span>Te escucho…</span>
+                        </>
+                    )}
+                    <div
+                        className="absolute -bottom-1 right-3 h-2 w-2 rotate-45
+               bg-white/95 dark:bg-neutral-900/90 border-r border-b
+               border-neutral-200 dark:border-neutral-700"
+                    />
+                </div>
                 <motion.button
                     type="button"
                     onClick={() => setBubbleOpen((v) => !v)}
