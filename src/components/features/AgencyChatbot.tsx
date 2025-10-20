@@ -387,7 +387,7 @@ export default function AgencyChatbot({
                         <div className="relative h-full w-full flex items-center justify-between px-3">
                             {/* Mic toggle */}
                             <div
-                                onClick={(e) => { e.stopPropagation(); handleStartStopClick(); }}
+                                onClick={(e) => { e.stopPropagation(); handleStartStopClick(); setBubbleOpen(!bubbleOpen) }}
                                 className={[
                                     "inline-flex items-center justify-center rounded-full",
                                     "h-10 w-10 border transition-colors",
