@@ -80,7 +80,7 @@ export default function AgencyChatbot({
         startSession,
         stopSession
     } = useWebRTCAudio("sage", tools as any, {
-        autoStart: true,
+        autoStart: false,
         startDelayMs: 120,
         debugLogs: false,
         getBootInstructions,

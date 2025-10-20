@@ -150,77 +150,28 @@ export function useModerationAssistantTools() {
         newQuestion?: string;
         newAnswer?: string;
     }) {
-        const list = Array.isArray((data as any)?.qa) ? (data as any).qa : [];
-        const { match, score } = findBestQA(list, args);
-
-        if (!match) {
-            // devuelve candidatos ordenados para que el asistente pregunte “¿te referís a …?”
-            const candidates = list
-                .map((qa: any) => ({
-                    id: qa.id,
-                    question: qa.question,
-                    answer: qa.answer,
-                    score: scoreQA(qa, args),
-                }))
-                .sort((a: any, b: any) => b.score - a.score)
-                .slice(0, 5);
-
-            return {
-                success: false,
-                message:
-                    "No pude encontrar una Q&A con suficiente confianza. ¿Podés especificar mejor la pregunta/respuesta?",
-                candidates,
-            };
-        }
-
-        const patch: any = {};
-        if (typeof args.newQuestion === "string" && args.newQuestion.trim()) {
-            patch.question = args.newQuestion.trim();
-        }
-        if (typeof args.newAnswer === "string" && args.newAnswer.trim()) {
-            patch.answer = args.newAnswer.trim();
-        }
-        if (!Object.keys(patch).length) {
-            return { success: false, message: "No hay cambios para aplicar (newQuestion/newAnswer)." };
-        }
-
-        updateQA(match.id, patch);
         return {
-            success: true,
-            message: `Q&A actualizada (confianza ${(score * 100).toFixed(0)}%).`,
-            id: match.id,
-            applied: patch,
+            success: false,
+            requiresManual: true,
+            action: "edit",
+            message:
+                "La edición de preguntas y respuestas (Q&A) debe realizarse manualmente desde la sección \"Base de conocimiento\".",
+            instructions:
+                "Abrí 'Reglas' → 'Base de conocimiento', localizá la Q&A y editá los campos de manera manual.",
+            receivedArgs: args ?? {},
         };
     }
 
-    /** Elimina por ID o por similitud de texto */
     function removeModerationQAMatch(args: { id?: string; questionHint?: string; answerHint?: string }) {
-        const list = Array.isArray((data as any)?.qa) ? (data as any).qa : [];
-        const { match, score } = findBestQA(list, args);
-
-        if (!match) {
-            const candidates = list
-                .map((qa: any) => ({
-                    id: qa.id,
-                    question: qa.question,
-                    answer: qa.answer,
-                    score: scoreQA(qa, args),
-                }))
-                .sort((a: any, b: any) => b.score - a.score)
-                .slice(0, 5);
-            return {
-                success: false,
-                message:
-                    "No pude identificar con confianza la Q&A a eliminar. ¿Te referías a alguna de estas?",
-                candidates,
-            };
-        }
-
-        removeQA(match.id);
         return {
-            success: true,
-            message: `Q&A eliminada (confianza ${(score * 100).toFixed(0)}%).`,
-            id: match.id,
+            success: false,
+            requiresManual: true,
+            action: "remove",
+            message:
+                "La eliminación de preguntas y respuestas (Q&A) debe realizarse manualmente desde la sección \"Base de conocimiento\".",
+            instructions:
+                "Abrí 'Reglas' → 'Base de conocimiento', localizá la Q&A y usá el botón de eliminar.",
+            receivedArgs: args ?? {},
         };
     }
 
