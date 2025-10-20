@@ -9,7 +9,7 @@ import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
 import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus } from "../../../services/campaigns";
-import { saveLastLaunchedModeration } from "../../../utils/helper";
+import { clampStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
@@ -414,6 +414,7 @@ const Moderation: React.FC = () => {
                                 register("checkModerationStepStatus", checkModerationStepStatus);
                                 register("scrollToModerationField", scrollToModerationField);
                                 register("scrollToFieldIfFilled", scrollToFieldIfFilled);
+                                /* Go to next or prev step */
                                 register("goToNextModerationStep", async () => {
                                     const ok = await saveCurrentStep();
                                     if (!ok) {
@@ -447,6 +448,99 @@ const Moderation: React.FC = () => {
                                     }
                                     setCurrent((c) => Math.max(0, c - 1));
                                     return { success: true, movedTo: Math.max(0, current - 1) };
+                                });
+
+                                register("goNextNModerationStep", async (args: any) => {
+                                    let target: number | null = toIndexStep(args?.step);
+                                    if (target === null) {
+                                        const byTopic = resolveStepFromTopic(args?.topic);
+                                        if (byTopic !== null) target = byTopic;
+                                    }
+                                    if (target === null && Number.isFinite(args?.n)) {
+                                        const delta = Number(args.n);
+                                        target = clampStep(current + delta);
+                                    }
+                                    if (target === null) target = clampStep(current + 1);
+
+                                    if (target === current) {
+                                        return {
+                                            success: false,
+                                            message: `Ya estás en "${formatStepName(current)}".`,
+                                            currentStep: current,
+                                        };
+                                    }
+
+                                    if (target < current) {
+                                        setCurrent(target);
+                                        return {
+                                            success: true,
+                                            movedTo: target,
+                                            label: formatStepName(target),
+                                            note: "Movimiento hacia atrás: no se requirió validación.",
+                                        };
+                                    }
+
+                                    let ptr = current;
+                                    while (ptr < target) {
+                                        const ok = await saveCurrentStep();
+                                        if (!ok) {
+                                            const r = checkModerationStepStatus({ step: ptr });
+                                            return {
+                                                success: false,
+                                                message: `Faltan completar datos antes de continuar desde "${formatStepName(ptr)}".`,
+                                                blockedAt: ptr,
+                                                targetStep: target,
+                                                ...r,
+                                            };
+                                        }
+                                        setCurrent((c) => Math.min(3, c + 1));
+                                        ptr += 1;
+                                    }
+
+                                    return {
+                                        success: true,
+                                        movedTo: target,
+                                        label: formatStepName(target),
+                                    };
+                                });
+
+                                register("goPrevNModerationStep", (args: any) => {
+                                    let target: number | null = toIndexStep(args?.step);
+                                    if (target === null) {
+                                        const byTopic = resolveStepFromTopic(args?.topic);
+                                        if (byTopic !== null) target = byTopic;
+                                    }
+                                    if (target === null && Number.isFinite(args?.n)) {
+                                        const delta = Math.abs(Number(args.n));
+                                        target = clampStep(current - delta);
+                                    }
+                                    if (target === null) target = clampStep(current - 1);
+
+                                    if (target === current) {
+                                        return {
+                                            success: false,
+                                            message: `Ya estás en "${formatStepName(current)}".`,
+                                            currentStep: current,
+                                        };
+                                    }
+                                    if (target > current) {
+                                        return {
+                                            success: false,
+                                            message:
+                                                `El objetivo (${formatStepName(target)}) está por delante de "${formatStepName(current)}". ` +
+                                                `Para avanzar, usá "goNextNModerationStep".`,
+                                            currentStep: current,
+                                            targetStep: target,
+                                        };
+                                    }
+
+                                    setCurrent(target);
+                                    return {
+                                        success: true,
+                                        movedTo: target,
+                                        label: formatStepName(target),
+                                        note: "Movimiento hacia atrás: no se requirió validación.",
+                                    };
                                 });
 
                                 register("setModerationAssistantConfig", (args: any) => {

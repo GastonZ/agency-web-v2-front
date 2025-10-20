@@ -149,3 +149,66 @@ export function clearLastLaunchedModeration() {
     localStorage.removeItem(LAST_KEY);
   } catch {}
 }
+
+export function _norm(s: string) {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const STEP0_MATCHERS = [
+  "definicion de campaña", "definición de campaña", "definicion", "campaña",
+  "nombre", "descripcion", "descripción", "definicion lead", "definición lead",
+  "lead definition", "objetivo", "objetivo principal",
+  "publico objetivo", "público objetivo",
+  "pais", "país", "provincia", "region", "región", "ciudad",
+  "segmentacion", "segmentación",
+  "tono de comunicacion", "tono de comunicación",
+];
+
+const STEP1_MATCHERS = [
+  "canales", "canales de comunicacion", "canales de comunicación",
+];
+
+const STEP2_MATCHERS = [
+  "asistente", "datos del asistente",
+  "logica de conversacion", "lógica de conversacion", "lógica de conversación",
+  "saludo", "saludo inicial",
+  "calendario", "turnos", "citas",
+  "base de conocimiento", "preguntas y respuestas", "qa", "q&a",
+  "voz del asistente", "voz",
+];
+
+export function resolveStepFromTopic(topic?: string): number | null {
+  if (!topic) return null;
+  const t = _norm(topic);
+
+  const hit = (arr: string[]) => arr.some(k => t.includes(_norm(k)));
+  if (hit(STEP0_MATCHERS)) return 0;
+  if (hit(STEP1_MATCHERS)) return 1;
+  if (hit(STEP2_MATCHERS)) return 2;
+  return null;
+}
+
+export function clampStep(n: number) {
+  return Math.max(0, Math.min(3, n));
+}
+
+export function formatStepName(i: number) {
+  return i === 0 ? "Datos"
+       : i === 1 ? "Canales"
+       : i === 2 ? "Reglas"
+       : "Revisión";
+}
+
+export function toIndexStep(stepLike: any): number | null {
+  if (stepLike === null || stepLike === undefined) return null;
+  const n = typeof stepLike === "string" ? parseInt(stepLike, 10) : Number(stepLike);
+  if (!Number.isFinite(n)) return null;
+  if (n >= 1 && n <= 4) return n - 1; 
+  if (n >= 0 && n <= 3) return n;
+  return null;
+}

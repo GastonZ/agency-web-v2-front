@@ -146,7 +146,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       body = JSON.parse(raw);
     } catch { }
 
-    if (REALTIME_DEBUG) {
+/*     if (REALTIME_DEBUG) {
       console.groupCollapsed("[/realtime/sessions] RESPONSE");
       console.log("status:", res.status, res.statusText);
       console.log("body:", body);
@@ -154,7 +154,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         body?.client_secret?.value ?? body?.value ?? body?.token;
       console.log("token:", mask(tokenPreview));
       console.groupEnd();
-    }
+    } */
 
     if (!res.ok) throw new Error(`Failed to get token: ${res.status} ${raw}`);
 
