@@ -33,6 +33,10 @@ type AgencyChatbotProps = {
     getBusinessSnapshot?: () => Record<string, any>;
     getLocalNote?: () => string | undefined;
 
+    autoStart?: boolean;
+
+    bootSummaryOverride?: string;
+
     onConversationChange?: (
         conversation: Array<{
             id: string;
@@ -55,6 +59,9 @@ export default function AgencyChatbot({
     getBusinessSnapshot,
     getLocalNote,
 
+    autoStart = false,
+    bootSummaryOverride,
+
     onConversationChange,
 }: AgencyChatbotProps) {
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools], []);
@@ -62,11 +69,21 @@ export default function AgencyChatbot({
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
-        return buildBootInstructions(snap);
-    }, [persistNamespace, userId]);
+        const merged = bootSummaryOverride
+            ? { ...snap, business: { ...(snap?.business || {}), __summary: bootSummaryOverride } }
+            : snap;
 
+        const instructions = buildBootInstructions(merged as any);
 
+        console.groupCollapsed("[Chatbot][boot] instructions");
+        console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride);
+        console.log("instructions.len:", instructions?.length ?? 0);
+        console.log("instructions.preview:\n", (instructions || "").slice(0, 600));
+        console.groupEnd();
 
+        return instructions;
+    }, [persistNamespace, userId, bootSummaryOverride]);
+    
     const {
         isSessionActive,
         handleStartStopClick,
@@ -78,9 +95,9 @@ export default function AgencyChatbot({
         isStarting,
         isThinking,
         startSession,
-        stopSession
+        stopSession,
     } = useWebRTCAudio("sage", tools as any, {
-        autoStart: false,
+        autoStart,
         startDelayMs: 120,
         debugLogs: false,
         getBootInstructions,

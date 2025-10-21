@@ -212,3 +212,11 @@ export function toIndexStep(stepLike: any): number | null {
   if (n >= 0 && n <= 3) return n;
   return null;
 }
+
+export function historyToText(
+  hist: Array<{ role: "user" | "assistant"; text: string; ts: number }>
+) {
+  return (hist || [])
+    .map((m) => `${m.role === "assistant" ? "Asistente" : "Usuario"}: ${m.text || ""}`)
+    .join("\n");
+}
