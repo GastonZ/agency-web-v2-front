@@ -81,15 +81,15 @@ export const assistantSchema: ToolSpec[] = [
         type: "function",
         name: "updateModerationQAMatch",
         description:
-            "Actualiza una Q&A buscando por similitud de texto si no se provee ID. Usa questionHint/answerHint para identificar y newQuestion/newAnswer para actualizar.",
+            "No modifica la base de conocimiento de forma automática. Devuelve instrucciones para que el usuario edite manualmente una Q&A en la UI (Reglas → Base de conocimiento).",
         parameters: {
             type: "object",
             properties: {
-                id: { type: "string", description: "Opcional; si se pasa, se usa directo." },
-                questionHint: { type: "string", description: "Pista de pregunta para localizar la Q&A." },
-                answerHint: { type: "string", description: "Pista de respuesta para localizar la Q&A." },
-                newQuestion: { type: "string", description: "Nueva pregunta (si se desea cambiar)." },
-                newAnswer: { type: "string", description: "Nueva respuesta (si se desea cambiar)." },
+                id: { type: "string", description: "Ignorado. La edición es manual en la UI." },
+                questionHint: { type: "string", description: "Ignorado. La edición es manual en la UI." },
+                answerHint: { type: "string", description: "Ignorado. La edición es manual en la UI." },
+                newQuestion: { type: "string", description: "Ignorado. La edición es manual en la UI." },
+                newAnswer: { type: "string", description: "Ignorado. La edición es manual en la UI." },
             },
             additionalProperties: false,
         },
@@ -98,15 +98,15 @@ export const assistantSchema: ToolSpec[] = [
         type: "function",
         name: "removeModerationQAMatch",
         description:
-            "Elimina una Q&A buscando por similitud de texto si no se provee ID. Usa questionHint/answerHint para identificar.",
+            "No elimina Q&A automáticamente. Devuelve instrucciones para que el usuario elimine manualmente una Q&A en la UI (Reglas → Base de conocimiento).",
         parameters: {
             type: "object",
             properties: {
-                id: { type: "string", description: "Opcional; si se pasa, se usa directo." },
-                questionHint: { type: "string", description: "Pista de pregunta para localizar la Q&A." },
-                answerHint: { type: "string", description: "Pista de respuesta para localizar la Q&A." },
+                id: { type: "string", description: "Ignorado. La eliminación es manual en la UI." },
+                questionHint: { type: "string", description: "Ignorado. La eliminación es manual en la UI." },
+                answerHint: { type: "string", description: "Ignorado. La eliminación es manual en la UI." },
             },
             additionalProperties: false,
         },
-    },
+    }
 ];

@@ -146,15 +146,15 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       body = JSON.parse(raw);
     } catch { }
 
-    if (REALTIME_DEBUG) {
-      console.groupCollapsed("[/realtime/sessions] RESPONSE");
-      console.log("status:", res.status, res.statusText);
-      console.log("body:", body);
-      const tokenPreview =
-        body?.client_secret?.value ?? body?.value ?? body?.token;
-      console.log("token:", mask(tokenPreview));
-      console.groupEnd();
-    }
+    /*     if (REALTIME_DEBUG) {
+          console.groupCollapsed("[/realtime/sessions] RESPONSE");
+          console.log("status:", res.status, res.statusText);
+          console.log("body:", body);
+          const tokenPreview =
+            body?.client_secret?.value ?? body?.value ?? body?.token;
+          console.log("token:", mask(tokenPreview));
+          console.groupEnd();
+        } */
 
     if (!res.ok) throw new Error(`Failed to get token: ${res.status} ${raw}`);
 
@@ -208,10 +208,17 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       sessionUpdate.session.instructions = extra;
     }
 
-/*     if (REALTIME_DEBUG) {
-      console.log("[session.update] tools:", sessionUpdate.session.tools);
-      if (extra) console.log("[session.update] boot instructions:\n" + extra);
-    } */
+    console.groupCollapsed("[Realtime][boot] session.update payload");
+    const tnames = (sessionUpdate.session.tools || []).map((t: any) => t?.name).filter(Boolean);
+    console.log("tools:", tnames);
+    if (sessionUpdate.session.instructions) {
+      const instr = sessionUpdate.session.instructions as string;
+      console.log("instructions.len:", instr.length);
+      console.log("instructions.preview:\n" + instr.slice(0, 600));
+    } else {
+      console.log("instructions: <none>");
+    }
+    console.groupEnd();
 
     dc.send(JSON.stringify(sessionUpdate));
   }
@@ -240,7 +247,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         reject(new Error("Timeout esperando DataChannel 'open'"));
       }, timeoutMs);
 
-      // si ya abrió entre líneas:
       if (dc.readyState === "open") {
         clearTimeout(to);
         dc.removeEventListener?.("open", onOpen as any);
@@ -416,7 +422,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
           setConversation((prev) => {
             const last = prev[prev.length - 1];
 
-            // Si el último ya es del assistant y no está finalizado: concatenar texto
             if (last && last.role === "assistant" && !last.isFinal) {
               const updated = [...prev];
               updated[updated.length - 1] = {
@@ -426,7 +431,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
               return updated;
             }
 
-            // Primer delta de un nuevo mensaje del assistant
             return [
               ...prev,
               {
@@ -454,7 +458,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
             };
             return updated;
           });
-          // Log después de que React aplique el estado
           setTimeout(() => logSessionWindow?.("assistant-replied"), 0);
           break;
         }
