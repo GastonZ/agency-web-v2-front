@@ -32,6 +32,7 @@ import { useAutoScrollTools } from "../../../AIconversational/voice/tools/useAut
 import { getUserId, historyToText } from "../../../utils/helper";
 import { getResumeOfConversation } from "../../../services/ia";
 import { loadBotSnapshot } from "../../../AIconversational/voice/session/persistence";
+import { MODERATION_PLAYBOOK } from "../utils/campaignsInstructions";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -377,6 +378,7 @@ const Moderation: React.FC = () => {
                             userId={userId}
                             autoStart={bootReady}
                             bootSummaryOverride={bootSummary}
+                            bootExtraInstructions={MODERATION_PLAYBOOK}
                             getBusinessSnapshot={() => ({
                                 __summary: (() => {
                                     const name = data?.name || "Sin nombre";
@@ -633,7 +635,6 @@ const Moderation: React.FC = () => {
                                 });
                                 register("explainAssistantVoiceFormat", (args: any) => {
                                     const r = explainAssistantVoiceFormat(args);
-                                    // lo más cercano a "lógica de conversación"
                                     try { scrollToModerationField({ field: "assistant.logic" as any }); } catch { }
                                     return r;
                                 });

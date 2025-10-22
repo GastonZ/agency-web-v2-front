@@ -46,6 +46,8 @@ type AgencyChatbotProps = {
             timestamp?: string;
         }>
     ) => void;
+
+    bootExtraInstructions?: string;
 };
 
 export default function AgencyChatbot({
@@ -63,27 +65,33 @@ export default function AgencyChatbot({
     bootSummaryOverride,
 
     onConversationChange,
+    bootExtraInstructions,
 }: AgencyChatbotProps) {
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
+        if (!snap && !bootExtraInstructions) return;
+
         const merged = bootSummaryOverride
             ? { ...snap, business: { ...(snap?.business || {}), __summary: bootSummaryOverride } }
             : snap;
 
-        const instructions = buildBootInstructions(merged as any);
+        const base = buildBootInstructions(merged as any) || "";
+        const extra = (bootExtraInstructions || "").trim();
 
+        const finalText = extra ? `${base}\n\nGuía específica de esta vista:\n${extra}` : base;
+
+        // Logs para chequear que entró
         console.groupCollapsed("[Chatbot][boot] instructions");
-        console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride);
-        console.log("instructions.len:", instructions?.length ?? 0);
-        console.log("instructions.preview:\n", (instructions || "").slice(0, 600));
+        console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride, "hasExtra:", !!extra);
+        console.log("instructions.len:", finalText.length);
+        console.log("instructions.preview:\n", finalText.slice(0, 600));
         console.groupEnd();
 
-        return instructions;
-    }, [persistNamespace, userId, bootSummaryOverride]);
-    
+        return finalText;
+    }, [persistNamespace, userId, bootSummaryOverride, bootExtraInstructions]);
     const {
         isSessionActive,
         handleStartStopClick,
