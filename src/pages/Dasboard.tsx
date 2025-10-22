@@ -2,7 +2,7 @@
 import React from "react";
 import OnlineLayout from "../layout/OnlineLayout";
 import AgencyChatbot from "../components/features/AgencyChatbot";
-import { getUserId } from "../utils/helper";
+import { DASHBOARD_PLAYBOOK, getUserId } from "../utils/helper";
 
 type GlassCardProps = {
     title?: React.ReactNode;
@@ -74,7 +74,7 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
                     {/* Chatbot */}
                     <AgencyChatbot
-                        autoStart={true}
+                        autoStart
                         mode="floating"
                         placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
                         persistNamespace="global"    
@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
                             __summary: "Chat general del dashboard.",
                             page: "dashboard",
                         })}
-                        getLocalNote={() => "Charlando en el panel principal."}
+                        bootExtraInstructions={DASHBOARD_PLAYBOOK}
                     />
                     <div className="lg:col-span-12 flex">
                         <GlassCard title="Active campaigns performance" rightLabel="Last 24h" className="w-full">
