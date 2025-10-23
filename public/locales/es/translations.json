@@ -92,7 +92,7 @@
     "knowledge_base": "Base de conocimiento (PDF/TXT/CSV)",
     "question": "Pregunta",
     "answer": "Respuesta",
-    "add_qa": "Agregar Q&A",
+    "add_qa": "Agregar preg. y resp.",
     "delete": "Eliminar",
     "reply_only_related": "Responder únicamente consultas relacionadas a…",
     "allowed_topics": "Temas permitidos",

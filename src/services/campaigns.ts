@@ -183,3 +183,30 @@ export async function activateWhatsappBot(
   );
   return res.data;
 }
+
+type InstagramCredentialsPayload = {
+  instagramId: string;
+  accessToken: string;
+};
+
+export async function updateModerationInstagramCredentials(
+  campaignId: string,
+  creds: InstagramCredentialsPayload
+) {
+  if (!campaignId) throw new Error("campaignId es requerido");
+  if (!creds?.instagramId || !creds?.accessToken) {
+    throw new Error("instagramId y accessToken son requeridos");
+  }
+
+  const payload = {
+    instagramId: creds.instagramId,
+    accessToken: creds.accessToken,
+  };
+
+  const res: AxiosResponse<any> = await api.put(
+    `moderation-campaigns/${campaignId}/instagram-credentials`,
+    payload
+  );
+
+  return res.data;
+}
