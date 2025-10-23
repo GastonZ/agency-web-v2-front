@@ -6,6 +6,8 @@ import { channelsSchema } from "./channels.schema";
 import { validationSchema } from "./validation.schema";
 import { assistantSchema } from "./assistant.schema";
 import { communicationSchema } from "./communication.schema";
+import { finalizeModerationSchema } from "./finalize.schema";
+import { resetModerationSchema } from "./reset.schema";
 
 export const moderationSchemas = [
   ...basicsSchema,
@@ -15,5 +17,7 @@ export const moderationSchemas = [
   ...channelsSchema,
   ...validationSchema,
   ...assistantSchema,
-  ...communicationSchema
+  ...communicationSchema,
+  ...finalizeModerationSchema,
+  ...resetModerationSchema
 ];
