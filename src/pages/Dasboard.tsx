@@ -2,6 +2,7 @@
 import React from "react";
 import OnlineLayout from "../layout/OnlineLayout";
 import AgencyChatbot from "../components/features/AgencyChatbot";
+import { DASHBOARD_PLAYBOOK, getUserId } from "../utils/helper";
 
 type GlassCardProps = {
     title?: React.ReactNode;
@@ -65,14 +66,25 @@ function Placeholder({ className = "" }: { className?: string }) {
 
 const Dashboard: React.FC = () => {
 
+    const userId = getUserId?.() || "anon";
+
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
                     {/* Chatbot */}
-                    <AgencyChatbot placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
-                        mode="floating" />
-
+                    <AgencyChatbot
+                        autoStart
+                        mode="floating"
+                        placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
+                        persistNamespace="global"    
+                        userId={userId}         
+                        getBusinessSnapshot={() => ({
+                            __summary: "Chat general del dashboard.",
+                            page: "dashboard",
+                        })}
+                        bootExtraInstructions={DASHBOARD_PLAYBOOK}
+                    />
                     <div className="lg:col-span-12 flex">
                         <GlassCard title="Active campaigns performance" rightLabel="Last 24h" className="w-full">
                             <Placeholder className="h-full" />

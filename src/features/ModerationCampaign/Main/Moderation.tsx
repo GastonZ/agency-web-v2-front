@@ -9,7 +9,7 @@ import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
 import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus } from "../../../services/campaigns";
-import { saveLastLaunchedModeration } from "../../../utils/helper";
+import { clampStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
@@ -29,7 +29,10 @@ import { useModerationCommsTools } from "../../../AIconversational/voice/tools/M
 import { calendarSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/calendar.schema";
 import { useModerationCalendarTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationCalendarTools";
 import { useAutoScrollTools } from "../../../AIconversational/voice/tools/useAutoScrollTools";
-import { getUserId } from "../../../utils/helper";
+import { getUserId, historyToText } from "../../../utils/helper";
+import { getResumeOfConversation } from "../../../services/ia";
+import { loadBotSnapshot } from "../../../AIconversational/voice/session/persistence";
+import { MODERATION_PLAYBOOK } from "../utils/campaignsInstructions";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -82,7 +85,71 @@ const Moderation: React.FC = () => {
 
     const [current, setCurrent] = useState(0);
     const [saving, setSaving] = useState(false);
+
+    const [bootSummary, setBootSummary] = React.useState<string | undefined>(undefined);
+    const [bootReady, setBootReady] = React.useState(false);
+
+    const userId = getUserId?.() || "anon";
+    const persistNamespace = "moderation";
+
     const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
+
+    React.useEffect(() => {
+        let aborted = false;
+        const ctrl = new AbortController();
+
+        (async () => {
+            try {
+                const primaryNs = persistNamespace;
+                const fallbackNs = "global";
+
+                const snapPrimary = loadBotSnapshot(primaryNs, userId);
+                const primaryLen = snapPrimary?.history?.length ?? 0;
+
+                const snapFallback = loadBotSnapshot(fallbackNs, userId);
+                const fallbackLen = snapFallback?.history?.length ?? 0;
+
+                console.groupCollapsed("[Moderation][boot] resumen previo");
+                console.log("primary:", primaryNs, "len:", primaryLen);
+                console.log("fallback:", fallbackNs, "len:", fallbackLen);
+                console.groupEnd();
+
+                let chosenText = "";
+                let chosenSource: "primary" | "fallback" | "none" = "none";
+
+                if (primaryLen > 0) {
+                    chosenText = historyToText(snapPrimary!.history);
+                    chosenSource = "primary";
+                } else if (fallbackLen > 0) {
+                    chosenText = historyToText(snapFallback!.history);
+                    chosenSource = "fallback";
+                }
+
+                if (chosenSource !== "none" && chosenText.trim().length) {
+                    console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
+                    const summary = await getResumeOfConversation(chosenText, 280, ctrl.signal);
+                    if (!aborted) {
+                        setBootSummary(summary || undefined);
+                        console.groupCollapsed("[Moderation][boot] resumen recibido");
+                        console.log("summary.len:", (summary || "").length);
+                        console.log("summary.preview:", (summary || "").slice(0, 240));
+                        console.groupEnd();
+                    }
+                } else {
+                    console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
+                }
+            } catch (e) {
+                console.warn("[Moderation][boot] fallo al resumir:", e);
+            } finally {
+                if (!aborted) setBootReady(true);
+            }
+        })();
+
+        return () => {
+            aborted = true;
+            ctrl.abort();
+        };
+    }, [persistNamespace, userId]);
 
     React.useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -308,7 +375,10 @@ const Moderation: React.FC = () => {
                         <AgencyChatbot
                             mode="floating"
                             persistNamespace="moderation"
-                            userId={getUserId?.() || "anon"}
+                            userId={userId}
+                            autoStart={bootReady}
+                            bootSummaryOverride={bootSummary}
+                            bootExtraInstructions={MODERATION_PLAYBOOK}
                             getBusinessSnapshot={() => ({
                                 __summary: (() => {
                                     const name = data?.name || "Sin nombre";
@@ -414,6 +484,7 @@ const Moderation: React.FC = () => {
                                 register("checkModerationStepStatus", checkModerationStepStatus);
                                 register("scrollToModerationField", scrollToModerationField);
                                 register("scrollToFieldIfFilled", scrollToFieldIfFilled);
+                                /* Go to next or prev step */
                                 register("goToNextModerationStep", async () => {
                                     const ok = await saveCurrentStep();
                                     if (!ok) {
@@ -449,6 +520,99 @@ const Moderation: React.FC = () => {
                                     return { success: true, movedTo: Math.max(0, current - 1) };
                                 });
 
+                                register("goNextNModerationStep", async (args: any) => {
+                                    let target: number | null = toIndexStep(args?.step);
+                                    if (target === null) {
+                                        const byTopic = resolveStepFromTopic(args?.topic);
+                                        if (byTopic !== null) target = byTopic;
+                                    }
+                                    if (target === null && Number.isFinite(args?.n)) {
+                                        const delta = Number(args.n);
+                                        target = clampStep(current + delta);
+                                    }
+                                    if (target === null) target = clampStep(current + 1);
+
+                                    if (target === current) {
+                                        return {
+                                            success: false,
+                                            message: `Ya estás en "${formatStepName(current)}".`,
+                                            currentStep: current,
+                                        };
+                                    }
+
+                                    if (target < current) {
+                                        setCurrent(target);
+                                        return {
+                                            success: true,
+                                            movedTo: target,
+                                            label: formatStepName(target),
+                                            note: "Movimiento hacia atrás: no se requirió validación.",
+                                        };
+                                    }
+
+                                    let ptr = current;
+                                    while (ptr < target) {
+                                        const ok = await saveCurrentStep();
+                                        if (!ok) {
+                                            const r = checkModerationStepStatus({ step: ptr });
+                                            return {
+                                                success: false,
+                                                message: `Faltan completar datos antes de continuar desde "${formatStepName(ptr)}".`,
+                                                blockedAt: ptr,
+                                                targetStep: target,
+                                                ...r,
+                                            };
+                                        }
+                                        setCurrent((c) => Math.min(3, c + 1));
+                                        ptr += 1;
+                                    }
+
+                                    return {
+                                        success: true,
+                                        movedTo: target,
+                                        label: formatStepName(target),
+                                    };
+                                });
+
+                                register("goPrevNModerationStep", (args: any) => {
+                                    let target: number | null = toIndexStep(args?.step);
+                                    if (target === null) {
+                                        const byTopic = resolveStepFromTopic(args?.topic);
+                                        if (byTopic !== null) target = byTopic;
+                                    }
+                                    if (target === null && Number.isFinite(args?.n)) {
+                                        const delta = Math.abs(Number(args.n));
+                                        target = clampStep(current - delta);
+                                    }
+                                    if (target === null) target = clampStep(current - 1);
+
+                                    if (target === current) {
+                                        return {
+                                            success: false,
+                                            message: `Ya estás en "${formatStepName(current)}".`,
+                                            currentStep: current,
+                                        };
+                                    }
+                                    if (target > current) {
+                                        return {
+                                            success: false,
+                                            message:
+                                                `El objetivo (${formatStepName(target)}) está por delante de "${formatStepName(current)}". ` +
+                                                `Para avanzar, usá "goNextNModerationStep".`,
+                                            currentStep: current,
+                                            targetStep: target,
+                                        };
+                                    }
+
+                                    setCurrent(target);
+                                    return {
+                                        success: true,
+                                        movedTo: target,
+                                        label: formatStepName(target),
+                                        note: "Movimiento hacia atrás: no se requirió validación.",
+                                    };
+                                });
+
                                 register("setModerationAssistantConfig", (args: any) => {
                                     const res = setModerationAssistantConfig(args);
                                     // según las props tocadas, scrollear a cada una
@@ -471,7 +635,6 @@ const Moderation: React.FC = () => {
                                 });
                                 register("explainAssistantVoiceFormat", (args: any) => {
                                     const r = explainAssistantVoiceFormat(args);
-                                    // lo más cercano a "lógica de conversación"
                                     try { scrollToModerationField({ field: "assistant.logic" as any }); } catch { }
                                     return r;
                                 });

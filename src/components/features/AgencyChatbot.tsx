@@ -33,6 +33,10 @@ type AgencyChatbotProps = {
     getBusinessSnapshot?: () => Record<string, any>;
     getLocalNote?: () => string | undefined;
 
+    autoStart?: boolean;
+
+    bootSummaryOverride?: string;
+
     onConversationChange?: (
         conversation: Array<{
             id: string;
@@ -42,6 +46,8 @@ type AgencyChatbotProps = {
             timestamp?: string;
         }>
     ) => void;
+
+    bootExtraInstructions?: string;
 };
 
 export default function AgencyChatbot({
@@ -55,18 +61,37 @@ export default function AgencyChatbot({
     getBusinessSnapshot,
     getLocalNote,
 
+    autoStart = false,
+    bootSummaryOverride,
+
     onConversationChange,
+    bootExtraInstructions,
 }: AgencyChatbotProps) {
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
-        return buildBootInstructions(snap);
-    }, [persistNamespace, userId]);
+        if (!snap && !bootExtraInstructions) return;
 
+        const merged = bootSummaryOverride
+            ? { ...snap, business: { ...(snap?.business || {}), __summary: bootSummaryOverride } }
+            : snap;
 
+        const base = buildBootInstructions(merged as any) || "";
+        const extra = (bootExtraInstructions || "").trim();
 
+        const finalText = extra ? `${base}\n\nGuía específica de esta vista:\n${extra}` : base;
+
+        // Logs para chequear que entró
+        console.groupCollapsed("[Chatbot][boot] instructions");
+        console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride, "hasExtra:", !!extra);
+        console.log("instructions.len:", finalText.length);
+        console.log("instructions.preview:\n", finalText.slice(0, 600));
+        console.groupEnd();
+
+        return finalText;
+    }, [persistNamespace, userId, bootSummaryOverride, bootExtraInstructions]);
     const {
         isSessionActive,
         handleStartStopClick,
@@ -78,9 +103,9 @@ export default function AgencyChatbot({
         isStarting,
         isThinking,
         startSession,
-        stopSession
+        stopSession,
     } = useWebRTCAudio("sage", tools as any, {
-        autoStart: true,
+        autoStart,
         startDelayMs: 120,
         debugLogs: false,
         getBootInstructions,
@@ -387,7 +412,7 @@ export default function AgencyChatbot({
                         <div className="relative h-full w-full flex items-center justify-between px-3">
                             {/* Mic toggle */}
                             <div
-                                onClick={(e) => { e.stopPropagation(); handleStartStopClick(); }}
+                                onClick={(e) => { e.stopPropagation(); handleStartStopClick(); setBubbleOpen(!bubbleOpen) }}
                                 className={[
                                     "inline-flex items-center justify-center rounded-full",
                                     "h-10 w-10 border transition-colors",
