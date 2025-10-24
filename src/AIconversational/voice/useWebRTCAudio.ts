@@ -267,7 +267,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const clean = (text ?? "").trim();
     if (!clean) return;
 
-    // agregamos el item en la conversación remota, pero NO enviamos response.create
     dc.send(JSON.stringify({
       type: "conversation.item.create",
       item: {
@@ -277,7 +276,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       },
     }));
 
-    // opcional: también lo reflejamos localmente (así queda en el history)
     setConversation(prev => ([
       ...prev,
       {
@@ -290,7 +288,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     ]));
   }
 
-  // NUEVO: reinyectar instrucciones/ctx sin reiniciar
   function updateSessionContext(extra?: string) {
     const dc = dataChannelRef.current;
     if (!dc || dc.readyState !== "open") return;
@@ -298,14 +295,12 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const sessionUpdate: any = {
       type: "session.update",
       session: {
-        // mantenemos lo importante tal cual
         modalities: ["text", "audio"],
         input_audio_transcription: { model: "gpt-4o-transcribe" },
         tools: [...tools],
       },
     };
 
-    // rearmamos instrucciones frescas usando el callback del caller
     const fresh = opts?.getBootInstructions?.();
     const merged = [fresh, (extra || "").trim()].filter(Boolean).join("\n\n");
     if (merged) sessionUpdate.session.instructions = merged;
@@ -428,8 +423,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     setIsThinking(true);
     logSessionWindow("before-send");
-
-    // asegurar canal abierto
+    
     let dc = dataChannelRef.current;
     if (!dc) return;
     if (dc.readyState !== "open") {
@@ -440,7 +434,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       }
     }
 
-    // enviar mensaje del usuario + pedir respuesta
     dc.send(JSON.stringify({
       type: "conversation.item.create",
       item: {
@@ -451,7 +444,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     }));
     dc.send(JSON.stringify({ type: "response.create" }));
 
-    // actualizar conversación local (sin recortes ni límites)
     setConversation((prev) => ([
       ...(prev ?? []),
       {

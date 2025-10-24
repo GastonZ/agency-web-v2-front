@@ -83,7 +83,6 @@ export default function AgencyChatbot({
 
         const finalText = extra ? `${base}\n\nGuía específica de esta vista:\n${extra}` : base;
 
-        // Logs para chequear que entró
         console.groupCollapsed("[Chatbot][boot] instructions");
         console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride, "hasExtra:", !!extra);
         console.log("instructions.len:", finalText.length);
@@ -180,20 +179,19 @@ export default function AgencyChatbot({
     const refreshCtxDebounced = React.useCallback(() => {
         if (refreshCtxDebouncedRef.current) window.clearTimeout(refreshCtxDebouncedRef.current);
         refreshCtxDebouncedRef.current = window.setTimeout(() => {
-            updateSessionContext(); // reinyecta instrucciones (buildBootInstructions + overrides)
+            updateSessionContext();
         }, 350);
     }, [updateSessionContext]);
 
     React.useEffect(() => {
         function onManualChange(ev: any) {
             const d = ev?.detail || {};
-            // armá un mensaje corto y claro
             const label = d?.label || d?.field || "campo_desconocido";
             const val = typeof d?.value === "string" ? d.value : JSON.stringify(d?.value ?? "");
             const ns = d?.namespace ? `[${d.namespace}] ` : "";
             const note = `${ns}Cambio manual: "${label}" => ${val}`;
-            sendSilentUserNote(note);   // queda en la historia, sin pedir respuesta
-            refreshCtxDebounced();     // y refrescamos instrucciones de la sesión
+            sendSilentUserNote(note);
+            refreshCtxDebounced();
         }
 
         window.addEventListener("agency:manual-change" as any, onManualChange);
