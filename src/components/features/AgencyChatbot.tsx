@@ -6,7 +6,7 @@ import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 import { botControlTools, useBotControlTools } from "../../AIconversational/voice/tools/useBotControlTools";
 
-// NUEVO: utilidades de persistencia genérica
+// utilidades de persistencia genérica
 import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
 import { loadBotSnapshot, buildBootInstructions } from "../../AIconversational/voice/session/persistence";
 
@@ -104,6 +104,9 @@ export default function AgencyChatbot({
         isThinking,
         startSession,
         stopSession,
+
+        sendSilentUserNote,
+        updateSessionContext
     } = useWebRTCAudio("sage", tools as any, {
         autoStart,
         startDelayMs: 120,
@@ -170,6 +173,32 @@ export default function AgencyChatbot({
         localNote,
         maxHistory: 12,
     });
+
+    //  Silent note
+
+    const refreshCtxDebouncedRef = React.useRef<number | null>(null);
+    const refreshCtxDebounced = React.useCallback(() => {
+        if (refreshCtxDebouncedRef.current) window.clearTimeout(refreshCtxDebouncedRef.current);
+        refreshCtxDebouncedRef.current = window.setTimeout(() => {
+            updateSessionContext(); // reinyecta instrucciones (buildBootInstructions + overrides)
+        }, 350);
+    }, [updateSessionContext]);
+
+    React.useEffect(() => {
+        function onManualChange(ev: any) {
+            const d = ev?.detail || {};
+            // armá un mensaje corto y claro
+            const label = d?.label || d?.field || "campo_desconocido";
+            const val = typeof d?.value === "string" ? d.value : JSON.stringify(d?.value ?? "");
+            const ns = d?.namespace ? `[${d.namespace}] ` : "";
+            const note = `${ns}Cambio manual: "${label}" => ${val}`;
+            sendSilentUserNote(note);   // queda en la historia, sin pedir respuesta
+            refreshCtxDebounced();     // y refrescamos instrucciones de la sesión
+        }
+
+        window.addEventListener("agency:manual-change" as any, onManualChange);
+        return () => window.removeEventListener("agency:manual-change" as any, onManualChange);
+    }, [sendSilentUserNote, refreshCtxDebounced]);
 
     // UI state
     const [text, setText] = React.useState("");

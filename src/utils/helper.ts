@@ -274,3 +274,40 @@ Escucha    Escucha Social            Analizar reputación y tendencias   Monitor
   - Dashboards con gráficos y reportes PDF/Excel.
 • Ideal para: políticos, marcas, universidades, ONGs o empresas que quieran medir reputación o conocer a su audiencia.
 `.trim();
+
+/* Silent update helpers */
+
+type Detail = { namespace: string; field: string; label?: string; value: any };
+
+const timers = new Map<string, number>();
+const lastSent = new Map<string, string>();
+
+function keyOf(d: Detail) { return `${d.namespace}:${d.field}`; }
+function norm(v: any) { return typeof v === "string" ? v.trim() : JSON.stringify(v); }
+
+export function notifyBotManualChange(detail: Detail, delay = 600) {
+  const key = keyOf(detail);
+  const valueNorm = norm(detail.value);
+  if (lastSent.get(key) === valueNorm) return;
+
+  if (timers.has(key)) window.clearTimeout(timers.get(key)!);
+  const id = window.setTimeout(() => {
+    dispatch(detail);
+  }, delay);
+  timers.set(key, id);
+}
+
+export function flushBotManualChange(detail: Detail) {
+  const key = keyOf(detail);
+  if (timers.has(key)) {
+    window.clearTimeout(timers.get(key)!);
+    timers.delete(key);
+  }
+  dispatch(detail);
+}
+
+function dispatch(detail: Detail) {
+  const key = keyOf(detail);
+  lastSent.set(key, norm(detail.value));
+  window.dispatchEvent(new CustomEvent("agency:manual-change", { detail }));
+}

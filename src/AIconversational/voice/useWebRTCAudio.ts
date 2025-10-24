@@ -257,6 +257,68 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     return dataChannelRef.current!;
   }
 
+  /* 
+    Silent message sync with ALMA
+  */
+
+  async function sendSilentUserNote(text: string) {
+    const dc = dataChannelRef.current;
+    if (!dc || dc.readyState !== "open") return;
+    const clean = (text ?? "").trim();
+    if (!clean) return;
+
+    // agregamos el item en la conversación remota, pero NO enviamos response.create
+    dc.send(JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: clean }],
+      },
+    }));
+
+    // opcional: también lo reflejamos localmente (así queda en el history)
+    setConversation(prev => ([
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: "user",
+        text: clean,
+        isFinal: true,
+        timestamp: new Date().toISOString(),
+      },
+    ]));
+  }
+
+  // NUEVO: reinyectar instrucciones/ctx sin reiniciar
+  function updateSessionContext(extra?: string) {
+    const dc = dataChannelRef.current;
+    if (!dc || dc.readyState !== "open") return;
+
+    const sessionUpdate: any = {
+      type: "session.update",
+      session: {
+        // mantenemos lo importante tal cual
+        modalities: ["text", "audio"],
+        input_audio_transcription: { model: "gpt-4o-transcribe" },
+        tools: [...tools],
+      },
+    };
+
+    // rearmamos instrucciones frescas usando el callback del caller
+    const fresh = opts?.getBootInstructions?.();
+    const merged = [fresh, (extra || "").trim()].filter(Boolean).join("\n\n");
+    if (merged) sessionUpdate.session.instructions = merged;
+
+    if (REALTIME_DEBUG) {
+      console.groupCollapsed("[Realtime][ctx-refresh] session.update payload");
+      console.log("hasInstructions:", !!merged, "len:", merged?.length || 0);
+      console.groupEnd();
+    }
+
+    dc.send(JSON.stringify(sessionUpdate));
+  }
+
   async function startSession() {
     try {
       setIsStarting(true);
@@ -538,5 +600,8 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     logSessionWindow,
     isStarting,
     isThinking,
+
+    sendSilentUserNote,
+    updateSessionContext
   };
 }
