@@ -20,6 +20,8 @@ import SocialListening from '../features/SocialListeningCampaign/Main/SocialList
 import DatacivisLanding from '../WebLanding';
 import { I18nProvider } from '../WebLanding/lib/i18n';
 
+import InstagramCallback from '../pages/InstagramCallback';
+
 const AppRouter: React.FC = () => (
     <Router>
         <ToastContainer />
@@ -79,6 +81,8 @@ const AppRouter: React.FC = () => (
             <Route path='/landing-datacivis' element={<I18nProvider>
                 <DatacivisLanding />
             </I18nProvider>} />
+
+            <Route path="/instagram/callback" element={<InstagramCallback />} />
             {/* (opcional) 404 */}
             <Route path="*" element={<NotFound />} />
         </Routes>

@@ -5,8 +5,9 @@ import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../..
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { MessageSquare, ClipboardList, CalendarRange } from "lucide-react";
 import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
-import InstagramConnectPanel from "../../../components/features/InstagramConnectPanel";
+import InstagramConnectPanel from "../../../components/features/InstagramConnectButton";
 import { getUserId } from "../../../utils/helper";
+import InstagramConnectButton from "../../../components/features/InstagramConnectButton";
 
 export default function StatisticsView() {
     const { id } = useParams<{ id: string }>();
@@ -133,7 +134,7 @@ export default function StatisticsView() {
                                 )}
                             </div>
                             {hasInstagram && (
-                                <InstagramConnectPanel
+                                <InstagramConnectButton campaignId={id!}
                                 />
                             )}
 
