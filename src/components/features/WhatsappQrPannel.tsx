@@ -19,7 +19,7 @@ type QrPayload = { data?: string; qr?: string; campaignId?: string;[k: string]: 
 const WhatsappQrPanel: React.FC<Props> = ({
     userId,
     campaignId,
-    socketUrl = "http://localhost:9000",
+    socketUrl = import.meta.env.VITE_API_URL,
     token,
     campaignStatus,
 }) => {

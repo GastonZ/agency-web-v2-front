@@ -81,6 +81,7 @@ const Moderation: React.FC = () => {
         removeModerationTimeSlot,
     } = useModerationCalendarTools();
 
+
     const { autoScrollTools, scrollToModerationField, scrollToFieldIfFilled } = useAutoScrollTools();
 
     const [current, setCurrent] = useState(0);
@@ -362,6 +363,76 @@ const Moderation: React.FC = () => {
         setCurrent((c) => Math.min(3, c + 1));
     }, [saveCurrentStep, current, data, navigate, resetAll, setSaving]);
 
+    async function finalizeCampaign() {
+        const miss0 = missingFromStep0(data);
+        const miss1 = missingFromStep1(data);
+        const miss2 = missingFromStep2(data);
+
+        if (miss0.length || miss1.length || miss2.length) {
+            const failingStep = miss0.length ? 0 : miss1.length ? 1 : 2;
+            const stepName = ["Datos", "Canales", "Reglas"][failingStep] ?? String(failingStep);
+            return {
+                success: false,
+                message: `Faltan completar datos para finalizar. Revisá el paso "${stepName}".`,
+                failingStep,
+                missing: { step0: miss0, step1: miss1, step2: miss2 },
+            };
+        }
+
+        if (!data.campaignId) {
+            const created = await saveStepOne();
+            if (!created || !data.campaignId) {
+                return {
+                    success: false,
+                    message: "No se pudo crear/obtener el id de campaña. Guardá los datos del Paso 1 e intentá nuevamente.",
+                };
+            }
+        }
+
+        try {
+            setSaving(true);
+
+            await updateModerationCampaignStatus(data.campaignId!, "active");
+
+            const channels = Array.isArray(data.channels) ? data.channels : [];
+            saveLastLaunchedModeration({
+                id: data.campaignId!,
+                channels,
+                savedAt: Date.now(),
+            });
+
+            resetAll();
+            navigate(`/my_moderation_campaign/${data.campaignId}/statistics`, { replace: true });
+
+            return {
+                success: true,
+                activated: true,
+                campaignId: data.campaignId,
+                navigatedTo: "statistics",
+                message: "Campaña activada y vista de estadísticas abierta.",
+            };
+        } catch (e: any) {
+            return { success: false, error: e?.message || "No se pudo lanzar la campaña." };
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    function resetAndGoFirst() {
+        try {
+            resetAll();
+            setCurrent(0);
+            return {
+                success: true,
+                movedTo: 0,
+                label: "Datos",
+                message: "Se limpió el borrador y volvimos al Paso 1.",
+            };
+        } catch (e: any) {
+            return { success: false, error: e?.message ?? "No se pudo reiniciar el flujo." };
+        }
+    }
+
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
@@ -502,7 +573,7 @@ const Moderation: React.FC = () => {
                                             message:
                                                 "Ya estás en el último paso. Si todo está correcto, podés finalizar la campaña.",
                                             suggestion:
-                                                "Decime “finalizar campaña” o usá el botón de la UI para activarla.",
+                                                "Decime “finalizar campaña” “lanzar campaña” o usá el botón de la UI para activarla.",
                                         };
                                     }
                                     setCurrent((c) => Math.min(3, c + 1));
@@ -685,7 +756,14 @@ const Moderation: React.FC = () => {
                                 register("addModerationTimeSlot", (args: any) => { const r = addModerationTimeSlot(args); scrollCalendars(); return r; });
                                 register("addModerationTimeSlotsBulk", (args: any) => { const r = addModerationTimeSlotsBulk(args); scrollCalendars(); return r; });
                                 register("removeModerationTimeSlot", (args: any) => { const r = removeModerationTimeSlot(args); scrollCalendars(); return r; });
-
+                                
+                                register("finalizeModerationCampaign", finalizeCampaign);
+                                register("launchModerationCampaign", finalizeCampaign);
+                                register("createModerationCampaignNow", finalizeCampaign);
+                                
+                                register("resetModerationCampaignDraft", resetAndGoFirst);
+                                register("startNewModerationCampaign", resetAndGoFirst);
+                                register("clearModerationDraft", resetAndGoFirst);
                             }}
                         />
                     </div>

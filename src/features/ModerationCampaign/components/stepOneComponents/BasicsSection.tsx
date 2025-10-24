@@ -1,6 +1,7 @@
 import * as React from "react";
 import { GlassCard, SectionTitle, Label, TextInput, TextArea } from "../Primitives";
 import { useModeration } from "../../../../context/ModerationContext";
+import { notifyBotManualChange, flushBotManualChange } from "../../../../utils/helper";
 
 const BasicsSection: React.FC = () => {
   const { data, setBasics } = useModeration();
@@ -18,7 +19,22 @@ const BasicsSection: React.FC = () => {
             data-testid="campaign-name"
             placeholder="Ej. Moderación Q4 LATAM"
             value={data.name}
-            onChange={(e) => setBasics({ name: e.target.value })}
+            onChange={(e) => {
+              const v = e.target.value;
+              setBasics({ name: v });
+              notifyBotManualChange(
+                { namespace: "moderation", field: "name", label: "Nombre de la campaña", value: v },
+                600
+              );
+            }}
+            onBlur={(e) =>
+              flushBotManualChange({
+                namespace: "moderation",
+                field: "name",
+                label: "Nombre de la campaña",
+                value: e.target.value,
+              })
+            }
           />
         </div>
 
@@ -28,7 +44,22 @@ const BasicsSection: React.FC = () => {
             id="campaignSummary"
             placeholder="Resumen breve de objetivos y alcance"
             value={data.summary}
-            onChange={(e) => setBasics({ summary: e.target.value })}
+            onChange={(e) => {
+              const v = e.target.value;
+              setBasics({ summary: v });
+              notifyBotManualChange(
+                { namespace: "moderation", field: "summary", label: "Descripción breve", value: v },
+                600
+              );
+            }}
+            onBlur={(e) =>
+              flushBotManualChange({
+                namespace: "moderation",
+                field: "summary",
+                label: "Descripción breve",
+                value: e.target.value,
+              })
+            }
           />
         </div>
 
@@ -40,9 +71,25 @@ const BasicsSection: React.FC = () => {
               rows={3}
               placeholder="¿Qué consideras un lead válido?"
               value={data.leadDefinition}
-              onChange={(e) => setBasics({ leadDefinition: e.target.value })}
+              onChange={(e) => {
+                const v = e.target.value;
+                setBasics({ leadDefinition: v });
+                notifyBotManualChange(
+                  { namespace: "moderation", field: "leadDefinition", label: "Definición de lead", value: v },
+                  600
+                );
+              }}
+              onBlur={(e) =>
+                flushBotManualChange({
+                  namespace: "moderation",
+                  field: "leadDefinition",
+                  label: "Definición de lead",
+                  value: e.target.value,
+                })
+              }
             />
           </div>
+
           <div>
             <Label htmlFor="mainGoal">Objetivo principal</Label>
             <TextArea
@@ -50,7 +97,22 @@ const BasicsSection: React.FC = () => {
               rows={3}
               placeholder="Ej. Reducir spam y elevar la calidad de conversaciones"
               value={data.goal}
-              onChange={(e) => setBasics({ goal: e.target.value })}
+              onChange={(e) => {
+                const v = e.target.value;
+                setBasics({ goal: v });
+                notifyBotManualChange(
+                  { namespace: "moderation", field: "goal", label: "Objetivo principal", value: v },
+                  600
+                );
+              }}
+              onBlur={(e) =>
+                flushBotManualChange({
+                  namespace: "moderation",
+                  field: "goal",
+                  label: "Objetivo principal",
+                  value: e.target.value,
+                })
+              }
             />
           </div>
         </div>

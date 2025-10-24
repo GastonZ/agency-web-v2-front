@@ -5,6 +5,7 @@ import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../..
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { MessageSquare, ClipboardList, CalendarRange } from "lucide-react";
 import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
+import InstagramConnectPanel from "../../../components/features/InstagramConnectPanel";
 import { getUserId } from "../../../utils/helper";
 
 export default function StatisticsView() {
@@ -44,6 +45,11 @@ export default function StatisticsView() {
     const hasWhatsApp = React.useMemo(() => {
         const arr = (channelsToConfigure?.length ? channelsToConfigure : campaign?.channels) ?? [];
         return arr.some((c: string) => (c || "").toLowerCase().includes("whats"));
+    }, [channelsToConfigure, campaign]);
+
+    const hasInstagram = React.useMemo(() => {
+        const arr = (channelsToConfigure?.length ? channelsToConfigure : campaign?.channels) ?? [];
+        return arr.some((c: string) => (c || "").toLowerCase().includes("instagram"));
     }, [channelsToConfigure, campaign]);
 
 
@@ -126,6 +132,10 @@ export default function StatisticsView() {
                                     </button>
                                 )}
                             </div>
+                            {hasInstagram && (
+                                <InstagramConnectPanel
+                                />
+                            )}
 
                         </div>
                     </div>
@@ -201,7 +211,6 @@ export default function StatisticsView() {
                     </div>
                 </div>
             )}
-
 
         </OnlineLayout>
     );

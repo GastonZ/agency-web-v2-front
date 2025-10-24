@@ -92,7 +92,7 @@ export function useModerationAssistantTools() {
         return {
             success: true,
             message:
-                "La base de conocimiento acepta **CSV**, **TXT**, **Word/DOCX** y **PDF**. El sistema leerá el archivo y generará preguntas y respuestas (Q&A) para que el asistente pueda responder rápido y con contexto.",
+                "La base de conocimiento acepta **CSV**, **TXT**, **Word/DOCX** y **PDF**. El sistema leerá el archivo y generará preguntas y respuestas para que el asistente pueda responder rápido y con contexto.",
         };
     }
     function addModerationQAPair(args: { question: string; answer?: string }) {
@@ -100,7 +100,7 @@ export function useModerationAssistantTools() {
         const a = (args?.answer || "").trim();
 
         if (!q) {
-            return { success: false, needs: "question", message: "Falta la pregunta para crear la Q&A." };
+            return { success: false, needs: "question", message: "Falta la pregunta." };
         }
         if (!a) {
             // no agregamos aún, pedimos la respuesta
@@ -115,14 +115,14 @@ export function useModerationAssistantTools() {
         addQA({ question: q, answer: a });
         return {
             success: true,
-            message: "Agregué la Q&A correctamente.",
+            message: "Agregué la preg. y resp. correctamente.",
             qa: { question: q, answer: a },
         };
     }
 
     function updateModerationQA(args: { id: string; question?: string; answer?: string }) {
         const id = args?.id;
-        if (!id) return { success: false, message: "Falta el id de la Q&A a actualizar." };
+        if (!id) return { success: false, message: "Falta el id de la pregunta y respuesta a actualizar." };
 
         const patch: any = {};
         if (typeof args.question === "string") patch.question = args.question;
@@ -133,7 +133,7 @@ export function useModerationAssistantTools() {
         }
 
         updateQA(id, patch);
-        return { success: true, message: "Q&A actualizada.", id, applied: patch };
+        return { success: true, message: "pregunta y respuesta actualizada.", id, applied: patch };
     }
 
     function removeModerationQA(args: { id: string }) {
@@ -155,9 +155,9 @@ export function useModerationAssistantTools() {
             requiresManual: true,
             action: "edit",
             message:
-                "La edición de preguntas y respuestas (Q&A) debe realizarse manualmente desde la sección \"Base de conocimiento\".",
+                "La edición de preguntas y respuestas debe realizarse manualmente desde la sección \"Base de conocimiento\".",
             instructions:
-                "Abrí 'Reglas' → 'Base de conocimiento', localizá la Q&A y editá los campos de manera manual.",
+                "Abrí 'Reglas' → 'Base de conocimiento', localizá la pregunta/respuesta y editá los campos de manera manual.",
             receivedArgs: args ?? {},
         };
     }
@@ -168,9 +168,9 @@ export function useModerationAssistantTools() {
             requiresManual: true,
             action: "remove",
             message:
-                "La eliminación de preguntas y respuestas (Q&A) debe realizarse manualmente desde la sección \"Base de conocimiento\".",
+                "La eliminación de preguntas y respuestas debe realizarse manualmente desde la sección \"Base de conocimiento\".",
             instructions:
-                "Abrí 'Reglas' → 'Base de conocimiento', localizá la Q&A y usá el botón de eliminar.",
+                "Abrí 'Reglas' → 'Base de conocimiento', localizá la pregunta/respuesta y usá el botón de eliminar.",
             receivedArgs: args ?? {},
         };
     }

@@ -6,7 +6,7 @@ import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 import { botControlTools, useBotControlTools } from "../../AIconversational/voice/tools/useBotControlTools";
 
-// NUEVO: utilidades de persistencia genérica
+// utilidades de persistencia genérica
 import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
 import { loadBotSnapshot, buildBootInstructions } from "../../AIconversational/voice/session/persistence";
 
@@ -83,7 +83,6 @@ export default function AgencyChatbot({
 
         const finalText = extra ? `${base}\n\nGuía específica de esta vista:\n${extra}` : base;
 
-        // Logs para chequear que entró
         console.groupCollapsed("[Chatbot][boot] instructions");
         console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride, "hasExtra:", !!extra);
         console.log("instructions.len:", finalText.length);
@@ -104,6 +103,9 @@ export default function AgencyChatbot({
         isThinking,
         startSession,
         stopSession,
+
+        sendSilentUserNote,
+        updateSessionContext
     } = useWebRTCAudio("sage", tools as any, {
         autoStart,
         startDelayMs: 120,
@@ -170,6 +172,31 @@ export default function AgencyChatbot({
         localNote,
         maxHistory: 12,
     });
+
+    //  Silent note
+
+    const refreshCtxDebouncedRef = React.useRef<number | null>(null);
+    const refreshCtxDebounced = React.useCallback(() => {
+        if (refreshCtxDebouncedRef.current) window.clearTimeout(refreshCtxDebouncedRef.current);
+        refreshCtxDebouncedRef.current = window.setTimeout(() => {
+            updateSessionContext();
+        }, 350);
+    }, [updateSessionContext]);
+
+    React.useEffect(() => {
+        function onManualChange(ev: any) {
+            const d = ev?.detail || {};
+            const label = d?.label || d?.field || "campo_desconocido";
+            const val = typeof d?.value === "string" ? d.value : JSON.stringify(d?.value ?? "");
+            const ns = d?.namespace ? `[${d.namespace}] ` : "";
+            const note = `${ns}Cambio manual: "${label}" => ${val}`;
+            sendSilentUserNote(note);
+            refreshCtxDebounced();
+        }
+
+        window.addEventListener("agency:manual-change" as any, onManualChange);
+        return () => window.removeEventListener("agency:manual-change" as any, onManualChange);
+    }, [sendSilentUserNote, refreshCtxDebounced]);
 
     // UI state
     const [text, setText] = React.useState("");

@@ -43,9 +43,9 @@ const EditModeBanner: React.FC<Props> = ({ className }) => {
       <button
         onClick={handleStartNew}
         className={[
-          "inline-flex items-center gap-2 rounded-xl px-3 py-2",
+          "inline-flex items-center gap-2 rounded-xl px-3 py-2 cursor-pointer",
           "text-sm font-semibold",
-          "bg-white/70 dark:bg-neutral-900/50 hover:bg-white",
+          "bg-white/70 dark:bg-neutral-900/50 hover:bg-amber-300/30 dark:hover:bg-amber-600/30",
           "border border-amber-300/40 dark:border-amber-300/30",
           "shadow-sm transition",
         ].join(" ")}

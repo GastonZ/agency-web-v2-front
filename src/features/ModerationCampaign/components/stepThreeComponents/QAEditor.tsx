@@ -31,7 +31,7 @@ const QAEditor: React.FC = () => {
           onClick={add}
           className="h-10 px-4 rounded-xl border bg-emerald-500/20 text-emerald-700 dark:text-emerald-200 border-emerald-400/60 hover:bg-emerald-500/30"
         >
-          Agregar Q&A
+          Agregar preg. y resp.
         </button>
       </div>
 

@@ -31,7 +31,7 @@ export const assistantSchema: ToolSpec[] = [
         type: "function",
         name: "explainKnowledgeBaseUpload",
         description:
-            "Explica cómo funciona la base de conocimiento: tipos de archivo aceptados (csv, txt, word/docx, pdf) y que el sistema extrae Q&A.",
+            "Explica cómo funciona la base de conocimiento: tipos de archivo aceptados (csv, txt, word/docx, pdf) y que el sistema extrae preguntas y respuestas.",
         parameters: { type: "object", properties: {}, additionalProperties: false },
     },
     {
