@@ -134,7 +134,9 @@ export default function StatisticsView() {
                                 )}
                             </div>
                             {hasInstagram && (
-                                <InstagramConnectButton campaignId={id!}
+                                <InstagramConnectButton
+                                    clientId={import.meta.env.VITE_IG_APP_ID!}
+                                    redirectUri={"https://4188b2a0a116.ngrok-free.app/instagram/callback"}
                                 />
                             )}
 

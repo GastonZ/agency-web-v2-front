@@ -1,25 +1,32 @@
-export function buildInstagramOAuthUrl(campaignId: string) {
-    const clientId = import.meta.env.VITE_IG_APP_ID as string;
-    const redirectUri = import.meta.env.VITE_IG_REDIRECT_URI as string;
+export type InstagramAuthOpts = {
+  clientId: string;
+  redirectUri: string; // ej: "http://localhost:5173/instagram/callback"
+  forceReauth?: boolean;
+  state?: string;      // usa algo aleatorio/CSRF token
+};
 
-    const scope = [
-        "instagram_business_basic",
-        "instagram_business_manage_messages",
-        "instagram_business_manage_comments",
-        "instagram_business_content_publish",
-    ].join(",");
+const IG_SCOPES = [
+  "instagram_business_basic",
+  "instagram_business_manage_messages",
+  "instagram_business_manage_comments",
+  "instagram_business_content_publish",
+  "instagram_business_manage_insights",
+] as const;
 
-    const statePayload = { campaignId, nonce: crypto.randomUUID() };
-    const state = encodeURIComponent(btoa(JSON.stringify(statePayload)));
+export function buildInstagramAuthUrl(opts: InstagramAuthOpts) {
+  const { clientId, redirectUri, forceReauth = true, state = crypto.randomUUID() } = opts;
 
-    const authBase = "https://www.facebook.com/v19.0/dialog/oauth";
-    const params = new URLSearchParams({
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        response_type: "code",
-        scope,
-        state,
-    });
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: IG_SCOPES.join(","),
+    state,
+  });
 
-    return `${authBase}?${params.toString()}`;
+  if (forceReauth) params.set("force_reauth", "true");
+
+  // Nota: el endpoint de autorización correcto:
+  // https://www.instagram.com/oauth/authorize
+  return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
 }
