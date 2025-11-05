@@ -16,7 +16,7 @@ export default function InstagramConnectButton({ clientId, redirectUri }: Props)
   return (
     <button
       onClick={onClick}
-      className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
+      className="rounded-xl px-5 h-11 mt-4 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
     >
       Conectar Instagram
     </button>

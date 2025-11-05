@@ -210,3 +210,11 @@ export async function updateModerationInstagramCredentials(
 
   return res.data;
 }
+
+export async function setModerationInstagramCode(campaignId: string, code: string) {
+  const { data } = await api.put(
+    `moderation-campaigns/${campaignId}/instagram-credentials`,
+    { code }
+  );
+  return data;
+}
