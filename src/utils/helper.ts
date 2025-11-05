@@ -311,3 +311,81 @@ function dispatch(detail: Detail) {
   lastSent.set(key, norm(detail.value));
   window.dispatchEvent(new CustomEvent("agency:manual-change", { detail }));
 }
+
+export function extractPlaybookForStep(playbook: string, stepIndex: number): string {
+  // 0: Paso 1 (Datos)
+  // 1: Paso 2 (Canales)
+  // 2: Paso 3 (Reglas/Asistente)
+  // 3: Paso 4 (Revisión)
+  // separar por encabezados "1) ", "2) " ...
+  const parts = (playbook || "").split(/\n\s*(?=\d\)\s)/g);
+  // fallback: si no separó, devolver todo (mejor eso que nada)
+  if (!parts || parts.length < 2) return playbook;
+
+  // mapear: index 0 => "1) ...", etc.
+  const safeIndex = Math.max(0, Math.min(3, stepIndex));
+  const pick = parts[safeIndex] || parts[0];
+
+  // siempre agregar “Política de Respuestas…” al final si existiera
+  const policy = parts.find(p => /Pol[ií]tica de Respuestas/i.test(p)) || "";
+  const chunk = [pick.trim(), policy.trim()].filter(Boolean).join("\n\n");
+  return chunk;
+}
+
+// Helper para armar el transcript completo (user + assistant)
+export function buildTranscriptFromHistory(history: Array<{ role?: string; text?: string; isFinal?: boolean }>, opts?: {
+  maxChars?: number;            // límite de seguridad antes de llamar /api/resume
+  newestLast?: boolean;         // true => orden cronológico normal (viejo->nuevo)
+}) {
+  const maxChars = opts?.maxChars ?? 4000;
+  const newestLast = opts?.newestLast ?? true;
+
+  if (!Array.isArray(history) || history.length === 0) return "";
+
+  // Filtrar mensajes “vacíos” y de roles que no aportan al diálogo
+  const allowedRoles = new Set(["user", "assistant"]);
+  const cleaned = history
+    .filter(m => m && allowedRoles.has((m.role || "").toLowerCase()) && (m.text || "").trim().length > 0)
+    .map(m => ({ role: (m.role || "").toLowerCase(), text: (m.text || "").trim() }));
+
+  if (cleaned.length === 0) return "";
+
+  // Orden: por defecto de más viejo a más nuevo (mejor para sumarización)
+  const ordered = newestLast ? cleaned : [...cleaned].reverse();
+
+  // Formato compacto para el resumidor
+  // Ej: "User: ...\nAssistant: ...\nUser: ...\nAssistant: ..."
+  let acc = "";
+  for (const m of ordered) {
+    const line = (m.role === "user" ? "User: " : "Assistant: ") + m.text + "\n";
+    // Si nos pasamos del límite, recortamos al vuelo desde el inicio
+    if (acc.length + line.length > maxChars) {
+      const overflow = acc.length + line.length - maxChars;
+      acc = acc.slice(overflow); // recorta por el principio
+    }
+    acc += line;
+  }
+
+  return acc.trim();
+}
+
+export function extractUserTextFromContent(content: any[]): string {
+  if (!Array.isArray(content)) return "";
+  const parts: string[] = [];
+  for (const c of content) {
+    // Texto escrito por el usuario (input manual)
+    if (c?.type === "input_text" && typeof c?.text === "string" && c.text.trim()) {
+      parts.push(c.text.trim());
+    }
+    // Transcripción de audio del usuario (cuando Realtime ya la generó)
+    // Algunos payloads usan { type: "input_audio_transcription", transcript: "..." }
+    if (c?.type === "input_audio_transcription" && typeof c?.transcript === "string" && c.transcript.trim()) {
+      parts.push(c.transcript.trim());
+    }
+    // A veces llega como { type: "transcript", text: "..." } (dependiendo de versión)
+    if (c?.type === "transcript" && typeof c?.text === "string" && c.text.trim()) {
+      parts.push(c.text.trim());
+    }
+  }
+  return parts.join(" ").trim();
+}

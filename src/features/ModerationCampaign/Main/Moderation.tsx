@@ -9,7 +9,7 @@ import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
 import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus } from "../../../services/campaigns";
-import { clampStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep } from "../../../utils/helper";
+import { buildTranscriptFromHistory, clampStep, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
@@ -93,6 +93,8 @@ const Moderation: React.FC = () => {
     const userId = getUserId?.() || "anon";
     const persistNamespace = "moderation";
 
+    const [toolsReady, setToolsReady] = React.useState(false);
+
     const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
 
     React.useEffect(() => {
@@ -104,10 +106,14 @@ const Moderation: React.FC = () => {
                 const primaryNs = persistNamespace;
                 const fallbackNs = "global";
 
-                const snapPrimary = loadBotSnapshot(primaryNs, userId);
-                const primaryLen = snapPrimary?.history?.length ?? 0;
+                const snapPrimary = loadBotSnapshot("moderation", userId);
+                const snapFallback = loadBotSnapshot("global", userId);
 
-                const snapFallback = loadBotSnapshot(fallbackNs, userId);
+                const shouldBridge =
+                    (!snapPrimary || (snapPrimary.history ?? []).length === 0) &&
+                    (snapFallback && (snapFallback.history ?? []).length > 0);
+
+                const primaryLen = snapPrimary?.history?.length ?? 0;
                 const fallbackLen = snapFallback?.history?.length ?? 0;
 
                 console.groupCollapsed("[Moderation][boot] resumen previo");
@@ -117,18 +123,29 @@ const Moderation: React.FC = () => {
 
                 let chosenText = "";
                 let chosenSource: "primary" | "fallback" | "none" = "none";
+                let pickedHistory: any[] = [];
 
-                if (primaryLen > 0) {
-                    chosenText = historyToText(snapPrimary!.history);
+                if (primaryLen > 0 && Array.isArray(snapPrimary?.history)) {
                     chosenSource = "primary";
-                } else if (fallbackLen > 0) {
-                    chosenText = historyToText(snapFallback!.history);
+                    pickedHistory = snapPrimary!.history;
+                } else if (fallbackLen > 0 && Array.isArray(snapFallback?.history)) {
                     chosenSource = "fallback";
+                    pickedHistory = snapFallback!.history;
+                } else {
+                    chosenSource = "none";
+                }
+
+                // 👉 NUEVO: transcript completo con roles (User/Assistant), recortado a un máximo seguro
+                if (chosenSource !== "none") {
+                    chosenText = buildTranscriptFromHistory(pickedHistory, {
+                        maxChars: 40000,   // podés subir/bajar este límite
+                        newestLast: true, // orden cronológico: viejo -> nuevo
+                    });
                 }
 
                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-                    const summary = await getResumeOfConversation(chosenText, 280, ctrl.signal);
+                    const summary = await getResumeOfConversation(chosenText, 1000, ctrl.signal);
                     if (!aborted) {
                         setBootSummary(summary || undefined);
                         console.groupCollapsed("[Moderation][boot] resumen recibido");
@@ -433,6 +450,12 @@ const Moderation: React.FC = () => {
         }
     }
 
+    const stepIndex = toIndexStep(current);
+    const stepFocusedPlaybook = useMemo(
+        () => extractPlaybookForStep(MODERATION_PLAYBOOK, current - 1),
+        [stepIndex]
+    );
+
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
@@ -447,7 +470,7 @@ const Moderation: React.FC = () => {
                             mode="floating"
                             persistNamespace="moderation"
                             userId={userId}
-                            autoStart={bootReady}
+                            autoStart={bootReady && toolsReady}
                             bootSummaryOverride={bootSummary}
                             bootExtraInstructions={MODERATION_PLAYBOOK}
                             getBusinessSnapshot={() => ({
@@ -756,14 +779,16 @@ const Moderation: React.FC = () => {
                                 register("addModerationTimeSlot", (args: any) => { const r = addModerationTimeSlot(args); scrollCalendars(); return r; });
                                 register("addModerationTimeSlotsBulk", (args: any) => { const r = addModerationTimeSlotsBulk(args); scrollCalendars(); return r; });
                                 register("removeModerationTimeSlot", (args: any) => { const r = removeModerationTimeSlot(args); scrollCalendars(); return r; });
-                                
+
                                 register("finalizeModerationCampaign", finalizeCampaign);
                                 register("launchModerationCampaign", finalizeCampaign);
                                 register("createModerationCampaignNow", finalizeCampaign);
-                                
+
                                 register("resetModerationCampaignDraft", resetAndGoFirst);
                                 register("startNewModerationCampaign", resetAndGoFirst);
                                 register("clearModerationDraft", resetAndGoFirst);
+
+                                setToolsReady(true);
                             }}
                         />
                     </div>
