@@ -6,6 +6,7 @@ import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 import { botControlTools, useBotControlTools } from "../../AIconversational/voice/tools/useBotControlTools";
 
+import { internalSummaryTool } from "../../AIconversational/voice/internal/internalSummaryTool";
 // utilidades de persistencia genérica
 import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
 import { loadBotSnapshot, buildBootInstructions } from "../../AIconversational/voice/session/persistence";
@@ -67,30 +68,67 @@ export default function AgencyChatbot({
     onConversationChange,
     bootExtraInstructions,
 }: AgencyChatbotProps) {
-    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools], []);
+    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools, internalSummaryTool as any], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
+
+    const [rollingSummary, setRollingSummary] = React.useState<string>("");
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
-        if (!snap && !bootExtraInstructions) return;
 
-        const merged = bootSummaryOverride
-            ? { ...snap, business: { ...(snap?.business || {}), __summary: bootSummaryOverride } }
-            : snap;
+        // Si no hay nada de nada, devolvemos undefined
+        if (!snap && !bootExtraInstructions && !rollingSummary && !bootSummaryOverride) return;
 
-        const base = buildBootInstructions(merged as any) || "";
+        // 1) Construimos el snapshot “mergeado”
+        const merged: any = { ...(snap || {}), business: { ...(snap?.business || {}) } };
+
+        // Tomamos el mejor resumen disponible con prioridad: override > rolling > snap
+        const liveSummary =
+            (bootSummaryOverride && String(bootSummaryOverride).trim()) ||
+            (rollingSummary && String(rollingSummary).trim()) ||
+            (merged.business?.__summary && String(merged.business.__summary).trim()) ||
+            "";
+
+        if (liveSummary) {
+            merged.business.__summary = liveSummary; // mantenemos por compat, pero ya no dependemos de que buildBootInstructions lo use
+        }
+
+        // 2) Texto base (sin resumen explícito, por si tu helper no lo incluye)
+        const base = (buildBootInstructions(merged) || "").trim();
+
+        // 3) Sección de resumen SIEMPRE explícita (independiente del helper)
+        const summarySection = liveSummary
+            ? [
+                "=== CONTEXTO RESUMEN (persistente) ===",
+                // Marcamos un tag reconocible para verificar en payloads
+                "[RESUMEN_BOOT_BEGIN]",
+                liveSummary,
+                "[RESUMEN_BOOT_END]",
+            ].join("\n")
+            : "";
+
+        // 4) Playbook / guía extra (si viene)
         const extra = (bootExtraInstructions || "").trim();
+        const extraSection = extra ? `=== GUÍA ESPECÍFICA DE ESTA VISTA ===\n${extra}` : "";
 
-        const finalText = extra ? `${base}\n\nGuía específica de esta vista:\n${extra}` : base;
+        // 5) Ensamblado final
+        const finalText = [base, summarySection, extraSection].filter(Boolean).join("\n\n");
 
+        // Logs y handle global para inspección rápida
         console.groupCollapsed("[Chatbot][boot] instructions");
-        console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride, "hasExtra:", !!extra);
-        console.log("instructions.len:", finalText.length);
-        console.log("instructions.preview:\n", finalText.slice(0, 600));
+        console.log("hasSnapshot:", !!snap);
+        console.log("hasSummaryOverride:", !!bootSummaryOverride, "len:", (bootSummaryOverride || "").length);
+        console.log("hasRollingSummary:", !!rollingSummary, "len:", (rollingSummary || "").length);
+        console.log("hasExtra:", !!extra);
+        console.log("final.len:", finalText.length);
+        console.log("final.preview:\n", finalText.slice(0, 800));
         console.groupEnd();
 
+        try { (window as any).__ALMA_LAST_BOOT = { at: new Date().toISOString(), finalText }; } catch { }
+
         return finalText;
-    }, [persistNamespace, userId, bootSummaryOverride, bootExtraInstructions]);
+    }, [persistNamespace, userId, bootSummaryOverride, bootExtraInstructions, rollingSummary]);
+
     const {
         isSessionActive,
         handleStartStopClick,
@@ -109,7 +147,7 @@ export default function AgencyChatbot({
     } = useWebRTCAudio("sage", tools as any, {
         autoStart,
         startDelayMs: 120,
-        debugLogs: false,
+        debugLogs: true,
         getBootInstructions,
     });
 
@@ -126,6 +164,17 @@ export default function AgencyChatbot({
         startSession,
         stopSession,
     });
+
+    React.useEffect(() => {
+        registerFunction("__setRollingSummary", async ({ summary }: { summary: string }) => {
+            const clean = (summary || "").slice(0, 800);
+            setRollingSummary(clean);
+
+            setTimeout(() => updateSessionContext?.(), 50);
+
+            return { ok: true };
+        });
+    }, [registerFunction, updateSessionContext]);
 
     React.useEffect(() => {
         registerFunction("goToCampaignSelection", goToCampaignSelection);
@@ -170,7 +219,7 @@ export default function AgencyChatbot({
         conversation,
         business,
         localNote,
-        maxHistory: 12,
+        maxHistory: 999,
     });
 
     //  Silent note
@@ -228,6 +277,22 @@ export default function AgencyChatbot({
         panelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, []);
 
+    React.useEffect(() => {
+        // si la sesión está activa, empujamos nuevas instrucciones
+        if (!isSessionActive) return;
+        // Esperá ~120-200ms para aglutinar cambios rápidos de UI
+        const id = window.setTimeout(() => {
+            try { updateSessionContext?.(); } catch { }
+        }, 150);
+        return () => window.clearTimeout(id);
+    }, [
+        isSessionActive,
+        bootSummaryOverride,
+        bootExtraInstructions,
+        // derivan en buildBootInstructions:
+        getBusinessSnapshot,
+        getLocalNote,
+    ]);
 
     const ChatPanel = (
         <div

@@ -1,8 +1,9 @@
 // Dashboard.tsx
-import React from "react";
+import React, { use } from "react";
 import OnlineLayout from "../layout/OnlineLayout";
 import AgencyChatbot from "../components/features/AgencyChatbot";
 import { DASHBOARD_PLAYBOOK, getUserId } from "../utils/helper";
+import WipeMemoryBtn from "../components/features/WipeMemoryBtn";
 
 type GlassCardProps = {
     title?: React.ReactNode;
@@ -77,10 +78,10 @@ const Dashboard: React.FC = () => {
                         autoStart
                         mode="floating"
                         placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
-                        persistNamespace="global"    
-                        userId={userId}         
+                        persistNamespace="global"
+                        userId={userId}
                         getBusinessSnapshot={() => ({
-                            __summary: "Chat general del dashboard.",
+                            __summary: "Por ahora no hay resumen definido.",
                             page: "dashboard",
                         })}
                         bootExtraInstructions={DASHBOARD_PLAYBOOK}
@@ -96,6 +97,7 @@ const Dashboard: React.FC = () => {
                             <Placeholder className="h-full" />
                         </GlassCard>
                     </div>
+                    <WipeMemoryBtn userId={userId} />
                 </div>
             </div>
         </OnlineLayout>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { extractUserTextFromContent } from "../../utils/helper";
 
 export type Tool = {
   type: "function";
@@ -74,7 +75,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
   const startedRef = useRef(false);
 
-  const debugLogs = !!opts?.debugLogs;
+  const debugLogs = true /* !!opts?.debugLogs */
 
   const logSessionWindow = useCallback((label: string) => {
     if (!debugLogs) return;
@@ -108,28 +109,51 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     const model = import.meta.env.VITE_OPENAI_MODEL;
     const speed = clamp(toNum(readEnv("VITE_OPENAI_SPEED") || "1", 1), 0.5, 3.0);
-    const temperature = clamp(
-      toNum(readEnv("VITE_OPENAI_TEMPERATURE") || "0.7", 0.7),
-      0.6,
-      2.0
-    );
+    const temperature = clamp(toNum(readEnv("VITE_OPENAI_TEMPERATURE") || "0.7", 0.7), 0.6, 2.0);
+
+    // ⬅️ NUEVO: traemos instrucciones de boot para incluirlas también en el token inicial
+    const boot = (opts?.getBootInstructions?.() || "").trim();
+
+    const PREAMBLE = [
+      "Te llamás Alma. Respondé en español (si el usuario cambia de idioma, seguí su idioma).",
+      "Sé clara y breve. Podés tener una charla breve (1–2 líneas) si te saludan o hacen small talk, y luego retomá el objetivo.",
+      "Leé y respetá el bloque '=== CONTEXTO RESUMEN ===' si existe; usalo para recordar lo hablado aunque se haya recargado la página.",
+      "Leé y seguí '=== GUÍA ESPECÍFICA DE ESTA VISTA ===' (playbook/pasos) si existe.",
+      "Cuando ejecutes una tool: confirmá en una línea y, si corresponde, indicá qué campo tocaste o qué cambió.",
+      "Si el usuario pide 'apágate' o 'detener', llamá la tool deactivateAgent.",
+      "Si te piden “¿qué recordás?” o “¿qué resumiste?”: respondé con 2–4 viñetas del CONTEXTO RESUMEN.",
+      "No inventes datos; si falta algo, pedilo puntualmente."
+    ].join(" ");
+
+    const combinedInstructions = [PREAMBLE, boot]
+      .filter(Boolean)
+      .join("\n\n=== BOOT CONTEXT ===\n");
+
+    if (debugLogs) {
+      console.groupCollapsed("[Realtime][token] instructions");
+      console.log("len:", combinedInstructions.length);
+      console.log("preview:\n" + combinedInstructions.slice(0, 800));
+      console.groupEnd();
+    }
 
     const payload = {
       model,
       voice,
       modalities: ["audio", "text"],
-      instructions:
-        "Tu nombre es Alma, presentate y respondé en español. Si el usuario pide navegar o cambiar el tema, llamá la tool correspondiente. Confirmá brevemente después de ejecutar.",
+      instructions: combinedInstructions, // ⬅️ AHORA el arranque ya lleva tu boot context
       tool_choice: "auto",
       speed,
       temperature,
     };
 
+    console.log('PAYLOAD #################', payload);
+
+
     const url = `${backendUrl}/realtime/sessions`;
-    if (REALTIME_DEBUG) {
+    if (REALTIME_DEBUG || debugLogs) {
       console.groupCollapsed("[/realtime/sessions] REQUEST");
       console.log("url:", url);
-      console.log("payload:", payload);
+      console.log("payload:", { ...payload, instructions: `<${combinedInstructions.length} chars>` });
       console.groupEnd();
     }
 
@@ -142,27 +166,15 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     const raw = await res.clone().text();
     let body: any = raw;
-    try {
-      body = JSON.parse(raw);
-    } catch { }
-
-    /*     if (REALTIME_DEBUG) {
-          console.groupCollapsed("[/realtime/sessions] RESPONSE");
-          console.log("status:", res.status, res.statusText);
-          console.log("body:", body);
-          const tokenPreview =
-            body?.client_secret?.value ?? body?.value ?? body?.token;
-          console.log("token:", mask(tokenPreview));
-          console.groupEnd();
-        } */
+    try { body = JSON.parse(raw); } catch { }
 
     if (!res.ok) throw new Error(`Failed to get token: ${res.status} ${raw}`);
 
-    const token =
-      body?.client_secret?.value ?? body?.value ?? body?.token;
+    const token = body?.client_secret?.value ?? body?.value ?? body?.token;
     if (!token) throw new Error("Ephemeral token not found in response");
     return token;
   }
+
 
   function setupInboundAudio(pc: RTCPeerConnection) {
     const audioEl = document.createElement("audio");
@@ -198,14 +210,16 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
-        input_audio_transcription: { model: "gpt-4o-transcribe" },
+        input_audio_transcription: { model: "gpt-4o-transcribe", language: "es" },
         tools: [...tools],
       },
     };
 
     const extra = opts?.getBootInstructions?.();
     if (extra && typeof extra === "string" && extra.trim().length) {
-      sessionUpdate.session.instructions = extra;
+      // Marcamos esta versión de ctx (útil para ver si realmente "entra")
+      const ctxId = `BOOT@${new Date().toISOString()}`;
+      sessionUpdate.session.instructions = `${extra}\n\n[CTX_ID:${ctxId}]`;
     }
 
     console.groupCollapsed("[Realtime][boot] session.update payload");
@@ -214,13 +228,30 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     if (sessionUpdate.session.instructions) {
       const instr = sessionUpdate.session.instructions as string;
       console.log("instructions.len:", instr.length);
-      console.log("instructions.preview:\n" + instr.slice(0, 600));
+      console.log("instructions.preview:\n" + instr);
     } else {
       console.log("instructions: <none>");
     }
     console.groupEnd();
 
     dc.send(JSON.stringify(sessionUpdate));
+
+    // ⬅️ En algunos stacks conviene reenviar un update a los ~300ms para asegurar apply
+    setTimeout(() => {
+      try {
+        const again: any = { ...sessionUpdate };
+        const instr = (again.session.instructions || "").toString();
+        const ctxId2 = `BOOT_AGAIN@${new Date().toISOString()}`;
+        again.session.instructions = `${instr}\n\n[CTX_ID:${ctxId2}]`;
+        if (debugLogs) {
+          console.groupCollapsed("[Realtime][boot] session.update (again)");
+          console.log("len:", again.session.instructions.length);
+          console.log("preview:\n" + again.session.instructions.slice(0, 400));
+          console.groupEnd();
+        }
+        dc.send(JSON.stringify(again));
+      } catch { }
+    }, 300);
   }
 
   async function waitForDataChannelOpen(timeoutMs = 4000): Promise<RTCDataChannel> {
@@ -292,24 +323,29 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const dc = dataChannelRef.current;
     if (!dc || dc.readyState !== "open") return;
 
+    const ctxId = `CTX_REFRESH@${new Date().toISOString()}`;
+
     const sessionUpdate: any = {
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
-        input_audio_transcription: { model: "gpt-4o-transcribe" },
+        input_audio_transcription: { model: "gpt-4o-transcribe", language: "es" },
         tools: [...tools],
       },
     };
 
     const fresh = opts?.getBootInstructions?.();
-    const merged = [fresh, (extra || "").trim()].filter(Boolean).join("\n\n");
+    const merged = [fresh, (extra || "").trim(), `[CTX_ID:${ctxId}]`]
+      .filter(Boolean)
+      .join("\n\n");
+
     if (merged) sessionUpdate.session.instructions = merged;
 
-    if (REALTIME_DEBUG) {
-      console.groupCollapsed("[Realtime][ctx-refresh] session.update payload");
-      console.log("hasInstructions:", !!merged, "len:", merged?.length || 0);
-      console.groupEnd();
-    }
+    console.groupCollapsed("[Realtime][ctx-refresh] session.update payload");
+    console.log("dataChannel:", dc.readyState);
+    console.log("hasInstructions:", !!merged, "len:", merged?.length || 0);
+    console.log("preview:\n" + merged.slice(0, 800));
+    console.groupEnd();
 
     dc.send(JSON.stringify(sessionUpdate));
   }
@@ -318,7 +354,15 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     try {
       setIsStarting(true);
       setStatus("Pidiendo micrófono…");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false,   
+          channelCount: 1,
+          sampleRate: 48000  
+        }
+      });
       audioStreamRef.current = stream;
 
       setStatus("Obteniendo token efímero…");
@@ -336,6 +380,14 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       dc.onmessage = onDataMessage;
 
       pc.addTrack(stream.getTracks()[0]);
+
+      if (debugLogs) {
+        const bootNow = (opts?.getBootInstructions?.() || "").trim();
+        console.groupCollapsed("[Realtime][pre-offer] boot snapshot");
+        console.log("pre-offer.len:", bootNow.length);
+        console.log("pre-offer.preview:\n" + bootNow.slice(0, 800));
+        console.groupEnd();
+      }
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -423,7 +475,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     setIsThinking(true);
     logSessionWindow("before-send");
-    
+
     let dc = dataChannelRef.current;
     if (!dc) return;
     if (dc.readyState !== "open") {
@@ -550,17 +602,63 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
           dataChannelRef.current?.send(JSON.stringify(resume));
           break;
         }
-
-        default:
-          if (debugLogs && msg?.type) {
-            console.debug("[RTC] Unhandled message type:", msg.type, msg);
+        case "conversation.item.created": {
+          // Estructura típica cuando el Realtime emite un item del usuario ya “consolidado”
+          const item = msg?.item;
+          if (item?.type === "message" && (item?.role === "user" || item?.role === "User")) {
+            const text = extractUserTextFromContent(item?.content || []);
+            if (text) {
+              setConversation(prev => ([
+                ...prev,
+                {
+                  id: item?.id || crypto.randomUUID(),
+                  role: "user",
+                  text,
+                  isFinal: true,
+                  timestamp: new Date().toISOString(),
+                },
+              ]));
+              if (debugLogs) console.debug("[RTC] user message captured (created):", text.slice(0, 120));
+            }
           }
           break;
+        }
+
+        // ===== TRANSCRIPCIÓN FINAL DEL USUARIO (por audio) =====
+        // Algunas variantes del Realtime envían un evento explícito de transcripción “completed”
+        case "conversation.item.input_audio_transcription.completed":
+        case "input_audio_transcription.completed":
+        case "response.input_audio_transcription.completed": {
+          const transcript =
+            msg?.transcript ||
+            msg?.item?.content?.find?.((c: any) => c?.type === "input_audio_transcription")?.transcript ||
+            msg?.item?.content?.find?.((c: any) => c?.type === "transcript")?.text ||
+            "";
+
+          const clean = (transcript || "").trim();
+          if (clean) {
+            setConversation(prev => ([
+              ...prev,
+              {
+                id: msg?.item_id || crypto.randomUUID(),
+                role: "user",
+                text: clean,
+                isFinal: true,
+                timestamp: new Date().toISOString(),
+              },
+            ]));
+            if (debugLogs) console.debug("[RTC] user transcript captured (completed):", clean.slice(0, 120));
+          }
+          break;
+        }
       }
     } catch (e) {
       console.error("onDataMessage parse error", e);
     }
   }
+
+
+  console.log("LOGS DE CONVERSACION ############", conversation);
 
   useEffect(() => {
     if (!opts?.autoStart || startedRef.current) return;

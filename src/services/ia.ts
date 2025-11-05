@@ -12,7 +12,7 @@ export async function getResumeOfConversation(text: string, maxLength = 240, sig
     { signal }
   );
 
-  console.log(data);
+  console.log('DATA RESUMIDA ##################',data);
   
   return String(data?.summary || "");
 }
