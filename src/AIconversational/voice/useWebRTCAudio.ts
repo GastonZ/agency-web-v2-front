@@ -114,7 +114,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const boot = (opts?.getBootInstructions?.() || "").trim();
 
     const PREAMBLE = [
-      "Te llamás Alma. Respondé en español (si el usuario cambia de idioma, seguí su idioma).",
+      "Te llamás LISA. Respondé en español (si el usuario cambia de idioma, seguí su idioma).",
       "Sé clara y breve. Podés tener una charla breve (1–2 líneas) si te saludan o hacen small talk, y luego retomá el objetivo.",
       "Leé y respetá el bloque '=== CONTEXTO RESUMEN ===' si existe; usalo para recordar lo hablado aunque se haya recargado la página.",
       "Leé y seguí '=== GUÍA ESPECÍFICA DE ESTA VISTA ===' (playbook/pasos) si existe.",

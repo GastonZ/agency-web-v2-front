@@ -33,6 +33,7 @@ import { getUserId, historyToText } from "../../../utils/helper";
 import { getResumeOfConversation } from "../../../services/ia";
 import { loadBotSnapshot } from "../../../AIconversational/voice/session/persistence";
 import { MODERATION_PLAYBOOK } from "../utils/campaignsInstructions";
+import ModerationSkeleton from "../components/ModerationSkeleton";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -137,14 +138,14 @@ const Moderation: React.FC = () => {
 
                 if (chosenSource !== "none") {
                     chosenText = buildTranscriptFromHistory(pickedHistory, {
-                        maxChars: 40000,  
+                        maxChars: 40000,
                         newestLast: true,
                     });
                 }
 
                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-                    const summary = await getResumeOfConversation(chosenText, 1000, ctrl.signal);
+                    const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
                     if (!aborted) {
                         setBootSummary(summary || undefined);
                         console.groupCollapsed("[Moderation][boot] resumen recibido");
@@ -454,6 +455,12 @@ const Moderation: React.FC = () => {
         () => extractPlaybookForStep(MODERATION_PLAYBOOK, current - 1),
         [stepIndex]
     );
+
+    const viewReady = bootReady;
+
+    if (!viewReady) {
+        return <ModerationSkeleton />;
+    }
 
     return (
         <OnlineLayout>

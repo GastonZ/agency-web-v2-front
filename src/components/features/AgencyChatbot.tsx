@@ -326,7 +326,7 @@ export default function AgencyChatbot({
             </div>
 
             <div className="absolute top-3 right-3 text-xs tracking-wider text-neutral-500 dark:text-neutral-400 select-none">
-                Alma Chatbot
+                LISA Chatbot
             </div>
 
             {/* HISTORIAL */}
