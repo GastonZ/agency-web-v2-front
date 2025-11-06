@@ -111,7 +111,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const speed = clamp(toNum(readEnv("VITE_OPENAI_SPEED") || "1", 1), 0.5, 3.0);
     const temperature = clamp(toNum(readEnv("VITE_OPENAI_TEMPERATURE") || "0.7", 0.7), 0.6, 2.0);
 
-    // ⬅️ NUEVO: traemos instrucciones de boot para incluirlas también en el token inicial
     const boot = (opts?.getBootInstructions?.() || "").trim();
 
     const PREAMBLE = [
@@ -140,7 +139,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       model,
       voice,
       modalities: ["audio", "text"],
-      instructions: combinedInstructions, // ⬅️ AHORA el arranque ya lleva tu boot context
+      instructions: combinedInstructions,
       tool_choice: "auto",
       speed,
       temperature,
@@ -217,7 +216,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     const extra = opts?.getBootInstructions?.();
     if (extra && typeof extra === "string" && extra.trim().length) {
-      // Marcamos esta versión de ctx (útil para ver si realmente "entra")
       const ctxId = `BOOT@${new Date().toISOString()}`;
       sessionUpdate.session.instructions = `${extra}\n\n[CTX_ID:${ctxId}]`;
     }
@@ -236,7 +234,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     dc.send(JSON.stringify(sessionUpdate));
 
-    // ⬅️ En algunos stacks conviene reenviar un update a los ~300ms para asegurar apply
     setTimeout(() => {
       try {
         const again: any = { ...sessionUpdate };
@@ -603,7 +600,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
           break;
         }
         case "conversation.item.created": {
-          // Estructura típica cuando el Realtime emite un item del usuario ya “consolidado”
           const item = msg?.item;
           if (item?.type === "message" && (item?.role === "user" || item?.role === "User")) {
             const text = extractUserTextFromContent(item?.content || []);
@@ -624,8 +620,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
           break;
         }
 
-        // ===== TRANSCRIPCIÓN FINAL DEL USUARIO (por audio) =====
-        // Algunas variantes del Realtime envían un evento explícito de transcripción “completed”
         case "conversation.item.input_audio_transcription.completed":
         case "input_audio_transcription.completed":
         case "response.input_audio_transcription.completed": {
