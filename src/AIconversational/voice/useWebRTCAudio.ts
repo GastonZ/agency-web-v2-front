@@ -114,7 +114,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     const boot = (opts?.getBootInstructions?.() || "").trim();
 
     const PREAMBLE = [
-      "Te llamás Alma. Respondé en español (si el usuario cambia de idioma, seguí su idioma).",
+      "Te llamás LISA. Respondé en español (si el usuario cambia de idioma, seguí su idioma).",
       "Sé clara y breve. Podés tener una charla breve (1–2 líneas) si te saludan o hacen small talk, y luego retomá el objetivo.",
       "Leé y respetá el bloque '=== CONTEXTO RESUMEN ===' si existe; usalo para recordar lo hablado aunque se haya recargado la página.",
       "Leé y seguí '=== GUÍA ESPECÍFICA DE ESTA VISTA ===' (playbook/pasos) si existe.",
@@ -286,12 +286,17 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
   }
 
   /* 
-    Silent message sync with ALMA
+    Silent message sync with LISA
   */
 
-  async function sendSilentUserNote(text: string) {
+  async function sendSilentUserNote(
+    text: string,
+    forceRespond: boolean = false, 
+    showInUI: boolean = true
+  ) {
     const dc = dataChannelRef.current;
     if (!dc || dc.readyState !== "open") return;
+
     const clean = (text ?? "").trim();
     if (!clean) return;
 
@@ -304,16 +309,31 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       },
     }));
 
-    setConversation(prev => ([
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        role: "user",
-        text: clean,
-        isFinal: true,
-        timestamp: new Date().toISOString(),
-      },
-    ]));
+    if (forceRespond) {
+      dc.send(JSON.stringify({ type: "response.create" }));
+    }
+
+    if (showInUI) {
+      setConversation((prev) => ([
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "user",
+          text: clean,
+          isFinal: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]));
+    }
+  }
+
+  function nudgeResponse() {
+    try {
+      const dc = dataChannelRef.current;
+      if (dc && dc.readyState === "open") {
+        dc.send(JSON.stringify({ type: "response.create" }));
+      }
+    } catch { }
   }
 
   function updateSessionContext(extra?: string) {
@@ -355,9 +375,9 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: false,   
+          autoGainControl: false,
           channelCount: 1,
-          sampleRate: 48000  
+          sampleRate: 48000
         }
       });
       audioStreamRef.current = stream;
@@ -686,6 +706,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     isThinking,
 
     sendSilentUserNote,
-    updateSessionContext
+    updateSessionContext,
+    nudgeResponse
   };
 }

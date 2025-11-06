@@ -23,7 +23,7 @@ const WipeMemoryBtn: React.FC<Props> = ({
   userId,
   namespaces = ["global", "moderation"],
   draftKey = "campaign:moderation:draft",
-  label = "Borrar ctx y refrescar",
+  label = "Borrar memoria y refrescar",
   className = "",
   confirm = false,
 }) => {
@@ -76,16 +76,13 @@ const WipeMemoryBtn: React.FC<Props> = ({
     <button
       type="button"
       onClick={handleWipe}
-      className={[
-        "inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium",
-        "bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all active:scale-95",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400",
+      className={["flex gap-2 justify-center items-center dark:bg-emerald-700 bg-emerald-300 p-2 rounded-lg w-[220px] hover:scale-105 transition cursor-pointer hover:bg-emerald-400",
         className,
       ].join(" ")}
       title="Borrar snapshots (global/moderation) y draft, luego refrescar"
     >
-      <Trash2 className="w-6 h-6" />
-      <span>{label}</span>
+      <Trash2 className="w-4 h-4" />
+      <span className="text-sm font-semibold">{label}</span>
     </button>
   );
 };

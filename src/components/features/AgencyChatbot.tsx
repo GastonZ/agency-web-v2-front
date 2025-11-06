@@ -49,6 +49,8 @@ type AgencyChatbotProps = {
     ) => void;
 
     bootExtraInstructions?: string;
+    autoKickoff?: boolean;
+    kickoffMessage?: string;
 };
 
 export default function AgencyChatbot({
@@ -67,11 +69,14 @@ export default function AgencyChatbot({
 
     onConversationChange,
     bootExtraInstructions,
+    autoKickoff,
+    kickoffMessage
 }: AgencyChatbotProps) {
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools, internalSummaryTool as any], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
 
     const [rollingSummary, setRollingSummary] = React.useState<string>("");
+    const hasKickedRef = React.useRef(false);
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
@@ -141,7 +146,8 @@ export default function AgencyChatbot({
         stopSession,
 
         sendSilentUserNote,
-        updateSessionContext
+        updateSessionContext,
+        nudgeResponse
     } = useWebRTCAudio("sage", tools as any, {
         autoStart,
         startDelayMs: 120,
@@ -245,6 +251,32 @@ export default function AgencyChatbot({
         return () => window.removeEventListener("agency:manual-change" as any, onManualChange);
     }, [sendSilentUserNote, refreshCtxDebounced]);
 
+    React.useEffect(() => {
+        if (!autoKickoff || hasKickedRef.current || !isSessionActive) return;
+
+        const defaultKickoff =
+            "Lisa: iniciá la guía para crear una campaña de moderación. " +
+            "Saludá brevemente y preguntá si desea empezar por los datos básicos o " +
+            "que la guíes paso a paso.";
+
+        const kickoff = (kickoffMessage || defaultKickoff).trim();
+        if (!kickoff) return;
+
+        const t1 = setTimeout(() => {
+            sendSilentUserNote(kickoff, true, false);
+
+            hasKickedRef.current = true;
+
+            const t2 = setTimeout(() => {
+                nudgeResponse();
+            }, 1200);
+
+            return () => clearTimeout(t2);
+        }, 500);
+
+        return () => clearTimeout(t1);
+    }, [autoKickoff, kickoffMessage, isSessionActive, sendSilentUserNote, nudgeResponse]);
+
     // UI state
     const [text, setText] = React.useState("");
     const glowScale = isSessionActive ? 1 + Math.min(currentVolume * 2.5, 0.25) : 1;
@@ -326,7 +358,7 @@ export default function AgencyChatbot({
             </div>
 
             <div className="absolute top-3 right-3 text-xs tracking-wider text-neutral-500 dark:text-neutral-400 select-none">
-                Alma Chatbot
+                LISA Chatbot
             </div>
 
             {/* HISTORIAL */}

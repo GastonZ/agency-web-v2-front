@@ -1,9 +1,9 @@
 export const CHANNEL_STATUS = {
   instagram: "available",
   whatsapp: "available",
-  facebook: "unavailable",
-  email: "unavailable",
-  x: "unavailable",
+  facebook: "available",
+  email: "available",
+  x: "available",
 } as const;
 
 export type ChannelKey = keyof typeof CHANNEL_STATUS;
