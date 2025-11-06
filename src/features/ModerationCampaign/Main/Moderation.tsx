@@ -135,11 +135,10 @@ const Moderation: React.FC = () => {
                     chosenSource = "none";
                 }
 
-                // 👉 NUEVO: transcript completo con roles (User/Assistant), recortado a un máximo seguro
                 if (chosenSource !== "none") {
                     chosenText = buildTranscriptFromHistory(pickedHistory, {
-                        maxChars: 40000,   // podés subir/bajar este límite
-                        newestLast: true, // orden cronológico: viejo -> nuevo
+                        maxChars: 40000,  
+                        newestLast: true,
                     });
                 }
 

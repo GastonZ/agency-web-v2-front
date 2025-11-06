@@ -82,7 +82,6 @@ export default function AgencyChatbot({
         // 1) Construimos el snapshot “mergeado”
         const merged: any = { ...(snap || {}), business: { ...(snap?.business || {}) } };
 
-        // Tomamos el mejor resumen disponible con prioridad: override > rolling > snap
         const liveSummary =
             (bootSummaryOverride && String(bootSummaryOverride).trim()) ||
             (rollingSummary && String(rollingSummary).trim()) ||
@@ -90,31 +89,30 @@ export default function AgencyChatbot({
             "";
 
         if (liveSummary) {
-            merged.business.__summary = liveSummary; // mantenemos por compat, pero ya no dependemos de que buildBootInstructions lo use
+            merged.business.__summary = liveSummary;
         }
 
-        // 2) Texto base (sin resumen explícito, por si tu helper no lo incluye)
+        // 2) Texto base
         const base = (buildBootInstructions(merged) || "").trim();
 
-        // 3) Sección de resumen SIEMPRE explícita (independiente del helper)
+        // 3) Sección de resumen 
         const summarySection = liveSummary
             ? [
                 "=== CONTEXTO RESUMEN (persistente) ===",
-                // Marcamos un tag reconocible para verificar en payloads
                 "[RESUMEN_BOOT_BEGIN]",
                 liveSummary,
                 "[RESUMEN_BOOT_END]",
             ].join("\n")
             : "";
 
-        // 4) Playbook / guía extra (si viene)
+        // 4) Playbook / guía extra
         const extra = (bootExtraInstructions || "").trim();
         const extraSection = extra ? `=== GUÍA ESPECÍFICA DE ESTA VISTA ===\n${extra}` : "";
 
         // 5) Ensamblado final
         const finalText = [base, summarySection, extraSection].filter(Boolean).join("\n\n");
 
-        // Logs y handle global para inspección rápida
+        // Logs
         console.groupCollapsed("[Chatbot][boot] instructions");
         console.log("hasSnapshot:", !!snap);
         console.log("hasSummaryOverride:", !!bootSummaryOverride, "len:", (bootSummaryOverride || "").length);
@@ -280,7 +278,7 @@ export default function AgencyChatbot({
     React.useEffect(() => {
         // si la sesión está activa, empujamos nuevas instrucciones
         if (!isSessionActive) return;
-        // Esperá ~120-200ms para aglutinar cambios rápidos de UI
+        // Esperá  para aglutinar cambios rápidos de UI
         const id = window.setTimeout(() => {
             try { updateSessionContext?.(); } catch { }
         }, 150);
@@ -289,7 +287,7 @@ export default function AgencyChatbot({
         isSessionActive,
         bootSummaryOverride,
         bootExtraInstructions,
-        // derivan en buildBootInstructions:
+
         getBusinessSnapshot,
         getLocalNote,
     ]);
