@@ -146,7 +146,8 @@ export default function AgencyChatbot({
         stopSession,
 
         sendSilentUserNote,
-        updateSessionContext
+        updateSessionContext,
+        nudgeResponse
     } = useWebRTCAudio("sage", tools as any, {
         autoStart,
         startDelayMs: 120,
@@ -253,14 +254,28 @@ export default function AgencyChatbot({
     React.useEffect(() => {
         if (!autoKickoff || hasKickedRef.current || !isSessionActive) return;
 
-        const defaultMsg =
-            "Ayuda al usuario con lo que necesite.";
+        const defaultKickoff =
+            "Lisa: iniciá la guía para crear una campaña de moderación. " +
+            "Saludá brevemente y preguntá si desea empezar por los datos básicos o " +
+            "que la guíes paso a paso.";
 
-        const kickoff = (kickoffMessage || defaultMsg).trim();
+        const kickoff = (kickoffMessage || defaultKickoff).trim();
+        if (!kickoff) return;
 
-        sendSilentUserNote(kickoff, true, false);
-        hasKickedRef.current = true;
-    }, [autoKickoff, kickoffMessage, isSessionActive, sendSilentUserNote]);
+        const t1 = setTimeout(() => {
+            sendSilentUserNote(kickoff, true, false);
+
+            hasKickedRef.current = true;
+
+            const t2 = setTimeout(() => {
+                nudgeResponse();
+            }, 1200);
+
+            return () => clearTimeout(t2);
+        }, 500);
+
+        return () => clearTimeout(t1);
+    }, [autoKickoff, kickoffMessage, isSessionActive, sendSilentUserNote, nudgeResponse]);
 
     // UI state
     const [text, setText] = React.useState("");

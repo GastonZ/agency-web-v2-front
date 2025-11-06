@@ -286,7 +286,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
   }
 
   /* 
-    Silent message sync with ALMA
+    Silent message sync with LISA
   */
 
   async function sendSilentUserNote(
@@ -294,7 +294,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     forceRespond: boolean = false, 
     showInUI: boolean = true
   ) {
-    
     const dc = dataChannelRef.current;
     if (!dc || dc.readyState !== "open") return;
 
@@ -315,7 +314,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     }
 
     if (showInUI) {
-      setConversation(prev => ([
+      setConversation((prev) => ([
         ...prev,
         {
           id: crypto.randomUUID(),
@@ -328,6 +327,14 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     }
   }
 
+  function nudgeResponse() {
+    try {
+      const dc = dataChannelRef.current;
+      if (dc && dc.readyState === "open") {
+        dc.send(JSON.stringify({ type: "response.create" }));
+      }
+    } catch { }
+  }
 
   function updateSessionContext(extra?: string) {
     const dc = dataChannelRef.current;
@@ -699,6 +706,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     isThinking,
 
     sendSilentUserNote,
-    updateSessionContext
+    updateSessionContext,
+    nudgeResponse
   };
 }
