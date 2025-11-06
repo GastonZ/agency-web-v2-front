@@ -796,6 +796,11 @@ const Moderation: React.FC = () => {
 
                                 setToolsReady(true);
                             }}
+                            autoKickoff
+                            kickoffMessage={
+                                "Lisa, saludá al usuario y empezá guiándolo en la creación de su campaña de moderación. " +
+                                "Pedile que complete los datos básicos del paso 1 (nombre, objetivo y definición de lead). Luego que responda continua como lo harias normalmente"
+                            }
                         />
                     </div>
 

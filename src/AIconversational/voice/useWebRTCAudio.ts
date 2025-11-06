@@ -289,9 +289,15 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     Silent message sync with ALMA
   */
 
-  async function sendSilentUserNote(text: string) {
+  async function sendSilentUserNote(
+    text: string,
+    forceRespond: boolean = false, 
+    showInUI: boolean = true
+  ) {
+    
     const dc = dataChannelRef.current;
     if (!dc || dc.readyState !== "open") return;
+
     const clean = (text ?? "").trim();
     if (!clean) return;
 
@@ -304,17 +310,24 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       },
     }));
 
-    setConversation(prev => ([
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        role: "user",
-        text: clean,
-        isFinal: true,
-        timestamp: new Date().toISOString(),
-      },
-    ]));
+    if (forceRespond) {
+      dc.send(JSON.stringify({ type: "response.create" }));
+    }
+
+    if (showInUI) {
+      setConversation(prev => ([
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "user",
+          text: clean,
+          isFinal: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]));
+    }
   }
+
 
   function updateSessionContext(extra?: string) {
     const dc = dataChannelRef.current;
@@ -355,9 +368,9 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: false,   
+          autoGainControl: false,
           channelCount: 1,
-          sampleRate: 48000  
+          sampleRate: 48000
         }
       });
       audioStreamRef.current = stream;

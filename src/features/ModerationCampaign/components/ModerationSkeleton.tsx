@@ -70,7 +70,6 @@ function GlyphSweep() {
 }
 
 function NeuralNet() {
-  // Nodos y aristas (coordenadas dentro del SVG)
   const nodes = [
     { id: "n1", x: 40, y: 120 },
     { id: "n2", x: 140, y: 60 },

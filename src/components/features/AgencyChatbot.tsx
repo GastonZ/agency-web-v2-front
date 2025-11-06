@@ -49,6 +49,8 @@ type AgencyChatbotProps = {
     ) => void;
 
     bootExtraInstructions?: string;
+    autoKickoff?: boolean;
+    kickoffMessage?: string;
 };
 
 export default function AgencyChatbot({
@@ -67,11 +69,14 @@ export default function AgencyChatbot({
 
     onConversationChange,
     bootExtraInstructions,
+    autoKickoff,
+    kickoffMessage
 }: AgencyChatbotProps) {
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools, internalSummaryTool as any], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
 
     const [rollingSummary, setRollingSummary] = React.useState<string>("");
+    const hasKickedRef = React.useRef(false);
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
@@ -244,6 +249,18 @@ export default function AgencyChatbot({
         window.addEventListener("agency:manual-change" as any, onManualChange);
         return () => window.removeEventListener("agency:manual-change" as any, onManualChange);
     }, [sendSilentUserNote, refreshCtxDebounced]);
+
+    React.useEffect(() => {
+        if (!autoKickoff || hasKickedRef.current || !isSessionActive) return;
+
+        const defaultMsg =
+            "Ayuda al usuario con lo que necesite.";
+
+        const kickoff = (kickoffMessage || defaultMsg).trim();
+
+        sendSilentUserNote(kickoff, true, false);
+        hasKickedRef.current = true;
+    }, [autoKickoff, kickoffMessage, isSessionActive, sendSilentUserNote]);
 
     // UI state
     const [text, setText] = React.useState("");
