@@ -95,6 +95,7 @@ const Moderation: React.FC = () => {
     const persistNamespace = "moderation";
 
     const [toolsReady, setToolsReady] = React.useState(false);
+    const [showUI, setShowUI] = React.useState(false);
 
     const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
 
@@ -190,6 +191,13 @@ const Moderation: React.FC = () => {
         })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.search]);
+
+    React.useEffect(() => {
+        if (bootReady && toolsReady) {
+            const timeout = setTimeout(() => setShowUI(true), 4000);
+            return () => clearTimeout(timeout);
+        }
+    }, [bootReady, toolsReady]);
 
     // --- helpers de validación (Paso 1 y Paso 2) ---
     function missingFromStep0(data: any) {
@@ -463,397 +471,410 @@ const Moderation: React.FC = () => {
     }
 
     return (
-        <OnlineLayout>
-            <div className="w-full px-2 md:px-4">
-                <div className="mb-4 md:mb-6">
-                    <StepperTop steps={STEPS} current={current} onStepClick={jumpTo} />
-                </div>
-
-                <EditModeBanner />
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
-                    <div className="lg:col-span-5">
-                        <AgencyChatbot
-                            mode="floating"
-                            persistNamespace="moderation"
-                            userId={userId}
-                            autoStart={bootReady && toolsReady}
-                            bootSummaryOverride={bootSummary}
-                            bootExtraInstructions={MODERATION_PLAYBOOK}
-                            getBusinessSnapshot={() => ({
-                                __summary: (() => {
-                                    const name = data?.name || "Sin nombre";
-                                    const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
-                                    const step = stepNames[current] ?? String(current);
-                                    return `Campaña de Moderación “${name}”, paso ${step}.`;
-                                })(),
-                                stepIndex: current,
-                                campaignId: data?.campaignId,
-                                basics: {
-                                    name: data?.name,
-                                    goal: data?.goal,
-                                    summary: data?.summary,
-                                    leadDefinition: data?.leadDefinition,
-                                },
-                                audience: {
-                                    countryId: data?.audience?.geo?.countryCode,
-                                    provinceId: data?.audience?.geo?.regionCode,
-                                    cityId: data?.audience?.geo?.city,
-                                    culture: data?.audience?.cultural,
-                                    tone: data?.tone,
-                                },
-                                channels: Array.isArray(data?.channels) ? data.channels : [],
-                                assistant: {
-                                    name: data?.assistant?.name,
-                                    greeting: data?.assistant?.greeting,
-                                    logic: data?.assistant?.conversationLogic,
-                                    qaCount: Array.isArray(data?.knowHow) ? data.knowHow.length : 0,
-                                    allowedTopicsCount: Array.isArray(data?.allowedTopics) ? data.allowedTopics.length : 0,
-                                    escalationCount: Array.isArray(data?.escalationItems) ? data.escalationItems.length : 0,
-                                    phone: data?.escalationPhone,
-                                    calendarsEnabled: !!data?.calendarsEnabled,
-                                },
-                            })}
-                            getLocalNote={() => {
-                                const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
-                                const step = stepNames[current] ?? String(current);
-                                const name = data?.name || "Sin nombre";
-                                return `Estábamos configurando la campaña “${name}” en ${step}.`;
-                            }}
-                            extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any), ...(autoScrollTools as any)]}
-                            onRegisterTools={(register) => {
-                                register("getModerationOverview", getModerationOverview);
-                                register("explainModerationField", (args: { field: "name" | "goal" | "summary" | "leadDefinition" }) => {
-                                    const res = explainModerationField(args);
-                                    try { scrollToModerationField({ field: args.field as any }); } catch { }
-                                    return res;
-                                });
-                                register("updateModerationBasics", (args: {
-                                    name?: string; goal?: string; summary?: string; leadDefinition?: string;
-                                }) => {
-                                    const res = updateModerationBasics(args);
-                                    if (res?.success) {
-                                        const updated: string[] = Array.isArray(res.updated) ? res.updated : [];
-                                        if (updated.length === 1) {
-                                            try {
-                                                scrollToFieldIfFilled({ field: updated[0] as any, payload: data });
-                                            } catch { }
-                                        } else if (updated.length > 1) {
-                                            updated.forEach((f, i) => {
-                                                setTimeout(() => {
-                                                    try { scrollToFieldIfFilled({ field: f as any, payload: data }); } catch { }
-                                                }, i * 300);
-                                            });
-                                        }
-                                    }
-                                    return res;
-                                });
-                                register("updateModerationGeoByName", (args: any) => {
-                                    const out = updateModerationGeoByName(args);
-                                    // scrollea a lo que se “tocó” (si está lleno en data)
-                                    const candidates: Array<{ field: any, path: string[] }> = [
-                                        { field: "audience.geo.country", path: ["audience", "geo", "countryId"] },
-                                        { field: "audience.geo.province", path: ["audience", "geo", "provinceId"] },
-                                        { field: "audience.geo.city", path: ["audience", "geo", "cityId"] },
-                                    ];
-                                    candidates.forEach((c, i) => {
-                                        const value = c.path.reduce((acc: any, k) => acc?.[k], data);
-                                        if (value) setTimeout(() => {
-                                            try { scrollToModerationField({ field: c.field as any }); } catch { }
-                                        }, i * 200);
-                                    });
-                                    return out;
-                                });
-                                register("updateModerationAudienceCultural", (args: any) => {
-                                    const out = updateModerationAudienceCultural(args);
-                                    try { scrollToModerationField({ field: "audience.culture" as any }); } catch { }
-                                    return out;
-                                });
-                                register("updateModerationToneChoice", (args: any) => {
-                                    const out = updateModerationToneChoice(args);
-                                    try { scrollToModerationField({ field: "tone" as any }); } catch { }
-                                    return out;
-                                });
-                                const scrollChannels = () => {
-                                    try { scrollToModerationField({ field: "channels" as any }); } catch { }
-                                };
-                                register("setModerationChannels", (args: any) => { const r = setModerationChannels(args); scrollChannels(); return r; });
-                                register("addModerationChannel", (args: any) => { const r = addModerationChannel(args); scrollChannels(); return r; });
-                                register("removeModerationChannel", (args: any) => { const r = removeModerationChannel(args); scrollChannels(); return r; });
-                                register("describeModerationChannels", (args: any) => { const r = describeModerationChannels(args); scrollChannels(); return r; });
-                                register("describeModerationChannels", describeModerationChannels);
-                                register("checkModerationStepStatus", checkModerationStepStatus);
-                                register("scrollToModerationField", scrollToModerationField);
-                                register("scrollToFieldIfFilled", scrollToFieldIfFilled);
-                                /* Go to next or prev step */
-                                register("goToNextModerationStep", async () => {
-                                    const ok = await saveCurrentStep();
-                                    if (!ok) {
-                                        const r = checkModerationStepStatus({ step: current });
-                                        return {
-                                            success: false,
-                                            message: "Faltan completar datos antes de continuar.",
-                                            ...r,
-                                        };
-                                    }
-                                    if (current >= 3) {
-                                        return {
-                                            success: false,
-                                            atLastStep: true,
-                                            message:
-                                                "Ya estás en el último paso. Si todo está correcto, podés finalizar la campaña.",
-                                            suggestion:
-                                                "Decime “finalizar campaña” “lanzar campaña” o usá el botón de la UI para activarla.",
-                                        };
-                                    }
-                                    setCurrent((c) => Math.min(3, c + 1));
-                                    return { success: true, advancedTo: Math.min(3, current + 1) };
-                                });
-                                register("goToPrevModerationStep", () => {
-                                    if (current <= 0) {
-                                        return {
-                                            success: false,
-                                            atFirstStep: true,
-                                            message: "Ya estás en el primer paso; no se puede retroceder más.",
-                                        };
-                                    }
-                                    setCurrent((c) => Math.max(0, c - 1));
-                                    return { success: true, movedTo: Math.max(0, current - 1) };
-                                });
-
-                                register("goNextNModerationStep", async (args: any) => {
-                                    let target: number | null = toIndexStep(args?.step);
-                                    if (target === null) {
-                                        const byTopic = resolveStepFromTopic(args?.topic);
-                                        if (byTopic !== null) target = byTopic;
-                                    }
-                                    if (target === null && Number.isFinite(args?.n)) {
-                                        const delta = Number(args.n);
-                                        target = clampStep(current + delta);
-                                    }
-                                    if (target === null) target = clampStep(current + 1);
-
-                                    if (target === current) {
-                                        return {
-                                            success: false,
-                                            message: `Ya estás en "${formatStepName(current)}".`,
-                                            currentStep: current,
-                                        };
-                                    }
-
-                                    if (target < current) {
-                                        setCurrent(target);
-                                        return {
-                                            success: true,
-                                            movedTo: target,
-                                            label: formatStepName(target),
-                                            note: "Movimiento hacia atrás: no se requirió validación.",
-                                        };
-                                    }
-
-                                    let ptr = current;
-                                    while (ptr < target) {
-                                        const ok = await saveCurrentStep();
-                                        if (!ok) {
-                                            const r = checkModerationStepStatus({ step: ptr });
-                                            return {
-                                                success: false,
-                                                message: `Faltan completar datos antes de continuar desde "${formatStepName(ptr)}".`,
-                                                blockedAt: ptr,
-                                                targetStep: target,
-                                                ...r,
-                                            };
-                                        }
-                                        setCurrent((c) => Math.min(3, c + 1));
-                                        ptr += 1;
-                                    }
-
-                                    return {
-                                        success: true,
-                                        movedTo: target,
-                                        label: formatStepName(target),
-                                    };
-                                });
-
-                                register("goPrevNModerationStep", (args: any) => {
-                                    let target: number | null = toIndexStep(args?.step);
-                                    if (target === null) {
-                                        const byTopic = resolveStepFromTopic(args?.topic);
-                                        if (byTopic !== null) target = byTopic;
-                                    }
-                                    if (target === null && Number.isFinite(args?.n)) {
-                                        const delta = Math.abs(Number(args.n));
-                                        target = clampStep(current - delta);
-                                    }
-                                    if (target === null) target = clampStep(current - 1);
-
-                                    if (target === current) {
-                                        return {
-                                            success: false,
-                                            message: `Ya estás en "${formatStepName(current)}".`,
-                                            currentStep: current,
-                                        };
-                                    }
-                                    if (target > current) {
-                                        return {
-                                            success: false,
-                                            message:
-                                                `El objetivo (${formatStepName(target)}) está por delante de "${formatStepName(current)}". ` +
-                                                `Para avanzar, usá "goNextNModerationStep".`,
-                                            currentStep: current,
-                                            targetStep: target,
-                                        };
-                                    }
-
-                                    setCurrent(target);
-                                    return {
-                                        success: true,
-                                        movedTo: target,
-                                        label: formatStepName(target),
-                                        note: "Movimiento hacia atrás: no se requirió validación.",
-                                    };
-                                });
-
-                                register("setModerationAssistantConfig", (args: any) => {
-                                    const res = setModerationAssistantConfig(args);
-                                    // según las props tocadas, scrollear a cada una
-                                    const map: Array<[key: string, field: any, path: string[]]> = [
-                                        ["name", "assistant.name", ["assistant", "name"]],
-                                        ["greeting", "assistant.greeting", ["assistant", "greeting"]],
-                                        ["logic", "assistant.logic", ["assistant", "logic"]],
-                                    ];
-                                    let delay = 0;
-                                    map.forEach(([k, field, path]) => {
-                                        const provided = k in (args || {});
-                                        if (provided) {
-                                            const value = path.reduce((acc: any, kk) => acc?.[kk], data);
-                                            setTimeout(() => {
-                                                try { scrollToFieldIfFilled({ field: field as any, payload: data }); } catch { }
-                                            }, (delay += 200));
-                                        }
-                                    });
-                                    return res;
-                                });
-                                register("explainAssistantVoiceFormat", (args: any) => {
-                                    const r = explainAssistantVoiceFormat(args);
-                                    try { scrollToModerationField({ field: "assistant.logic" as any }); } catch { }
-                                    return r;
-                                });
-
-                                register("explainKnowledgeBaseUpload", (args: any) => {
-                                    const r = explainKnowledgeBaseUpload(args);
-                                    try { scrollToModerationField({ field: "knowHow" as any }); } catch { }
-                                    return r;
-                                });
-
-                                const scrollKnowHow = () => { try { scrollToModerationField({ field: "knowHow" as any }); } catch { } };
-                                register("addModerationQAPair", (args: any) => { const r = addModerationQAPair(args); scrollKnowHow(); return r; });
-                                register("updateModerationQAMatch", (args: any) => { const r = updateModerationQAMatch(args); scrollKnowHow(); return r; });
-                                register("removeModerationQAMatch", (args: any) => { const r = removeModerationQAMatch(args); scrollKnowHow(); return r; });
-
-                                // Temas permitidos
-                                const scrollAllowed = () => { try { scrollToModerationField({ field: "allowedTopics" as any }); } catch { } };
-                                register("addModerationAllowedTopics", (args: any) => { const r = addModerationAllowedTopics(args); scrollAllowed(); return r; });
-                                register("removeModerationAllowedTopics", (args: any) => { const r = removeModerationAllowedTopics(args); scrollAllowed(); return r; });
-                                register("listModerationAllowedTopics", (args: any) => { const r = listModerationAllowedTopics(args); scrollAllowed(); return r; });
-
-
-                                // Escalamiento humano
-                                const scrollEscalation = () => { try { scrollToModerationField({ field: "escalation" as any }); } catch { } };
-                                register("addModerationEscalationCases", (args: any) => { const r = addModerationEscalationCases(args); scrollEscalation(); return r; });
-                                register("removeModerationEscalationCases", (args: any) => { const r = removeModerationEscalationCases(args); scrollEscalation(); return r; });
-                                register("listModerationEscalationCases", (args: any) => { const r = listModerationEscalationCases(args); scrollEscalation(); return r; });
-
-
-                                // Contacto
-                                register("setModerationContactNumber", (args: any) => {
-                                    const r = setModerationContactNumber(args);
-                                    try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
-                                    return r;
-                                });
-                                register("getModerationContactNumber", (args: any) => {
-                                    const r = getModerationContactNumber(args);
-                                    try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
-                                    return r;
-                                });
-                                // Calendar
-                                const scrollCalendars = () => { try { scrollToModerationField({ field: "calendars" as any }); } catch { } };
-                                register("explainAndEnableCalendars", (args: any) => { const r = explainAndEnableCalendars(args); scrollCalendars(); return r; });
-                                register("createModerationCalendar", (args: any) => { const r = createModerationCalendar(args); scrollCalendars(); return r; });
-                                register("updateModerationCalendarMeta", (args: any) => { const r = updateModerationCalendarMeta(args); scrollCalendars(); return r; });
-                                register("removeModerationCalendar", (args: any) => { const r = removeModerationCalendar(args); scrollCalendars(); return r; });
-                                register("toggleModerationCalendarDay", (args: any) => { const r = toggleModerationCalendarDay(args); scrollCalendars(); return r; });
-                                register("addModerationTimeSlot", (args: any) => { const r = addModerationTimeSlot(args); scrollCalendars(); return r; });
-                                register("addModerationTimeSlotsBulk", (args: any) => { const r = addModerationTimeSlotsBulk(args); scrollCalendars(); return r; });
-                                register("removeModerationTimeSlot", (args: any) => { const r = removeModerationTimeSlot(args); scrollCalendars(); return r; });
-
-                                register("finalizeModerationCampaign", finalizeCampaign);
-                                register("launchModerationCampaign", finalizeCampaign);
-                                register("createModerationCampaignNow", finalizeCampaign);
-
-                                register("resetModerationCampaignDraft", resetAndGoFirst);
-                                register("startNewModerationCampaign", resetAndGoFirst);
-                                register("clearModerationDraft", resetAndGoFirst);
-
-                                setToolsReady(true);
-                            }}
-                            autoKickoff
-                            kickoffMessage={
-                                "Lisa, saludá al usuario y empezá guiándolo en la creación de su campaña de moderación."
-                            }
-                        />
-                    </div>
-
-                    {current === 0 && (
-                        <>
-                            <div className="lg:col-span-12">
-                                <StepOneTop />
-                            </div>
-
-                            <div className="lg:col-span-12">
-                                <StepOneBottom />
-                            </div>
-                        </>
-                    )}
-
-                    {current === 1 && <div className="lg:col-span-12"><StepTwo /></div>}
-
-                    {current === 2 && (
-                        <>
-                            <div className="lg:col-span-12">
-                                <StepThreeTop />
-                            </div>
-                            <div className="lg:col-span-12">
-                                <StepThreeBottom />
-                            </div>
-                        </>
-                    )}
-
-                    {current === 3 && (
-                        <div className="lg:col-span-12">
-                            <StepReview />
+        <div className="relative">
+            <div
+                className={`${showUI ? "opacity-100" : "opacity-0 pointer-events-none"
+                    }`}
+                aria-hidden={!showUI}
+            >
+                <OnlineLayout>
+                    <div className="w-full px-2 md:px-4">
+                        <div className="mb-4 md:mb-6">
+                            <StepperTop steps={STEPS} current={current} onStepClick={jumpTo} />
                         </div>
-                    )}
 
-                    <div className="lg:col-span-12">
-                        <StepControls
-                            canPrev={canPrev}
-                            canNext={canNext}
-                            onPrev={goPrev}
-                            onNext={goNext}
-                            nextLabel={
-                                current === 0
-                                    ? (saving ? (data.campaignId ? "Guardando…" : "Creando…") : "Siguiente")
-                                    : current === 1
-                                        ? (saving ? "Guardando canales…" : "Siguiente")
-                                        : current === 2
-                                            ? (saving ? "Guardando asistente…" : "Siguiente")
-                                            : (saving ? "Creando..." : "🚀 Crear campaña")
-                            }
-                        />
+                        <EditModeBanner />
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
+                            <div className="lg:col-span-5">
+                                <AgencyChatbot
+                                    mode="floating"
+                                    persistNamespace="moderation"
+                                    userId={userId}
+                                    autoStart={bootReady && toolsReady}
+                                    bootSummaryOverride={bootSummary}
+                                    bootExtraInstructions={MODERATION_PLAYBOOK}
+                                    getBusinessSnapshot={() => ({
+                                        __summary: (() => {
+                                            const name = data?.name || "Sin nombre";
+                                            const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
+                                            const step = stepNames[current] ?? String(current);
+                                            return `Campaña de Moderación “${name}”, paso ${step}.`;
+                                        })(),
+                                        stepIndex: current,
+                                        campaignId: data?.campaignId,
+                                        basics: {
+                                            name: data?.name,
+                                            goal: data?.goal,
+                                            summary: data?.summary,
+                                            leadDefinition: data?.leadDefinition,
+                                        },
+                                        audience: {
+                                            countryId: data?.audience?.geo?.countryCode,
+                                            provinceId: data?.audience?.geo?.regionCode,
+                                            cityId: data?.audience?.geo?.city,
+                                            culture: data?.audience?.cultural,
+                                            tone: data?.tone,
+                                        },
+                                        channels: Array.isArray(data?.channels) ? data.channels : [],
+                                        assistant: {
+                                            name: data?.assistant?.name,
+                                            greeting: data?.assistant?.greeting,
+                                            logic: data?.assistant?.conversationLogic,
+                                            qaCount: Array.isArray(data?.knowHow) ? data.knowHow.length : 0,
+                                            allowedTopicsCount: Array.isArray(data?.allowedTopics) ? data.allowedTopics.length : 0,
+                                            escalationCount: Array.isArray(data?.escalationItems) ? data.escalationItems.length : 0,
+                                            phone: data?.escalationPhone,
+                                            calendarsEnabled: !!data?.calendarsEnabled,
+                                        },
+                                    })}
+                                    getLocalNote={() => {
+                                        const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
+                                        const step = stepNames[current] ?? String(current);
+                                        const name = data?.name || "Sin nombre";
+                                        return `Estábamos configurando la campaña “${name}” en ${step}.`;
+                                    }}
+                                    extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any), ...(autoScrollTools as any)]}
+                                    onRegisterTools={(register) => {
+                                        register("getModerationOverview", getModerationOverview);
+                                        register("explainModerationField", (args: { field: "name" | "goal" | "summary" | "leadDefinition" }) => {
+                                            const res = explainModerationField(args);
+                                            try { scrollToModerationField({ field: args.field as any }); } catch { }
+                                            return res;
+                                        });
+                                        register("updateModerationBasics", (args: {
+                                            name?: string; goal?: string; summary?: string; leadDefinition?: string;
+                                        }) => {
+                                            const res = updateModerationBasics(args);
+                                            if (res?.success) {
+                                                const updated: string[] = Array.isArray(res.updated) ? res.updated : [];
+                                                if (updated.length === 1) {
+                                                    try {
+                                                        scrollToFieldIfFilled({ field: updated[0] as any, payload: data });
+                                                    } catch { }
+                                                } else if (updated.length > 1) {
+                                                    updated.forEach((f, i) => {
+                                                        setTimeout(() => {
+                                                            try { scrollToFieldIfFilled({ field: f as any, payload: data }); } catch { }
+                                                        }, i * 300);
+                                                    });
+                                                }
+                                            }
+                                            return res;
+                                        });
+                                        register("updateModerationGeoByName", (args: any) => {
+                                            const out = updateModerationGeoByName(args);
+                                            // scrollea a lo que se “tocó” (si está lleno en data)
+                                            const candidates: Array<{ field: any, path: string[] }> = [
+                                                { field: "audience.geo.country", path: ["audience", "geo", "countryId"] },
+                                                { field: "audience.geo.province", path: ["audience", "geo", "provinceId"] },
+                                                { field: "audience.geo.city", path: ["audience", "geo", "cityId"] },
+                                            ];
+                                            candidates.forEach((c, i) => {
+                                                const value = c.path.reduce((acc: any, k) => acc?.[k], data);
+                                                if (value) setTimeout(() => {
+                                                    try { scrollToModerationField({ field: c.field as any }); } catch { }
+                                                }, i * 200);
+                                            });
+                                            return out;
+                                        });
+                                        register("updateModerationAudienceCultural", (args: any) => {
+                                            const out = updateModerationAudienceCultural(args);
+                                            try { scrollToModerationField({ field: "audience.culture" as any }); } catch { }
+                                            return out;
+                                        });
+                                        register("updateModerationToneChoice", (args: any) => {
+                                            const out = updateModerationToneChoice(args);
+                                            try { scrollToModerationField({ field: "tone" as any }); } catch { }
+                                            return out;
+                                        });
+                                        const scrollChannels = () => {
+                                            try { scrollToModerationField({ field: "channels" as any }); } catch { }
+                                        };
+                                        register("setModerationChannels", (args: any) => { const r = setModerationChannels(args); scrollChannels(); return r; });
+                                        register("addModerationChannel", (args: any) => { const r = addModerationChannel(args); scrollChannels(); return r; });
+                                        register("removeModerationChannel", (args: any) => { const r = removeModerationChannel(args); scrollChannels(); return r; });
+                                        register("describeModerationChannels", (args: any) => { const r = describeModerationChannels(args); scrollChannels(); return r; });
+                                        register("describeModerationChannels", describeModerationChannels);
+                                        register("checkModerationStepStatus", checkModerationStepStatus);
+                                        register("scrollToModerationField", scrollToModerationField);
+                                        register("scrollToFieldIfFilled", scrollToFieldIfFilled);
+                                        /* Go to next or prev step */
+                                        register("goToNextModerationStep", async () => {
+                                            const ok = await saveCurrentStep();
+                                            if (!ok) {
+                                                const r = checkModerationStepStatus({ step: current });
+                                                return {
+                                                    success: false,
+                                                    message: "Faltan completar datos antes de continuar.",
+                                                    ...r,
+                                                };
+                                            }
+                                            if (current >= 3) {
+                                                return {
+                                                    success: false,
+                                                    atLastStep: true,
+                                                    message:
+                                                        "Ya estás en el último paso. Si todo está correcto, podés finalizar la campaña.",
+                                                    suggestion:
+                                                        "Decime “finalizar campaña” “lanzar campaña” o usá el botón de la UI para activarla.",
+                                                };
+                                            }
+                                            setCurrent((c) => Math.min(3, c + 1));
+                                            return { success: true, advancedTo: Math.min(3, current + 1) };
+                                        });
+                                        register("goToPrevModerationStep", () => {
+                                            if (current <= 0) {
+                                                return {
+                                                    success: false,
+                                                    atFirstStep: true,
+                                                    message: "Ya estás en el primer paso; no se puede retroceder más.",
+                                                };
+                                            }
+                                            setCurrent((c) => Math.max(0, c - 1));
+                                            return { success: true, movedTo: Math.max(0, current - 1) };
+                                        });
+
+                                        register("goNextNModerationStep", async (args: any) => {
+                                            let target: number | null = toIndexStep(args?.step);
+                                            if (target === null) {
+                                                const byTopic = resolveStepFromTopic(args?.topic);
+                                                if (byTopic !== null) target = byTopic;
+                                            }
+                                            if (target === null && Number.isFinite(args?.n)) {
+                                                const delta = Number(args.n);
+                                                target = clampStep(current + delta);
+                                            }
+                                            if (target === null) target = clampStep(current + 1);
+
+                                            if (target === current) {
+                                                return {
+                                                    success: false,
+                                                    message: `Ya estás en "${formatStepName(current)}".`,
+                                                    currentStep: current,
+                                                };
+                                            }
+
+                                            if (target < current) {
+                                                setCurrent(target);
+                                                return {
+                                                    success: true,
+                                                    movedTo: target,
+                                                    label: formatStepName(target),
+                                                    note: "Movimiento hacia atrás: no se requirió validación.",
+                                                };
+                                            }
+
+                                            let ptr = current;
+                                            while (ptr < target) {
+                                                const ok = await saveCurrentStep();
+                                                if (!ok) {
+                                                    const r = checkModerationStepStatus({ step: ptr });
+                                                    return {
+                                                        success: false,
+                                                        message: `Faltan completar datos antes de continuar desde "${formatStepName(ptr)}".`,
+                                                        blockedAt: ptr,
+                                                        targetStep: target,
+                                                        ...r,
+                                                    };
+                                                }
+                                                setCurrent((c) => Math.min(3, c + 1));
+                                                ptr += 1;
+                                            }
+
+                                            return {
+                                                success: true,
+                                                movedTo: target,
+                                                label: formatStepName(target),
+                                            };
+                                        });
+
+                                        register("goPrevNModerationStep", (args: any) => {
+                                            let target: number | null = toIndexStep(args?.step);
+                                            if (target === null) {
+                                                const byTopic = resolveStepFromTopic(args?.topic);
+                                                if (byTopic !== null) target = byTopic;
+                                            }
+                                            if (target === null && Number.isFinite(args?.n)) {
+                                                const delta = Math.abs(Number(args.n));
+                                                target = clampStep(current - delta);
+                                            }
+                                            if (target === null) target = clampStep(current - 1);
+
+                                            if (target === current) {
+                                                return {
+                                                    success: false,
+                                                    message: `Ya estás en "${formatStepName(current)}".`,
+                                                    currentStep: current,
+                                                };
+                                            }
+                                            if (target > current) {
+                                                return {
+                                                    success: false,
+                                                    message:
+                                                        `El objetivo (${formatStepName(target)}) está por delante de "${formatStepName(current)}". ` +
+                                                        `Para avanzar, usá "goNextNModerationStep".`,
+                                                    currentStep: current,
+                                                    targetStep: target,
+                                                };
+                                            }
+
+                                            setCurrent(target);
+                                            return {
+                                                success: true,
+                                                movedTo: target,
+                                                label: formatStepName(target),
+                                                note: "Movimiento hacia atrás: no se requirió validación.",
+                                            };
+                                        });
+
+                                        register("setModerationAssistantConfig", (args: any) => {
+                                            const res = setModerationAssistantConfig(args);
+                                            // según las props tocadas, scrollear a cada una
+                                            const map: Array<[key: string, field: any, path: string[]]> = [
+                                                ["name", "assistant.name", ["assistant", "name"]],
+                                                ["greeting", "assistant.greeting", ["assistant", "greeting"]],
+                                                ["logic", "assistant.logic", ["assistant", "logic"]],
+                                            ];
+                                            let delay = 0;
+                                            map.forEach(([k, field, path]) => {
+                                                const provided = k in (args || {});
+                                                if (provided) {
+                                                    const value = path.reduce((acc: any, kk) => acc?.[kk], data);
+                                                    setTimeout(() => {
+                                                        try { scrollToFieldIfFilled({ field: field as any, payload: data }); } catch { }
+                                                    }, (delay += 200));
+                                                }
+                                            });
+                                            return res;
+                                        });
+                                        register("explainAssistantVoiceFormat", (args: any) => {
+                                            const r = explainAssistantVoiceFormat(args);
+                                            try { scrollToModerationField({ field: "assistant.logic" as any }); } catch { }
+                                            return r;
+                                        });
+
+                                        register("explainKnowledgeBaseUpload", (args: any) => {
+                                            const r = explainKnowledgeBaseUpload(args);
+                                            try { scrollToModerationField({ field: "knowHow" as any }); } catch { }
+                                            return r;
+                                        });
+
+                                        const scrollKnowHow = () => { try { scrollToModerationField({ field: "knowHow" as any }); } catch { } };
+                                        register("addModerationQAPair", (args: any) => { const r = addModerationQAPair(args); scrollKnowHow(); return r; });
+                                        register("updateModerationQAMatch", (args: any) => { const r = updateModerationQAMatch(args); scrollKnowHow(); return r; });
+                                        register("removeModerationQAMatch", (args: any) => { const r = removeModerationQAMatch(args); scrollKnowHow(); return r; });
+
+                                        // Temas permitidos
+                                        const scrollAllowed = () => { try { scrollToModerationField({ field: "allowedTopics" as any }); } catch { } };
+                                        register("addModerationAllowedTopics", (args: any) => { const r = addModerationAllowedTopics(args); scrollAllowed(); return r; });
+                                        register("removeModerationAllowedTopics", (args: any) => { const r = removeModerationAllowedTopics(args); scrollAllowed(); return r; });
+                                        register("listModerationAllowedTopics", (args: any) => { const r = listModerationAllowedTopics(args); scrollAllowed(); return r; });
+
+
+                                        // Escalamiento humano
+                                        const scrollEscalation = () => { try { scrollToModerationField({ field: "escalation" as any }); } catch { } };
+                                        register("addModerationEscalationCases", (args: any) => { const r = addModerationEscalationCases(args); scrollEscalation(); return r; });
+                                        register("removeModerationEscalationCases", (args: any) => { const r = removeModerationEscalationCases(args); scrollEscalation(); return r; });
+                                        register("listModerationEscalationCases", (args: any) => { const r = listModerationEscalationCases(args); scrollEscalation(); return r; });
+
+
+                                        // Contacto
+                                        register("setModerationContactNumber", (args: any) => {
+                                            const r = setModerationContactNumber(args);
+                                            try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
+                                            return r;
+                                        });
+                                        register("getModerationContactNumber", (args: any) => {
+                                            const r = getModerationContactNumber(args);
+                                            try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
+                                            return r;
+                                        });
+                                        // Calendar
+                                        const scrollCalendars = () => { try { scrollToModerationField({ field: "calendars" as any }); } catch { } };
+                                        register("explainAndEnableCalendars", (args: any) => { const r = explainAndEnableCalendars(args); scrollCalendars(); return r; });
+                                        register("createModerationCalendar", (args: any) => { const r = createModerationCalendar(args); scrollCalendars(); return r; });
+                                        register("updateModerationCalendarMeta", (args: any) => { const r = updateModerationCalendarMeta(args); scrollCalendars(); return r; });
+                                        register("removeModerationCalendar", (args: any) => { const r = removeModerationCalendar(args); scrollCalendars(); return r; });
+                                        register("toggleModerationCalendarDay", (args: any) => { const r = toggleModerationCalendarDay(args); scrollCalendars(); return r; });
+                                        register("addModerationTimeSlot", (args: any) => { const r = addModerationTimeSlot(args); scrollCalendars(); return r; });
+                                        register("addModerationTimeSlotsBulk", (args: any) => { const r = addModerationTimeSlotsBulk(args); scrollCalendars(); return r; });
+                                        register("removeModerationTimeSlot", (args: any) => { const r = removeModerationTimeSlot(args); scrollCalendars(); return r; });
+
+                                        register("finalizeModerationCampaign", finalizeCampaign);
+                                        register("launchModerationCampaign", finalizeCampaign);
+                                        register("createModerationCampaignNow", finalizeCampaign);
+
+                                        register("resetModerationCampaignDraft", resetAndGoFirst);
+                                        register("startNewModerationCampaign", resetAndGoFirst);
+                                        register("clearModerationDraft", resetAndGoFirst);
+
+                                        setToolsReady(true);
+                                    }}
+                                    autoKickoff
+                                    kickoffMessage={
+                                        "Empieza a ayudar al usuario con la creacion de su campaña de moderación paso a paso."
+                                    }
+                                />
+                            </div>
+
+                            {current === 0 && (
+                                <>
+                                    <div className="lg:col-span-12">
+                                        <StepOneTop />
+                                    </div>
+
+                                    <div className="lg:col-span-12">
+                                        <StepOneBottom />
+                                    </div>
+                                </>
+                            )}
+
+                            {current === 1 && <div className="lg:col-span-12"><StepTwo /></div>}
+
+                            {current === 2 && (
+                                <>
+                                    <div className="lg:col-span-12">
+                                        <StepThreeTop />
+                                    </div>
+                                    <div className="lg:col-span-12">
+                                        <StepThreeBottom />
+                                    </div>
+                                </>
+                            )}
+
+                            {current === 3 && (
+                                <div className="lg:col-span-12">
+                                    <StepReview />
+                                </div>
+                            )}
+
+                            <div className="lg:col-span-12">
+                                <StepControls
+                                    canPrev={canPrev}
+                                    canNext={canNext}
+                                    onPrev={goPrev}
+                                    onNext={goNext}
+                                    nextLabel={
+                                        current === 0
+                                            ? (saving ? (data.campaignId ? "Guardando…" : "Creando…") : "Siguiente")
+                                            : current === 1
+                                                ? (saving ? "Guardando canales…" : "Siguiente")
+                                                : current === 2
+                                                    ? (saving ? "Guardando asistente…" : "Siguiente")
+                                                    : (saving ? "Creando..." : "🚀 Crear campaña")
+                                    }
+                                />
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </OnlineLayout>
             </div>
-        </OnlineLayout>
+            {!showUI && (
+                <div className="absolute inset-0 z-10">
+                    <ModerationSkeleton />
+                </div>
+            )}
+        </div>
     );
 };
 
