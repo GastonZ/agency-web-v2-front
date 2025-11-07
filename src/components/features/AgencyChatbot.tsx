@@ -263,7 +263,7 @@ export default function AgencyChatbot({
         if (!kickoff) return;
 
         const t1 = setTimeout(() => {
-            sendSilentUserNote(kickoff, true, false);
+            sendSilentUserNote(kickoff, true, true);
 
             hasKickedRef.current = true;
 
