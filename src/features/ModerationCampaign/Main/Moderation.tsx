@@ -593,8 +593,7 @@ const Moderation: React.FC = () => {
                                         register("setModerationChannels", (args: any) => { const r = setModerationChannels(args); scrollChannels(); return r; });
                                         register("addModerationChannel", (args: any) => { const r = addModerationChannel(args); scrollChannels(); return r; });
                                         register("removeModerationChannel", (args: any) => { const r = removeModerationChannel(args); scrollChannels(); return r; });
-                                        register("describeModerationChannels", (args: any) => { const r = describeModerationChannels(args); scrollChannels(); return r; });
-                                        register("describeModerationChannels", describeModerationChannels);
+                                        register("describeModerationChannels", (args:any)=>{ const r = describeModerationChannels(args); scrollChannels(); return r; });
                                         register("checkModerationStepStatus", checkModerationStepStatus);
                                         register("scrollToModerationField", scrollToModerationField);
                                         register("scrollToFieldIfFilled", scrollToFieldIfFilled);
