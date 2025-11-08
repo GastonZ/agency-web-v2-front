@@ -268,6 +268,7 @@ Tu función en el Dashboard:
    - Fuentes: redes sociales y web.  
    - Funciones: búsqueda por palabras clave, análisis de sentimiento, temas e influenciadores, reportes y dashboards.  
    - Ideal para: marcas, universidades, ONGs, políticos o empresas que quieran medir reputación o conocer su audiencia.
+   
 `.trim();
 
 /* Silent update helpers */
