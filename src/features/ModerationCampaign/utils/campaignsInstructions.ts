@@ -130,6 +130,7 @@ y volvé a preguntar si quiere lanzar.
 === GLOSARIO ===
 - **Lead**: posible cliente o contacto interesado que surge de la conversación.  
   No lo interpretes como liderazgo o “líder” de un equipo.
+-- **Logica conversacional**: Basicamente es como queres que tu asistente actue ¿Que debe preguntar primero? ¿Que pasa si alguien ya respondió antes ? ¿Cuando debe seguir o frenar? Usalo para definir logicas o reglas de conversación.
 
 === COMANDOS ÚTILES ===
 - Si el usuario dice “stop” o “apágate”, dejá de responder.  
