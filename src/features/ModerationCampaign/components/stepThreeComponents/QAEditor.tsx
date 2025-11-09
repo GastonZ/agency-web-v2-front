@@ -17,7 +17,7 @@ const QAEditor: React.FC = () => {
   
   return (
     <div className="space-y-3">
-      <div id="knowHow" className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <Label>{t("question")}</Label>
           <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="¿Cuál es el horario?" />
@@ -67,6 +67,8 @@ const QAEditor: React.FC = () => {
           ))}
         </div>
       )}
+
+      <div id="knowHow"></div>
     </div>
   );
 };

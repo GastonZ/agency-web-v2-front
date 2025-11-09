@@ -155,14 +155,14 @@ const Moderation: React.FC = () => {
 
                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-                    /*                     const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
-                                        if (!aborted) {
-                                            setBootSummary(summary || undefined);
-                                            console.groupCollapsed("[Moderation][boot] resumen recibido");
-                                            console.log("summary.len:", (summary || "").length);
-                                            console.log("summary.preview:", (summary || "").slice(0, 240));
-                                            console.groupEnd();
-                                        } */
+                    const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
+                    if (!aborted) {
+                        setBootSummary(summary || undefined);
+                        console.groupCollapsed("[Moderation][boot] resumen recibido");
+                        console.log("summary.len:", (summary || "").length);
+                        console.log("summary.preview:", (summary || "").slice(0, 240));
+                        console.groupEnd();
+                    }
                 } else {
                     console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
                 }
@@ -550,7 +550,7 @@ const Moderation: React.FC = () => {
                                     mode="floating"
                                     persistNamespace="moderation"
                                     userId={userId}
-                                    autoStart={false/* bootReady && toolsReady */}
+                                    autoStart={bootReady && toolsReady}
                                     bootSummaryOverride={bootSummary}
                                     bootExtraInstructions={MODERATION_PLAYBOOK}
                                     getBusinessSnapshot={() => ({

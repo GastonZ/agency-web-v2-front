@@ -75,7 +75,7 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
                     {/* Chatbot */}
                     <AgencyChatbot
-                        autoStart={false}
+                        autoStart
                         mode="floating"
                         placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
                         persistNamespace="global"
