@@ -39,19 +39,19 @@ export function buildBootInstructions(s: BotSnapshot | null): string | undefined
   if (!s) return;
   const lines: string[] = [];
 
-  lines.push("Contexto previo (recuperado tras recarga/cambio de vista):");
+  lines.push("Previous context :");
 
   const last = (s.history || []).slice(-2);
   if (last.length) {
-    lines.push("Últimos mensajes:");
+    lines.push("Last messages:");
     for (const m of last) lines.push(`- ${m.role}: ${truncate(m.text, 240)}`);
   }
 
   const b = s.business || {};
-  if (b.__summary) lines.push(`Resumen: ${truncate(String(b.__summary), 240)}`);
+  if (b.__summary) lines.push(`Resume: ${truncate(String(b.__summary), 240)}`);
 
-  if (s.localNote) lines.push(`Nota: ${truncate(s.localNote, 200)}`);
-  lines.push("Actuá coherente con esto y evitá repetirte al saludar si el usuario ya estaba en flujo.");
+  if (s.localNote) lines.push(`Note: ${truncate(s.localNote, 200)}`);
+  lines.push("Act coherently with this and avoid repeating greetings if the user was already in flow.");
 
   return lines.join("\n");
 }

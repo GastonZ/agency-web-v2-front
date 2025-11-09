@@ -209,7 +209,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
-        input_audio_transcription: { model: "gpt-4o-transcribe", language: "es" },
+        input_audio_transcription: { model: "gpt-4o-transcribe" },
         tools: [...tools],
       },
     };
@@ -346,7 +346,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
-        input_audio_transcription: { model: "gpt-4o-transcribe", language: "es" },
+        input_audio_transcription: { model: "gpt-4o-transcribe"},
         tools: [...tools],
       },
     };

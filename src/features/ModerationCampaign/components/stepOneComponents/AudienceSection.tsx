@@ -53,11 +53,11 @@ const AudienceSection: React.FC = () => {
       />
 
       <div className="mt-6">
-        <Label htmlFor="audienceCulture">Segmentación cultural / Intereses</Label>
+        <Label htmlFor="audienceCulture">{t("cultural_segmentation")}</Label>
         <TextArea
           id="audienceCulture"
           rows={3}
-          placeholder="Ej. Gamers, tecnología, cultura local…"
+          placeholder="Ej. Gamers, tech, local culture…"
           value={data.audience.cultural || ""}
           onChange={(e) => {
             const v = e.target.value;

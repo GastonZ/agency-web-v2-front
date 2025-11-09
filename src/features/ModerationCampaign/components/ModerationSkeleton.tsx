@@ -2,7 +2,7 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import OnlineLayout from "../../../layout/OnlineLayout";
 
-const STATUS = ["Cargando.", "Cargando..", "Cargando..."];
+const STATUS = ["Loading.", "Loading..", "Loading..."];
 
 function CodeBelt({
   y = "50%",
@@ -15,7 +15,7 @@ function CodeBelt({
   speed?: number;
   opacity?: number;
 }) {
-  const TEXT = "01 10 11 00 1010 0110 1101 0011  // IA: preparando contexto  ";
+  const TEXT = "01 10 11 00 1010 0110 1101 0011  // IA: preparing context  ";
   const line = Array.from({ length: 22 })
     .map(() => TEXT)
     .join("");

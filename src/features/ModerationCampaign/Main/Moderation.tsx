@@ -655,12 +655,6 @@ const Moderation: React.FC = () => {
                                             calendarsEnabled: !!data?.calendarsEnabled,
                                         },
                                     })}
-                                    getLocalNote={() => {
-                                        const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
-                                        const step = stepNames[current] ?? String(current);
-                                        const name = data?.name || "Sin nombre";
-                                        return `Estábamos configurando la campaña “${name}” en ${step}.`;
-                                    }}
                                     extraTools={[...(moderationSchemas as any), ...(validationSchema as any), ...(assistantSchema as any), ...(communicationSchema as any), ...(calendarSchema as any), ...(autoScrollTools as any)]}
                                     onRegisterTools={(register) => {
                                         register("getModerationOverview", getModerationOverview);
@@ -953,7 +947,7 @@ const Moderation: React.FC = () => {
                                     autoKickoff
                                     kickoffMessage={
                                         uiLang === "en"
-                                            ? "We are at Step 1 (Basics) of the moderation campaign wizard. Greet the user briefly, answer in English if the user speaks English, and then ask whether they prefer to start with the basic data or have you guide them step by step."
+                                            ? "We are at Step 1 (Basics) of the moderation campaign wizard. Greet the user briefly, always answer in english, and then ask whether they prefer to start with the basic data or have you guide them step by step."
                                             : "Estamos en el Paso 1 (Datos básicos) del flujo de creación de la campaña de moderación. Saludá brevemente, respondé en el mismo idioma que use el usuario y preguntá si prefiere empezar por los datos básicos o que lo guíes paso a paso."
                                     }
                                 />

@@ -103,7 +103,7 @@ export default function AgencyChatbot({
         // 3) Sección de resumen 
         const summarySection = liveSummary
             ? [
-                "=== CONTEXTO RESUMEN (persistente) ===",
+                "=== CONTEXT RESUME ===",
                 "[RESUMEN_BOOT_BEGIN]",
                 liveSummary,
                 "[RESUMEN_BOOT_END]",
@@ -112,7 +112,7 @@ export default function AgencyChatbot({
 
         // 4) Playbook / guía extra
         const extra = (bootExtraInstructions || "").trim();
-        const extraSection = extra ? `=== GUÍA ESPECÍFICA DE ESTA VISTA ===\n${extra}` : "";
+        const extraSection = extra ? `=== SPECIFIC GUIDE FOR THIS VIEW ===\n${extra}` : "";
 
         // 5) Ensamblado final
         const finalText = [base, summarySection, extraSection].filter(Boolean).join("\n\n");
