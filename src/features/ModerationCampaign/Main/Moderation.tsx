@@ -268,7 +268,7 @@ const Moderation: React.FC = () => {
         } else if (safeIndex === 1) {
             focusText = "Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
         } else if (safeIndex === 2) {
-            focusText = "Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica de conversación, base de conocimiento, temas permitidos y escalamiento humano.";
+            focusText = "Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica de conversación, preguntas y respuestas (conocimiento del asistente), temas permitidos y escalamiento humano.";
         } else if (safeIndex === 3) {
             focusText = "Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
         }
