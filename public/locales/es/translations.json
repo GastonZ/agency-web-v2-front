@@ -198,5 +198,8 @@
     "messages2": "¿En qué puedo ayudarte hoy?",
     "messages3": "Quiero crear una campaña",
     "messages4": "Te cuento sobre mi empresa",
-    "messages5": "Estoy aqui para ayudarte"
+    "messages5": "Estoy aqui para ayudarte",
+    "campaign_created_successfully": "Campaña creada con éxito",
+    "complete_before_saving": "Completá los datos requeridos antes de continuar",
+    "check_data": "Revisá los datos antes de continuar"
 }

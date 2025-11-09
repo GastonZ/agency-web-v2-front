@@ -199,5 +199,8 @@
     "messages2": "How can I help you today?",
     "messages3": "I want to create a campaign",
     "messages4": "Let me tell you about my company",
-    "messages5": "I'm here to help you"
+    "messages5": "I'm here to help you",
+    "campaign_created_successfully": "Campaign created successfully",
+    "complete_before_saving": "Complete the required data before saving",
+    "check_data": "Check the data before continuing"
 }

@@ -1,5 +1,10 @@
 // src/AIconversational/voice/tools/ModerationTools/useModerationValidationTools.ts
 import { useModeration } from "../../../../context/ModerationContext";
+import { useTranslation } from "react-i18next";
+
+type Lang = "es" | "en";
+const normalizeLang = (raw?: string): Lang =>
+    raw && raw.toLowerCase().startsWith("en") ? "en" : "es";
 
 function missingFromStep0(data: any) {
     const missing: string[] = [];
@@ -17,22 +22,33 @@ function missingFromStep1(data: any) {
     return arr.length ? [] : ["channels"];
 }
 
-function humanizeMissing(keys: string[]) {
-    const map: Record<string, string> = {
+function humanizeMissing(keys: string[], lang: Lang) {
+    const mapEs: Record<string, string> = {
         name: "Nombre de campaña",
         leadDefinition: "Definición de lead",
         goal: "Objetivo principal",
         "geo.countryId": "Ubicación: País",
         channels: "Seleccionar al menos un canal",
     };
-    return keys.map((k) => map[k] ?? k);
+    const mapEn: Record<string, string> = {
+        name: "Campaign name",
+        leadDefinition: "Lead definition",
+        goal: "Main objective",
+        "geo.countryId": "Location: Country",
+        channels: "Select at least one channel",
+    };
+    const map = lang === "en" ? mapEn : mapEs;
+    return keys.map(k => map[k] ?? k);
 }
 
 export function useModerationValidationTools() {
     const { data } = useModeration();
+    const { i18n } = useTranslation();
+    const langDefault = (i18n?.language as string) || "es";
 
-    function checkModerationStepStatus(args?: { step?: number }) {
+    function checkModerationStepStatus(args?: { step?: number; language?: string }) {
         const step = typeof args?.step === "number" ? args!.step : undefined;
+        const lang = normalizeLang(args?.language || langDefault);
 
         const make = (i: number) => {
             const k = i === 0 ? missingFromStep0(data) : i === 1 ? missingFromStep1(data) : [];
@@ -40,7 +56,7 @@ export function useModerationValidationTools() {
                 step: i,
                 ok: k.length === 0,
                 missingKeys: k,
-                missing: humanizeMissing(k),
+                missing: humanizeMissing(k, lang),
             };
         };
 

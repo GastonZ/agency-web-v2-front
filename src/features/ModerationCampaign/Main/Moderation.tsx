@@ -288,16 +288,16 @@ const Moderation: React.FC = () => {
             if (uiLang === "en") {
                 if (safeIndex === 0) {
                     focusText =
-                        "Your role is to guide the user to complete the basic campaign data: name, goal, lead definition and the main target country (and, optionally, summary, city, culture and tone).";
+                        "Keep talking in english , your role is to guide the user to complete the basic campaign data: name, goal, lead definition and the main target country (and, optionally, summary, city, culture and tone).";
                 } else if (safeIndex === 1) {
                     focusText =
-                        "Your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
+                        "Keep talking in english , Your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
                 } else if (safeIndex === 2) {
                     focusText =
-                        "Your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers), allowed topics and human escalation and calendars if users is interested.";
+                        "Keep talking in english , Your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers * AT LEAST ONE), allowed topics and human escalation and calendars if users is interested.";
                 } else {
                     focusText =
-                        "Your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
+                        "Keep talking in english , Your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
                 }
 
                 const message =
@@ -308,7 +308,6 @@ const Moderation: React.FC = () => {
                 console.groupCollapsed(
                     `[Moderation] Sending silent step note (EN) -> Step ${humanIndex} (${stepTitle})`
                 );
-                console.log("message:", message);
                 console.groupEnd();
 
                 try {
@@ -335,16 +334,16 @@ const Moderation: React.FC = () => {
             // === español ===
             if (safeIndex === 0) {
                 focusText =
-                    "Tu rol es guiar al usuario para completar los datos básicos de la campaña: nombre, objetivo, definición de lead y país principal del público (y, opcionalmente, resumen, ciudad, cultura y tono).";
+                    "Sigue hablando en español, Tu rol es guiar al usuario para completar los datos básicos de la campaña: nombre, objetivo, definición de lead y país principal del público (y, opcionalmente, resumen, ciudad, cultura y tono).";
             } else if (safeIndex === 1) {
                 focusText =
-                    "Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
+                    "Sigue hablando en español, Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
             } else if (safeIndex === 2) {
                 focusText =
-                    "Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica conversacional, base de conocimiento (preguntas y respuestas), temas permitidos y escalamiento humano.";
+                    "Sigue hablando en español, Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica conversacional, base de conocimiento (preguntas y respuestas), temas permitidos y escalamiento humano.";
             } else {
                 focusText =
-                    "Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, una vez hecho eso ofrece lanzar la campaña sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
+                    "Sigue hablando en español, Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, una vez hecho eso ofrece lanzar la campaña sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
             }
 
             const message =
@@ -389,7 +388,7 @@ const Moderation: React.FC = () => {
 
     const saveStepOne = useCallback(async () => {
         if (!validateStep(0)) {
-            toast.warning("Completá los datos requeridos antes de continuar.");
+            toast.warning(t("complete_before_saving"));
             return false;
         }
 
@@ -400,7 +399,7 @@ const Moderation: React.FC = () => {
                 console.log(res);
 
                 setCampaignId(res.id);
-                toast.success("Campaña creada con éxito.");
+                toast.success(t("campaign_created_successfully"));
             } else {
                 await updateModerationCampaignFromStepOne(data.campaignId, data);
                 toast.success("Cambios guardados.");
@@ -417,7 +416,7 @@ const Moderation: React.FC = () => {
 
     const saveCurrentStep = useCallback(async (): Promise<boolean> => {
         if (!validateStep(current)) {
-            toast.warning("Revisá los datos antes de continuar.");
+            toast.warning(t("check_data"));
             return false;
         }
         if (current === 3) return true;
@@ -947,8 +946,8 @@ const Moderation: React.FC = () => {
                                     autoKickoff
                                     kickoffMessage={
                                         uiLang === "en"
-                                            ? "We are at Step 1 (Basics) of the moderation campaign wizard. Greet the user briefly, always answer in english, and then ask whether they prefer to start with the basic data or have you guide them step by step."
-                                            : "Estamos en el Paso 1 (Datos básicos) del flujo de creación de la campaña de moderación. Saludá brevemente, respondé en el mismo idioma que use el usuario y preguntá si prefiere empezar por los datos básicos o que lo guíes paso a paso."
+                                            ? "From now on talk in english, we are at Step 1 (Basics) of the moderation campaign wizard. Greet the user briefly, always answer in english, and then ask whether they prefer to start with the basic data or have you guide them step by step."
+                                            : "Desde ahora en adelante habla en español, estamos en el Paso 1 (Datos básicos) del flujo de creación de la campaña de moderación. Saludá brevemente, respondé en el mismo idioma que use el usuario y preguntá si prefiere empezar por los datos básicos o que lo guíes paso a paso."
                                     }
                                 />
                             </div>
