@@ -192,5 +192,12 @@
     "talking": "Talking...",
     "thinking": "Thinking...",
     "wipe_memory_refresh": "Wipe memory and refresh",
-    "veryfing_session": "Verifying session..."
+    "veryfing_session": "Verifying session...",
+    "ia_gets_you": "The AI that understands you and builds with you",
+    "ia_gets_sub": "Chat with the platform, define your objectives and let artificial intelligence configure the rest: surveys, virtual assistants and strategies ready to launch.",
+    "messages1": "Hi, I'm your AI assistant",
+    "messages2": "How can I help you today?",
+    "messages3": "I want to create a campaign",
+    "messages4": "Let me tell you about my company",
+    "messages5": "I'm here to help you"
 }

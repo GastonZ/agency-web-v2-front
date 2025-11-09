@@ -4,6 +4,8 @@ import OnlineLayout from "../layout/OnlineLayout";
 import AgencyChatbot from "../components/features/AgencyChatbot";
 import { DASHBOARD_PLAYBOOK, getUserId } from "../utils/helper";
 import WipeMemoryBtn from "../components/features/WipeMemoryBtn";
+import HeroConversational from "../WebLanding/components/HeroConversational";
+import HeroConversationalAgency from "../components/features/HeroConversationalAgency";
 
 type GlassCardProps = {
     title?: React.ReactNode;
@@ -75,7 +77,7 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
                     {/* Chatbot */}
                     <AgencyChatbot
-                        autoStart
+                        autoStart={false}
                         mode="floating"
                         placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
                         persistNamespace="global"
@@ -87,16 +89,9 @@ const Dashboard: React.FC = () => {
                         bootExtraInstructions={DASHBOARD_PLAYBOOK}
                     />
                     <div className="lg:col-span-12 flex">
-                        <GlassCard title="Active campaigns performance" rightLabel="Last 24h" className="w-full">
-                            <Placeholder className="h-full" />
-                        </GlassCard>
+                        <HeroConversationalAgency />
                     </div>
 
-                    <div className="lg:col-span-12 flex">
-                        <GlassCard title="Actions" rightLabel="Realtime" className="w-full min-h-[220px]">
-                            <Placeholder className="h-full" />
-                        </GlassCard>
-                    </div>
                     <WipeMemoryBtn userId={userId} />
                 </div>
             </div>
