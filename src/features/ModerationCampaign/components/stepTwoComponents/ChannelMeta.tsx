@@ -15,27 +15,27 @@ export const CHANNEL_META: Record<
 > = {
   instagram: {
     title: "Instagram",
-    subtitle: "DMs y comentarios en posts y stories",
+    subtitle: "",
     Icon: IconInstagram,
   },
   facebook: {
     title: "Facebook",
-    subtitle: "Mensajes de página y comentarios",
+    subtitle: "",
     Icon: IconFacebook,
   },
   whatsapp: {
     title: "WhatsApp",
-    subtitle: "Atención directa y flujos rápidos",
+    subtitle: "",
     Icon: IconWhatsApp,
   },
   email: {
     title: "Email",
-    subtitle: "Respuestas y seguimiento por correo",
+    subtitle: "",
     Icon: IconEmail,
   },
   x: {
     title: "X / Twitter",
-    subtitle: "Respuestas públicas y DMs",
+    subtitle: "",
     Icon: IconX,
   },
 };

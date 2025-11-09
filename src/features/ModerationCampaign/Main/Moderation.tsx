@@ -33,6 +33,7 @@ import { getResumeOfConversation } from "../../../services/ia";
 import { loadBotSnapshot } from "../../../AIconversational/voice/session/persistence";
 import { MODERATION_PLAYBOOK } from "../utils/campaignsInstructions";
 import ModerationSkeleton from "../components/ModerationSkeleton";
+import { useTranslation } from "react-i18next";
 
 const STEPS = [
     { id: 1, title: "Datos" },
@@ -98,6 +99,8 @@ const Moderation: React.FC = () => {
 
     const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
 
+    const { t } = useTranslation('translations')
+
     React.useEffect(() => {
         let aborted = false;
         const ctrl = new AbortController();
@@ -145,14 +148,14 @@ const Moderation: React.FC = () => {
 
                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-                    const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
+/*                     const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
                     if (!aborted) {
                         setBootSummary(summary || undefined);
                         console.groupCollapsed("[Moderation][boot] resumen recibido");
                         console.log("summary.len:", (summary || "").length);
                         console.log("summary.preview:", (summary || "").slice(0, 240));
                         console.groupEnd();
-                    }
+                    } */
                 } else {
                     console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
                 }
@@ -540,7 +543,7 @@ const Moderation: React.FC = () => {
                                     mode="floating"
                                     persistNamespace="moderation"
                                     userId={userId}
-                                    autoStart={bootReady && toolsReady}
+                                    autoStart={false/* bootReady && toolsReady */}
                                     bootSummaryOverride={bootSummary}
                                     bootExtraInstructions={MODERATION_PLAYBOOK}
                                     getBusinessSnapshot={() => ({
@@ -923,12 +926,12 @@ const Moderation: React.FC = () => {
                                     onNext={goNext}
                                     nextLabel={
                                         current === 0
-                                            ? (saving ? (data.campaignId ? "Guardando…" : "Creando…") : "Siguiente")
+                                            ? (saving ? (data.campaignId ? t("saving") : t("creating")) : t("next"))
                                             : current === 1
-                                                ? (saving ? "Guardando canales…" : "Siguiente")
+                                                ? (saving ? t("saving_channels") : t("next"))
                                                 : current === 2
-                                                    ? (saving ? "Guardando asistente…" : "Siguiente")
-                                                    : (saving ? "Creando..." : "🚀 Crear campaña")
+                                                    ? (saving ? t("saving_assistant") : t("next"))
+                                                    : (saving ? t("creating") : t("create_campaign"))
                                     }
                                 />
                             </div>

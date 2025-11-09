@@ -8,11 +8,12 @@ import { notifyBotManualChange, flushBotManualChange } from "../../../../utils/h
 const AudienceSection: React.FC = () => {
   const { data, setGeo, setAudience } = useModeration();
   const { i18n } = useTranslation();
+  const { t } = useTranslation('translations');
   const language = i18n.language as any;
 
   return (
     <GlassCard>
-      <SectionTitle title="Público objetivo" subtitle="Segmenta geografía y demografía" />
+      <SectionTitle title={t("target_audience")} subtitle={t("segment_geo_demo")} />
 
       <LocationSelection
         value={{

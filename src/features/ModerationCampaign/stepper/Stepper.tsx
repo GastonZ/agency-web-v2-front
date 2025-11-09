@@ -1,5 +1,6 @@
 import * as React from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 type StepperProps = {
   steps: { id: number; title: string }[];
@@ -63,33 +64,38 @@ type ControlsProps = {
   nextLabel?: string;
 };
 
-export const StepControls: React.FC<ControlsProps> = ({ canPrev, canNext, onPrev, onNext, nextLabel = "Siguiente" }) => (
-  <div className="mt-6 flex items-center justify-between">
-    <button
-      type="button"
-      onClick={onPrev}
-      disabled={!canPrev}
-      className={[
-        "h-11 px-4 rounded-xl border transition-all",
-        "bg-white/70 dark:bg-neutral-900/50 text-neutral-700 dark:text-neutral-200",
-        "border-neutral-300/70 dark:border-neutral-700/70",
-        "hover:border-emerald-400/50 hover:text-emerald-600 disabled:opacity-50",
-      ].join(" ")}
-    >
-      Paso anterior
-    </button>
+export const StepControls: React.FC<ControlsProps> = ({ canPrev, canNext, onPrev, onNext, nextLabel = "Siguiente" }) => {
 
-    <button
-      type="button"
-      onClick={onNext}
-      disabled={!canNext}
-      className={[
-        "h-11 px-5 rounded-xl border transition-all",
-        "bg-emerald-500/20 text-emerald-700 dark:text-emerald-200",
-        "border-emerald-400/60 hover:bg-emerald-500/30 disabled:opacity-50",
-      ].join(" ")}
-    >
-      {nextLabel}
-    </button>
-  </div>
-);
+  const { t } = useTranslation('translations')
+
+  return (
+    <div className="mt-6 flex items-center justify-between">
+      <button
+        type="button"
+        onClick={onPrev}
+        disabled={!canPrev}
+        className={[
+          "h-11 px-4 rounded-xl border transition-all",
+          "bg-white/70 dark:bg-neutral-900/50 text-neutral-700 dark:text-neutral-200",
+          "border-neutral-300/70 dark:border-neutral-700/70",
+          "hover:border-emerald-400/50 hover:text-emerald-600 disabled:opacity-50",
+        ].join(" ")}
+      >
+        {t("previous")}
+      </button>
+
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={!canNext}
+        className={[
+          "h-11 px-5 rounded-xl border transition-all",
+          "bg-emerald-500/20 text-emerald-700 dark:text-emerald-200",
+          "border-emerald-400/60 hover:bg-emerald-500/30 disabled:opacity-50",
+        ].join(" ")}
+      >
+        {nextLabel}
+      </button>
+    </div>
+  )
+};

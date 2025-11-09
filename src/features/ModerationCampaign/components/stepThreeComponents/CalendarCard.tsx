@@ -1,6 +1,7 @@
 import * as React from "react";
 import { GlassCard, SectionTitle, Label, TextInput, Chip } from "../Primitives";
 import { useModeration } from "../../../../context/ModerationContext";
+import { useTranslation } from "react-i18next";
 
 const ToggleSwitch: React.FC<{ checked: boolean; onChange: (v: boolean) => void; label?: string }> = ({ checked, onChange, label }) => (
     <button
@@ -200,6 +201,8 @@ const CalendarCard: React.FC = () => {
         removeCalendar
     } = useModeration();
 
+    const { t } = useTranslation('translations')
+
     const enabled = data.calendarsEnabled;
 
     const [modal, setModal] = React.useState<{ open: boolean; calId?: string; day?: string; error?: string | null }>({
@@ -236,37 +239,37 @@ const CalendarCard: React.FC = () => {
         <GlassCard className="relative overflow-hidden">
             <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-emerald-400/30 blur-3xl" />
             <SectionTitle
-                title="Turnos y Citas (opcional)"
+                title={t("appointments")}
                 subtitle="Define calendarios por profesional, días activos y horarios disponibles."
             />
 
             <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm text-neutral-600 dark:text-neutral-300/80">
-                    Activá para configurar calendarios de atención. Si lo desactivás, no se mostrarán en tu asistente.
+                    {t("appointments_warning")}
                 </p>
                 <ToggleSwitch checked={enabled} onChange={setCalendarsEnabled} label="Usar agendas" />
             </div>
 
             {!enabled ? (
                 <div className="mt-2 rounded-xl px-4 py-3 bg-white/40 dark:bg-neutral-900/40 border border-white/30 dark:border-white/10 text-neutral-600 dark:text-neutral-300/80">
-                    Desactivado. Activa el interruptor para configurar calendarios.
+                    {t("appointments_off")}
                 </div>
             ) : (
                 <>
                     <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">Calendarios</h4>
+                        <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">{t("calendars")}</h4>
                         <button
                             type="button"
                             onClick={handleAddCalendar}
                             className="px-4 h-10 rounded-xl text-white bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-500/90 hover:to-emerald-600/90 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]"
                         >
-                            + Nuevo calendario
+                            + {t("new_calendar")}
                         </button>
                     </div>
 
                     {data.calendars.length === 0 && (
                         <div className="rounded-xl border border-dashed border-emerald-400/40 p-4 text-sm text-neutral-600 dark:text-neutral-300/80">
-                            No hay calendarios todavía. Creá el primero con “Nuevo calendario”.
+                            {t("no_calendars")}
                         </div>
                     )}
 
@@ -275,7 +278,7 @@ const CalendarCard: React.FC = () => {
                             <div key={cal.id} className="rounded-2xl p-4 bg-white/50 dark:bg-neutral-900/30 border border-white/30 dark:border-white/10 ring-1 ring-inset ring-emerald-400/15">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div>
-                                        <Label>Nombre del calendario</Label>
+                                        <Label>{t("calendar_name")}</Label>
                                         <TextInput
                                             id={`cal-name-${cal.id}`}
                                             value={cal.name}
@@ -284,7 +287,7 @@ const CalendarCard: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <Label>Persona que atiende</Label>
+                                        <Label>{t("calendar_human")}</Label>
                                         <TextInput
                                             value={cal.assignee}
                                             onChange={(e) => updateCalendarMeta(cal.id, { assignee: e.target.value })}
@@ -294,7 +297,7 @@ const CalendarCard: React.FC = () => {
                                 </div>
 
                                 <div className="mt-4">
-                                    <Label>Días en los que atiende</Label>
+                                    <Label>{t("calendar_human_days")}</Label>
                                     <div className="mt-2 flex flex-wrap gap-2">
                                         {DAY_ORDER.map((d) => {
                                             const active = cal.activeDays.includes(d as any);
@@ -317,7 +320,7 @@ const CalendarCard: React.FC = () => {
                                     {confirmDeleteId === cal.id ? (
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-neutral-700 dark:text-neutral-300">
-                                                ¿Eliminar este calendario?
+                                                {t("delete_calendar")}
                                             </span>
                                             <button
                                                 type="button"
@@ -327,7 +330,7 @@ const CalendarCard: React.FC = () => {
                                                     hover:from-emerald-600/90 hover:to-emerald-700/90
                                                     ring-1 ring-inset ring-emerald-400/30"
                                             >
-                                                Sí, eliminar
+                                                {t("delete_confirm")}
                                             </button>
                                             <button
                                                 type="button"
@@ -337,7 +340,7 @@ const CalendarCard: React.FC = () => {
                                                     border border-neutral-300/60 dark:border-neutral-700/60 
                                                     hover:border-emerald-400/50"
                                             >
-                                                Cancelar
+                                                {"cancel"}
                                             </button>
                                         </div>
                                     ) : (
@@ -351,7 +354,7 @@ const CalendarCard: React.FC = () => {
                                                 hover:bg-emerald-400/10 hover:border-emerald-400/50"
                                             aria-label="Eliminar calendario"
                                         >
-                                            Eliminar calendario
+                                            {t("delete_yes")}
                                         </button>
                                     )}
                                 </div>
@@ -367,7 +370,7 @@ const CalendarCard: React.FC = () => {
                                                         onClick={() => openAddSlot(cal.id, d)}
                                                         className="px-3 h-9 rounded-lg text-sm text-white bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30"
                                                     >
-                                                        + Agregar horario
+                                                        + {t("add_time")}
                                                     </button>
 
                                                     <button
@@ -375,7 +378,7 @@ const CalendarCard: React.FC = () => {
                                                         onClick={() => setBulk({ open: true, calId: cal.id, activeDays: cal.activeDays })}
                                                         className="px-3 h-9 rounded-lg text-sm text-white bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30"
                                                     >
-                                                        + Agregar horarios múltiples
+                                                        + {t("add_multiple")}
                                                     </button>
 
                                                 </div>
@@ -404,7 +407,7 @@ const CalendarCard: React.FC = () => {
                                                     </ul>
                                                 ) : (
                                                     <p className="text-sm text-neutral-600 dark:text-neutral-300/80">
-                                                        Sin horarios para este día.
+                                                        {t("no_time_today")}
                                                     </p>
                                                 )}
 

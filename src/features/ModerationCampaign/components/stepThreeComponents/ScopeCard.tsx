@@ -2,18 +2,20 @@ import * as React from "react";
 import { GlassCard, SectionTitle } from "../Primitives";
 import { useModeration } from "../../../../context/ModerationContext";
 import TagEditor from "./TagEditor";
+import { useTranslation } from "react-i18next";
 
 const ScopeCard: React.FC = () => {
+  const { t } = useTranslation('translations')
   const { data, setAllowedTopics } = useModeration();
   return (
     <GlassCard>
-      <SectionTitle title="Temas permitidos (opcional)" subtitle="Responder únicamente consultas relacionadas a…" />
+      <SectionTitle title={t("allowed_topics")} subtitle={t("reply_only_related")} />
       <TagEditor
         id="allowedTopics"
-        label="Temas permitidos"
+        label={t("aallowed_topics")}
         items={data.allowedTopics}
         onChange={setAllowedTopics}
-        placeholder="Ej. Ventas, soporte, devoluciones"
+        placeholder={t("topics_example")}
       />
     </GlassCard>
   );

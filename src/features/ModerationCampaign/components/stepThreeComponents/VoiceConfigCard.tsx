@@ -1,10 +1,12 @@
 import * as React from "react";
 import { GlassCard, SectionTitle, Label, TextInput } from "../Primitives";
 import { useModeration } from "../../../../context/ModerationContext";
+import { useTranslation } from "react-i18next";
 
 const VoiceConfigCard: React.FC = () => {
   const { data, setAssistant, setVoiceFile } = useModeration();
   const [err, setErr] = React.useState<string | null>(null);
+  const { t } = useTranslation('translations')
 
   const onFile = (file: File) => {
     setErr(null);
@@ -18,10 +20,10 @@ const VoiceConfigCard: React.FC = () => {
 
   return (
     <GlassCard>
-      <SectionTitle title="Configuración de voz (opcional)" subtitle="Sube una voz o pega una URL" />
+      <SectionTitle title={t("voice_config")} subtitle={t("upload_or_record_voice")}/>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label>Subir voz (opcional)</Label>
+          <Label>{t("upload_voice")}</Label>
           <input
             type="file"
             accept="audio/*"
@@ -30,22 +32,19 @@ const VoiceConfigCard: React.FC = () => {
           />
           {data.assistant.voiceFile && (
             <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-              Archivo cargado: <span className="font-medium">{data.assistant.voiceFile.name}</span>
+              {t("file_uploaded")} <span className="font-medium">{data.assistant.voiceFile.name}</span>
             </p>
           )}
           {err && <p className="text-sm text-red-500 mt-1">{err}</p>}
         </div>
 
         <div>
-          <Label>URL de voz (opcional)</Label>
+          <Label>{t("url_voice")}</Label>
           <TextInput
             placeholder="https://…/voice.mp3"
             value={data.assistant.voiceUrl || ""}
             onChange={(e) => setAssistant({ voiceUrl: e.target.value || null })}
           />
-          <p className="mt-1 text-xs text-neutral-500">
-            Si defines una URL, el archivo subido no se enviará al backend.
-          </p>
         </div>
       </div>
     </GlassCard>

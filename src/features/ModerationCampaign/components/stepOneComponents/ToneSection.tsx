@@ -3,10 +3,12 @@ import { GlassCard, SectionTitle, Label, TextInput, Chip } from "../Primitives";
 import { useModeration, TONES } from "../../../../context/ModerationContext";
 import type { ToneOption } from "../../../../context/ModerationContext";
 import { notifyBotManualChange, flushBotManualChange } from "../../../../utils/helper";
+import { useTranslation } from "react-i18next";
 
 const ToneSection: React.FC = () => {
   const { data, setTone } = useModeration();
   const toneIsOther = data.tone === "other";
+  const { t } = useTranslation('translations');
 
   const toneLabel = (t: ToneOption | "other") =>
     t === "formal"
@@ -27,7 +29,7 @@ const ToneSection: React.FC = () => {
     <GlassCard>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <SectionTitle title="Tono de comunicación" subtitle="Elige el estilo de voz" />
+          <SectionTitle title={t("communication_tone")} subtitle={t("choose_voice_style")} />
           <div id="tone" className="flex flex-wrap gap-2 mt-2">
             {TONES.map((t) => (
               <Chip
@@ -50,10 +52,10 @@ const ToneSection: React.FC = () => {
 
           {toneIsOther && (
             <div className="mt-3">
-              <Label htmlFor="customTone">Especificar tono</Label>
+              <Label htmlFor="customTone">{t("specify_tone")} </Label>
               <TextInput
                 id="customTone"
-                placeholder="Describe el tono"
+                placeholder={t("describe_tone")}
                 value={data.customTone || ""}
                 onChange={(e) => {
                   const v = e.target.value;
