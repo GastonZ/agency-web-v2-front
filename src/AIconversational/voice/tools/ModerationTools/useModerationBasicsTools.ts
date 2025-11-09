@@ -16,7 +16,7 @@ export function useModerationBasicsTools() {
             name: "Nombre corto para identificar la campaña.",
             goal: "Objetivo principal (qué querés lograr).",
             summary: "Descripción breve de alcance y enfoque.",
-            leadDefinition: "Criterios para decidir cuándo una conversación califica como lead.",
+            leadDefinition: "Criterios para decidir cuándo una conversación califica como posible cliente o contacto.",
         };
         return { success: true, field, help: map[field] ?? "Campo desconocido." };
     }
