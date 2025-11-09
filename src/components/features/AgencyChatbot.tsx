@@ -240,16 +240,36 @@ export default function AgencyChatbot({
         function onManualChange(ev: any) {
             const d = ev?.detail || {};
             const label = d?.label || d?.field || "campo_desconocido";
-            const val = typeof d?.value === "string" ? d.value : JSON.stringify(d?.value ?? "");
+            const rawValue = d?.value;
+            const val =
+                typeof rawValue === "string"
+                    ? rawValue
+                    : JSON.stringify(rawValue ?? "");
             const ns = d?.namespace ? `[${d.namespace}] ` : "";
             const note = `${ns}Cambio manual: "${label}" => ${val}`;
-            sendSilentUserNote(note);
+
+            console.groupCollapsed("[Chatbot] Evento agency:manual-change recibido");
+            console.log("namespace:", d?.namespace || "(sin namespace)");
+            console.log("label:", label);
+            console.log("rawValue:", rawValue);
+            console.log("nota_final (silentNote):", note);
+            console.groupEnd();
+
+            try {
+                sendSilentUserNote(note);
+                console.log("[Chatbot] Silent note enviada correctamente a la sesión.");
+            } catch (err) {
+                console.warn("[Chatbot] Error al enviar silent note:", err);
+            }
+
             refreshCtxDebounced();
         }
 
         window.addEventListener("agency:manual-change" as any, onManualChange);
-        return () => window.removeEventListener("agency:manual-change" as any, onManualChange);
+        return () =>
+            window.removeEventListener("agency:manual-change" as any, onManualChange);
     }, [sendSilentUserNote, refreshCtxDebounced]);
+
 
     React.useEffect(() => {
         if (!autoKickoff || hasKickedRef.current || !isSessionActive) return;

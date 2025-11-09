@@ -9,7 +9,7 @@ import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
 import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus } from "../../../services/campaigns";
-import { buildTranscriptFromHistory, clampStep, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep } from "../../../utils/helper";
+import { buildTranscriptFromHistory, clampStep, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep, getUserId } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
@@ -29,7 +29,6 @@ import { useModerationCommsTools } from "../../../AIconversational/voice/tools/M
 import { calendarSchema } from "../../../AIconversational/voice/schemas/moderationSchemas/calendar.schema";
 import { useModerationCalendarTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationCalendarTools";
 import { useAutoScrollTools } from "../../../AIconversational/voice/tools/useAutoScrollTools";
-import { getUserId, historyToText } from "../../../utils/helper";
 import { getResumeOfConversation } from "../../../services/ia";
 import { loadBotSnapshot } from "../../../AIconversational/voice/session/persistence";
 import { MODERATION_PLAYBOOK } from "../utils/campaignsInstructions";
@@ -258,8 +257,56 @@ const Moderation: React.FC = () => {
     const canNext = useMemo(() => validateStep(current), [current, data]);
 
 
+    const sendStepSilentNote = useCallback((nextIndex: number) => {
+        const safeIndex = clampStep(nextIndex);
+        const humanIndex = safeIndex + 1;
+        const stepTitle = STEPS[safeIndex]?.title ?? `Paso ${humanIndex}`;
+
+        let focusText = "";
+        if (safeIndex === 0) {
+            focusText = "Tu rol es guiar al usuario para completar los datos básicos de la campaña (nombre, objetivo, resumen, definición de lead, publico objetivo (pais, provincia, ciudad) segmentacion cultural y tono de comunicacion).";
+        } else if (safeIndex === 1) {
+            focusText = "Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
+        } else if (safeIndex === 2) {
+            focusText = "Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica de conversación, base de conocimiento, temas permitidos y escalamiento humano.";
+        } else if (safeIndex === 3) {
+            focusText = "Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
+        }
+
+        const message =
+            `Estamos en el Paso ${humanIndex} (${stepTitle}) del flujo de creación de la campaña de moderación. ` +
+            `${focusText} ` +
+            `Mientras no cambiemos de paso, evitá tocar otros temas o adelantarte/retroceder por tu cuenta.`;
+
+        console.groupCollapsed(
+            `[Moderation] Enviando nota silenciosa de cambio de paso -> ${humanIndex} (${stepTitle})`
+        );
+        console.log("stepIndex:", safeIndex);
+        console.log("message:", message);
+        console.groupEnd();
+
+        try {
+            window.dispatchEvent(
+                new CustomEvent("agency:manual-change" as any, {
+                    detail: {
+                        namespace: "moderation",
+                        label: "wizard_step",
+                        value: message,
+                    },
+                })
+            );
+            console.log("[Moderation] Nota silenciosa de cambio de paso despachada con éxito.");
+        } catch (e) {
+            console.warn("[Moderation] No se pudo enviar la nota silenciosa de cambio de paso:", e);
+        }
+    }, []);
+
     const jumpTo = (i: number) => {
-        if (i <= current || validateStep(current)) setCurrent(i);
+        if (i <= current || validateStep(current)) {
+            const next = clampStep(i);
+            setCurrent(next);
+            sendStepSilentNote(next);
+        }
     };
 
     const saveStepOne = useCallback(async () => {
@@ -351,7 +398,12 @@ const Moderation: React.FC = () => {
         return true;
     }, [current, data, saveStepOne, validateStep]);
 
-    const goPrev = () => setCurrent((c) => Math.max(0, c - 1));
+    const goPrev = () =>
+        setCurrent((c) => {
+            const next = Math.max(0, c - 1);
+            sendStepSilentNote(next);
+            return next;
+        });
 
     const goNext = useCallback(async () => {
         const ok = await saveCurrentStep();
@@ -385,8 +437,12 @@ const Moderation: React.FC = () => {
             return;
         }
 
-        setCurrent((c) => Math.min(3, c + 1));
-    }, [saveCurrentStep, current, data, navigate, resetAll, setSaving]);
+        setCurrent((c) => {
+            const next = Math.min(3, c + 1);
+            sendStepSilentNote(next);
+            return next;
+        });
+    }, [saveCurrentStep, current, data, navigate, resetAll, setSaving, sendStepSilentNote]);
 
     async function finalizeCampaign() {
         const miss0 = missingFromStep0(data);
@@ -447,6 +503,7 @@ const Moderation: React.FC = () => {
         try {
             resetAll();
             setCurrent(0);
+            sendStepSilentNote(0);
             return {
                 success: true,
                 movedTo: 0,
@@ -457,13 +514,6 @@ const Moderation: React.FC = () => {
             return { success: false, error: e?.message ?? "No se pudo reiniciar el flujo." };
         }
     }
-
-    const stepIndex = toIndexStep(current);
-    const stepFocusedPlaybook = useMemo(
-        () => extractPlaybookForStep(MODERATION_PLAYBOOK, current - 1),
-        [stepIndex]
-    );
-
     const viewReady = bootReady;
 
     if (!viewReady) {
@@ -593,7 +643,7 @@ const Moderation: React.FC = () => {
                                         register("setModerationChannels", (args: any) => { const r = setModerationChannels(args); scrollChannels(); return r; });
                                         register("addModerationChannel", (args: any) => { const r = addModerationChannel(args); scrollChannels(); return r; });
                                         register("removeModerationChannel", (args: any) => { const r = removeModerationChannel(args); scrollChannels(); return r; });
-                                        register("describeModerationChannels", (args:any)=>{ const r = describeModerationChannels(args); scrollChannels(); return r; });
+                                        register("describeModerationChannels", (args: any) => { const r = describeModerationChannels(args); scrollChannels(); return r; });
                                         register("checkModerationStepStatus", checkModerationStepStatus);
                                         register("scrollToModerationField", scrollToModerationField);
                                         register("scrollToFieldIfFilled", scrollToFieldIfFilled);
@@ -618,8 +668,12 @@ const Moderation: React.FC = () => {
                                                         "Decime “finalizar campaña” “lanzar campaña” o usá el botón de la UI para activarla.",
                                                 };
                                             }
-                                            setCurrent((c) => Math.min(3, c + 1));
-                                            return { success: true, advancedTo: Math.min(3, current + 1) };
+
+                                            const next = clampStep(current + 1);
+                                            setCurrent(next);
+                                            sendStepSilentNote(next);
+
+                                            return { success: true, advancedTo: next };
                                         });
                                         register("goToPrevModerationStep", () => {
                                             if (current <= 0) {
@@ -629,10 +683,13 @@ const Moderation: React.FC = () => {
                                                     message: "Ya estás en el primer paso; no se puede retroceder más.",
                                                 };
                                             }
-                                            setCurrent((c) => Math.max(0, c - 1));
-                                            return { success: true, movedTo: Math.max(0, current - 1) };
-                                        });
 
+                                            const next = clampStep(current - 1);
+                                            setCurrent(next);
+                                            sendStepSilentNote(next);
+
+                                            return { success: true, movedTo: next };
+                                        });
                                         register("goNextNModerationStep", async (args: any) => {
                                             let target: number | null = toIndexStep(args?.step);
                                             if (target === null) {
@@ -655,6 +712,7 @@ const Moderation: React.FC = () => {
 
                                             if (target < current) {
                                                 setCurrent(target);
+                                                sendStepSilentNote(target);
                                                 return {
                                                     success: true,
                                                     movedTo: target,
@@ -676,9 +734,11 @@ const Moderation: React.FC = () => {
                                                         ...r,
                                                     };
                                                 }
-                                                setCurrent((c) => Math.min(3, c + 1));
                                                 ptr += 1;
                                             }
+
+                                            setCurrent(target);
+                                            sendStepSilentNote(target);
 
                                             return {
                                                 success: true,
@@ -718,6 +778,8 @@ const Moderation: React.FC = () => {
                                             }
 
                                             setCurrent(target);
+                                            sendStepSilentNote(target);
+
                                             return {
                                                 success: true,
                                                 movedTo: target,
@@ -725,6 +787,7 @@ const Moderation: React.FC = () => {
                                                 note: "Movimiento hacia atrás: no se requirió validación.",
                                             };
                                         });
+
 
                                         register("setModerationAssistantConfig", (args: any) => {
                                             const res = setModerationAssistantConfig(args);
@@ -811,7 +874,12 @@ const Moderation: React.FC = () => {
                                     }}
                                     autoKickoff
                                     kickoffMessage={
-                                        "Empieza a ayudar al usuario con la creacion de su campaña de moderación paso a paso."
+                                        "Estamos en el Paso 1 (Datos básicos) del flujo de creación de la campaña de moderación. \
+                                        Tu rol es guiar al usuario para completar los datos básicos de la campaña: \
+                                        nombre, objetivo, resumen o descripción, definición de lead, público objetivo (país, provincia, ciudad), \
+                                        segmentación cultural y tono de comunicación. \
+                                        Mientras no cambiemos de paso, evitá tocar otros temas o adelantarte/retroceder por tu cuenta. \
+                                        Cuando todo esté completo, podrás avanzar al Paso 2 (Canales)."
                                     }
                                 />
                             </div>
