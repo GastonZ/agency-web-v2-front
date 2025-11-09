@@ -91,6 +91,8 @@ const Moderation: React.FC = () => {
         { id: 4, title: t("review") },
     ];
 
+    const { i18n } = useTranslation();
+    const uiLang = i18n.language.startsWith("en") ? "en" : "es";
 
     const { autoScrollTools, scrollToModerationField, scrollToFieldIfFilled } = useAutoScrollTools();
 
@@ -267,49 +269,115 @@ const Moderation: React.FC = () => {
     const canNext = useMemo(() => validateStep(current), [current, data]);
 
 
-    const sendStepSilentNote = useCallback((nextIndex: number) => {
-        const safeIndex = clampStep(nextIndex);
-        const humanIndex = safeIndex + 1;
-        const stepTitle = STEPS[safeIndex]?.title ?? `Paso ${humanIndex}`;
+    const sendStepSilentNote = useCallback(
+        (nextIndex: number) => {
+            const safeIndex = clampStep(nextIndex);
+            const humanIndex = safeIndex + 1;
 
-        let focusText = "";
-        if (safeIndex === 0) {
-            focusText = "Tu rol es guiar al usuario para completar los datos básicos de la campaña (nombre, objetivo, resumen, definición de lead, publico objetivo (pais, provincia, ciudad) segmentacion cultural y tono de comunicacion).";
-        } else if (safeIndex === 1) {
-            focusText = "Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
-        } else if (safeIndex === 2) {
-            focusText = "Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica de conversación, preguntas y respuestas (conocimiento del asistente), temas permitidos y escalamiento humano.";
-        } else if (safeIndex === 3) {
-            focusText = "Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, si ya diste un resumen ofrece lanzar la campaña sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
-        }
+            // títulos por paso
+            const stepTitlesEs = ["Datos", "Canales", "Reglas", "Revisión"];
+            const stepTitlesEn = ["Basics", "Channels", "Assistant rules", "Review"];
 
-        const message =
-            `Estamos en el Paso ${humanIndex} (${stepTitle}) del flujo de creación de la campaña de moderación. ` +
-            `${focusText} ` +
-            `Mientras no cambiemos de paso, evitá tocar otros temas o adelantarte/retroceder por tu cuenta.`;
+            const stepTitleEs = stepTitlesEs[safeIndex] ?? `Paso ${humanIndex}`;
+            const stepTitleEn = stepTitlesEn[safeIndex] ?? `Step ${humanIndex}`;
 
-        console.groupCollapsed(
-            `[Moderation] Enviando nota silenciosa de cambio de paso -> ${humanIndex} (${stepTitle})`
-        );
-        console.log("stepIndex:", safeIndex);
-        console.log("message:", message);
-        console.groupEnd();
+            const stepTitle = uiLang === "en" ? stepTitleEn : stepTitleEs;
 
-        try {
-            window.dispatchEvent(
-                new CustomEvent("agency:manual-change" as any, {
-                    detail: {
-                        namespace: "moderation",
-                        label: "wizard_step",
-                        value: message,
-                    },
-                })
+            let focusText: string;
+
+            if (uiLang === "en") {
+                if (safeIndex === 0) {
+                    focusText =
+                        "Your role is to guide the user to complete the basic campaign data: name, goal, lead definition and the main target country (and, optionally, summary, city, culture and tone).";
+                } else if (safeIndex === 1) {
+                    focusText =
+                        "Your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
+                } else if (safeIndex === 2) {
+                    focusText =
+                        "Your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers), allowed topics and human escalation and calendars if users is interested.";
+                } else {
+                    focusText =
+                        "Your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
+                }
+
+                const message =
+                    `We are in Step ${humanIndex} (${stepTitle}) of the moderation campaign wizard. ` +
+                    `${focusText} ` +
+                    `While we stay on this step, avoid switching topics or jumping between steps on your own. Always answer in the same language the user is using.`;
+
+                console.groupCollapsed(
+                    `[Moderation] Sending silent step note (EN) -> Step ${humanIndex} (${stepTitle})`
+                );
+                console.log("message:", message);
+                console.groupEnd();
+
+                try {
+                    window.dispatchEvent(
+                        new CustomEvent("agency:manual-change" as any, {
+                            detail: {
+                                namespace: "moderation",
+                                label: "wizard_step",
+                                value: message,
+                            },
+                        })
+                    );
+                    console.log("[Moderation] Silent step note dispatched (EN).");
+                } catch (e) {
+                    console.warn(
+                        "[Moderation] Failed to dispatch silent step note (EN):",
+                        e
+                    );
+                }
+
+                return;
+            }
+
+            // === español ===
+            if (safeIndex === 0) {
+                focusText =
+                    "Tu rol es guiar al usuario para completar los datos básicos de la campaña: nombre, objetivo, definición de lead y país principal del público (y, opcionalmente, resumen, ciudad, cultura y tono).";
+            } else if (safeIndex === 1) {
+                focusText =
+                    "Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
+            } else if (safeIndex === 2) {
+                focusText =
+                    "Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica conversacional, base de conocimiento (preguntas y respuestas), temas permitidos y escalamiento humano.";
+            } else {
+                focusText =
+                    "Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, una vez hecho eso ofrece lanzar la campaña sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
+            }
+
+            const message =
+                `Estamos en el Paso ${humanIndex} (${stepTitle}) del flujo de creación de la campaña de moderación. ` +
+                `${focusText} ` +
+                `Mientras no cambiemos de paso, evitá tocar otros temas o adelantarte/retroceder por tu cuenta. Respondé siempre en el mismo idioma que use el usuario.`;
+
+            console.groupCollapsed(
+                `[Moderation] Enviando nota silenciosa de cambio de paso (ES) -> ${humanIndex} (${stepTitle})`
             );
-            console.log("[Moderation] Nota silenciosa de cambio de paso despachada con éxito.");
-        } catch (e) {
-            console.warn("[Moderation] No se pudo enviar la nota silenciosa de cambio de paso:", e);
-        }
-    }, []);
+            console.log("message:", message);
+            console.groupEnd();
+
+            try {
+                window.dispatchEvent(
+                    new CustomEvent("agency:manual-change" as any, {
+                        detail: {
+                            namespace: "moderation",
+                            label: "wizard_step",
+                            value: message,
+                        },
+                    })
+                );
+                console.log("[Moderation] Nota silenciosa de cambio de paso despachada (ES).");
+            } catch (e) {
+                console.warn(
+                    "[Moderation] No se pudo enviar la nota silenciosa de cambio de paso (ES):",
+                    e
+                );
+            }
+        },
+        [uiLang]
+    );
 
     const jumpTo = (i: number) => {
         if (i <= current || validateStep(current)) {
@@ -884,12 +952,9 @@ const Moderation: React.FC = () => {
                                     }}
                                     autoKickoff
                                     kickoffMessage={
-                                        "Estamos en el Paso 1 (Datos básicos) del flujo de creación de la campaña de moderación. \
-                                        Tu rol es guiar al usuario para completar los datos básicos de la campaña: \
-                                        nombre, objetivo, resumen o descripción, definición de lead, público objetivo (país, provincia, ciudad), \
-                                        segmentación cultural y tono de comunicación. \
-                                        Mientras no cambiemos de paso, evitá tocar otros temas o adelantarte/retroceder por tu cuenta. \
-                                        Cuando todo esté completo, podrás avanzar al Paso 2 (Canales)."
+                                        uiLang === "en"
+                                            ? "We are at Step 1 (Basics) of the moderation campaign wizard. Greet the user briefly, answer in English if the user speaks English, and then ask whether they prefer to start with the basic data or have you guide them step by step."
+                                            : "Estamos en el Paso 1 (Datos básicos) del flujo de creación de la campaña de moderación. Saludá brevemente, respondé en el mismo idioma que use el usuario y preguntá si prefiere empezar por los datos básicos o que lo guíes paso a paso."
                                     }
                                 />
                             </div>

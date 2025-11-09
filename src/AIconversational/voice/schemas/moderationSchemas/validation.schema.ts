@@ -32,7 +32,7 @@ export const validationSchema: ToolSpec[] = [
     type: "function",
     name: "goNextNModerationStep",
     description:
-      "Avanza al paso solicitado. Acepta step (0..3), n (cantidad a avanzar) o topic (texto en español como 'canales de comunicación', 'saludo inicial', 'base de conocimiento', etc.). Valida y guarda antes de avanzar.",
+      "Avanza al paso solicitado. Acepta step (0..3), n (cantidad a avanzar) o topic (texto como 'canales de comunicación', 'saludo inicial', 'base de conocimiento', etc.). Valida y guarda antes de avanzar.",
     parameters: {
       type: "object",
       properties: {
@@ -41,7 +41,7 @@ export const validationSchema: ToolSpec[] = [
           description: "Paso objetivo (humano 1..4 o índice 0..3). 1=Datos, 2=Canales, 3=Reglas, 4=Revisión.",
         },
         n: { type: "number", description: "Cantidad de pasos a avanzar desde el actual." },
-        topic: { type: "string", description: "Tópico en español que el usuario quiere editar. Se mapea al paso." },
+        topic: { type: "string", description: "Tópico que el usuario quiere editar. Se mapea al paso." },
       },
       additionalProperties: false,
     },
@@ -50,7 +50,7 @@ export const validationSchema: ToolSpec[] = [
     type: "function",
     name: "goPrevNModerationStep",
     description:
-      "Retrocede al paso solicitado. Acepta step (0..3), n (cantidad a retroceder) o topic (texto en español como 'nombre', 'objetivo', 'canales', 'calendario', etc.). No valida para retroceder.",
+      "Retrocede al paso solicitado. Acepta step (0..3), n (cantidad a retroceder) o topic (texto como 'nombre', 'objetivo', 'canales', 'calendario', etc.). No valida para retroceder.",
     parameters: {
       type: "object",
       properties: {
@@ -59,7 +59,7 @@ export const validationSchema: ToolSpec[] = [
           description: "Paso objetivo (humano 1..4 o índice 0..3). 1=Datos, 2=Canales, 3=Reglas, 4=Revisión.",
         },
         n: { type: "number", description: "Cantidad de pasos a retroceder desde el actual." },
-        topic: { type: "string", description: "Tópico en español que el usuario quiere editar. Se mapea al paso." },
+        topic: { type: "string", description: "Tópico que el usuario quiere editar. Se mapea al paso." },
       },
       additionalProperties: false,
     },
