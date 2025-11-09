@@ -185,5 +185,12 @@
     "who_and_how": "Who we talk to and how",
     "where_moderate": "Where we will moderate",
     "new_prefer": " — If you prefer, you can clear everything and start a new one",
-    "create_campaign": "Create campaign"
+    "create_campaign": "Create campaign",
+    "inactive": "Inactive",
+    "initiating": "Initiating...",
+    "listening": "Listening...",
+    "talking": "Talking...",
+    "thinking": "Thinking...",
+    "wipe_memory_refresh": "Wipe memory and refresh",
+    "veryfing_session": "Verifying session..."
 }

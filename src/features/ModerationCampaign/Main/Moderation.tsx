@@ -82,6 +82,15 @@ const Moderation: React.FC = () => {
         removeModerationTimeSlot,
     } = useModerationCalendarTools();
 
+    const { t } = useTranslation('translations')
+
+    const STEPS_T = [
+        { id: 1, title: t("data") },
+        { id: 2, title: t("channels") },
+        { id: 3, title: t("rules") },
+        { id: 4, title: t("review") },
+    ];
+
 
     const { autoScrollTools, scrollToModerationField, scrollToFieldIfFilled } = useAutoScrollTools();
 
@@ -98,8 +107,6 @@ const Moderation: React.FC = () => {
     const [showUI, setShowUI] = React.useState(false);
 
     const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
-
-    const { t } = useTranslation('translations')
 
     React.useEffect(() => {
         let aborted = false;
@@ -148,14 +155,14 @@ const Moderation: React.FC = () => {
 
                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-/*                     const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
-                    if (!aborted) {
-                        setBootSummary(summary || undefined);
-                        console.groupCollapsed("[Moderation][boot] resumen recibido");
-                        console.log("summary.len:", (summary || "").length);
-                        console.log("summary.preview:", (summary || "").slice(0, 240));
-                        console.groupEnd();
-                    } */
+                    /*                     const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
+                                        if (!aborted) {
+                                            setBootSummary(summary || undefined);
+                                            console.groupCollapsed("[Moderation][boot] resumen recibido");
+                                            console.log("summary.len:", (summary || "").length);
+                                            console.log("summary.preview:", (summary || "").slice(0, 240));
+                                            console.groupEnd();
+                                        } */
                 } else {
                     console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
                 }
@@ -533,7 +540,7 @@ const Moderation: React.FC = () => {
                 <OnlineLayout>
                     <div className="w-full px-2 md:px-4">
                         <div className="mb-4 md:mb-6">
-                            <StepperTop steps={STEPS} current={current} onStepClick={jumpTo} />
+                            <StepperTop steps={STEPS_T} current={current} onStepClick={jumpTo} />
                         </div>
 
                         <EditModeBanner />

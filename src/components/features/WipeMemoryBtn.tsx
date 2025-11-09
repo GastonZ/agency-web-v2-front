@@ -2,6 +2,7 @@ import * as React from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { clearBotSnapshot } from "../../AIconversational/voice/session/persistence";
+import { useTranslation } from "react-i18next";
 
 /**
  * Borra selectivamente:
@@ -72,6 +73,8 @@ const WipeMemoryBtn: React.FC<Props> = ({
     setTimeout(() => window.location.reload(), 600);
   }, [userId, namespaces, draftKey, confirm]);
 
+  const { t } = useTranslation('translations');
+
   return (
     <button
       type="button"
@@ -82,7 +85,7 @@ const WipeMemoryBtn: React.FC<Props> = ({
       title="Borrar snapshots (global/moderation) y draft, luego refrescar"
     >
       <Trash2 className="w-4 h-4" />
-      <span className="text-sm font-semibold">{label}</span>
+      <span className="text-sm font-semibold">{t("wipe_memory_refresh")}</span>
     </button>
   );
 };

@@ -5,7 +5,7 @@ import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 import { botControlTools, useBotControlTools } from "../../AIconversational/voice/tools/useBotControlTools";
-
+import { useTranslation } from "react-i18next";
 import { internalSummaryTool } from "../../AIconversational/voice/internal/internalSummaryTool";
 // utilidades de persistencia genérica
 import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
@@ -74,7 +74,7 @@ export default function AgencyChatbot({
 }: AgencyChatbotProps) {
     const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools, internalSummaryTool as any], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
-
+    const { t } = useTranslation('translations');
     const [rollingSummary, setRollingSummary] = React.useState<string>("");
     const hasKickedRef = React.useRef(false);
 
@@ -475,11 +475,11 @@ export default function AgencyChatbot({
                         isStarting ? (
                             <>
                                 <Loader2 className="h-3.5 w-3.5 animate-spin opacity-90" />
-                                <span>Iniciando…</span>
+                                <span>{t("initiating")}</span>
                             </>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <span>Inactiva…</span>
+                                <span>{t("inactive")}</span>
                                 <span className="opacity-70">click</span>
                                 <ChevronDown className="h-3.5 w-3.5 opacity-80" />
                                 <ChevronRight className="h-3.5 w-3.5 opacity-80" />
@@ -488,23 +488,23 @@ export default function AgencyChatbot({
                         )
                     ) : isThinking ? (
                         <div className="flex items-center gap-2">
-                            <span className="sr-only">Pensando…</span>
+                            <span className="sr-only">{t("thinking")}</span>
                             <div className="flex items-center gap-1">
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "0ms" }} />
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "120ms" }} />
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "240ms" }} />
                             </div>
-                            <span>Pensando…</span>
+                            <span>{t("thinking")}</span>
                         </div>
                     ) : isTalking ? (
                         <div className="flex items-center gap-2">
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>Hablando…</span>
+                            <span>{t("talking")}</span>
                         </div>
                     ) : (
                         <>
                             <Ear className="h-3.5 w-3.5 opacity-90" />
-                            <span>Te escucho…</span>
+                            <span>{t("listening")}</span>
                         </>
                     )}
                     <div
