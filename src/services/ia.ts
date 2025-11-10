@@ -1,14 +1,12 @@
 import api from "./api/api";
 
-export async function getResumeOfConversation(text: string, maxLength = 240, signal?: AbortSignal) {    
-    
+export async function getResumeOfConversation(text: string, maxLength = 240, language = 'en', signal?: AbortSignal) {    
+
   const { data } = await api.post(
     "resume",
-    { text, maxLength },
+    { text, maxLength, language },
     { signal }
   );
-
-  console.log('DATA RESUMIDA ##################',data);
   
   return String(data?.summary || "");
 }

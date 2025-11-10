@@ -2,10 +2,11 @@
 import React, { use } from "react";
 import OnlineLayout from "../layout/OnlineLayout";
 import AgencyChatbot from "../components/features/AgencyChatbot";
-import { DASHBOARD_PLAYBOOK, getUserId } from "../utils/helper";
+import { DASHBOARD_PLAYBOOK, getUserId, DASHBOARD_PLAYBOOK_ES } from "../utils/helper";
 import WipeMemoryBtn from "../components/features/WipeMemoryBtn";
 import HeroConversational from "../WebLanding/components/HeroConversational";
 import HeroConversationalAgency from "../components/features/HeroConversationalAgency";
+import { useTranslation } from "react-i18next";
 
 type GlassCardProps = {
     title?: React.ReactNode;
@@ -71,6 +72,9 @@ const Dashboard: React.FC = () => {
 
     const userId = getUserId?.() || "anon";
 
+    const { i18n } = useTranslation();
+    const uiLang = i18n.language.startsWith("en") ? "en" : "es";
+
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
@@ -86,7 +90,7 @@ const Dashboard: React.FC = () => {
                             __summary: "Por ahora no hay resumen definido.",
                             page: "dashboard",
                         })}
-                        bootExtraInstructions={DASHBOARD_PLAYBOOK}
+                        bootExtraInstructions={uiLang === "en" ? DASHBOARD_PLAYBOOK : DASHBOARD_PLAYBOOK_ES}
                     />
                     <div className="lg:col-span-12 flex">
                         <HeroConversationalAgency />

@@ -157,7 +157,7 @@ const Moderation: React.FC = () => {
 
                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-                    const summary = await getResumeOfConversation(chosenText, 10000, ctrl.signal);
+                    const summary = await getResumeOfConversation(chosenText, 10000, uiLang, ctrl.signal);
                     if (!aborted) {
                         setBootSummary(summary || undefined);
                         console.groupCollapsed("[Moderation][boot] resumen recibido");
@@ -672,14 +672,15 @@ const Moderation: React.FC = () => {
                                             const res = updateModerationBasics(args);
                                             if (res?.success) {
                                                 const updated: string[] = Array.isArray(res.updated) ? res.updated : [];
+
                                                 if (updated.length === 1) {
                                                     try {
-                                                        scrollToFieldIfFilled({ field: updated[0] as any, payload: data });
+                                                        scrollToModerationField({ field: updated[0] as any });
                                                     } catch { }
                                                 } else if (updated.length > 1) {
                                                     updated.forEach((f, i) => {
                                                         setTimeout(() => {
-                                                            try { scrollToFieldIfFilled({ field: f as any, payload: data }); } catch { }
+                                                            try { scrollToModerationField({ field: f as any }); } catch { }
                                                         }, i * 300);
                                                     });
                                                 }

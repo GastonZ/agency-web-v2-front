@@ -73,8 +73,8 @@ In this step the following are mandatory:
 - the assistant’s display name,  
 - the initial greeting,  
 - at least one question with its complete answer (Q&A).  
+Before moving to Step 4, verify that these elements exist.
 
-Before moving to Step 4, verify that these elements exist.  
 Other elements of Step 3 are optional (but recommended if the user wants to configure them):  
 - allowed topics,  
 - escalation cases,  
@@ -210,8 +210,8 @@ En este paso son obligatorios:
 - el nombre de visualización del asistente,
 - el saludo inicial,
 - al menos una pregunta con su respuesta completa (P&R).
-
 Antes de pasar al Paso 4, verifica que estos elementos existan.
+
 Otros elementos del Paso 3 son opcionales (pero recomendados si el usuario quiere configurarlos):
 - temas permitidos,
 - casos de escalación,

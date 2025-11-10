@@ -7,6 +7,8 @@ import { MessageSquare, ClipboardList, CalendarRange } from "lucide-react";
 import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
 import InstagramConnectPanel from "../../../components/features/InstagramConnectPanel";
 import { getUserId } from "../../../utils/helper";
+import AgencyChatbot from "../../../components/features/AgencyChatbot";
+import { useTranslation } from "react-i18next";
 
 export default function StatisticsView() {
     const { id } = useParams<{ id: string }>();
@@ -16,6 +18,8 @@ export default function StatisticsView() {
     const [channelsToConfigure, setChannelsToConfigure] = React.useState<string[]>([]);
     const userId = getUserId() || "";
     const [openWhatsAppSetup, setOpenWhatsAppSetup] = React.useState(false);
+    const { i18n } = useTranslation();
+    const uiLang = i18n.language.startsWith("en") ? "en" : "es";
 
     React.useEffect(() => {
         let mounted = true;
@@ -211,7 +215,87 @@ export default function StatisticsView() {
                     </div>
                 </div>
             )}
+            <AgencyChatbot
+                mode="floating"
+                persistNamespace={`moderation_stats_${campaign.id || "unknown"}`}
+                userId={userId}
+                autoStart={true}
+                bootSummaryOverride={(() => {
+                    const canales = (campaign.channels || []).join(", ") || (uiLang === "en" ? "none" : "ninguno");
+                    const status = campaign.status || (uiLang === "en" ? "unknown" : "desconocido");
+                    return uiLang === "en"
+                        ? `Moderation campaign “${campaign.name}” (status: ${status}). Channels: ${canales}.`
+                        : `Campaña de moderación “${campaign.name}” (estado: ${status}). Canales: ${canales}.`;
+                })()}
+                getBusinessSnapshot={() => ({
+                    __summary:
+                        uiLang === "en"
+                            ? `Moderation campaign “${campaign.name}” is active and shown in the Statistics view.`
+                            : `Campaña de moderación “${campaign.name}” activa, mostrada en la vista de estadísticas.`,
+                    campaignId: campaign.id,
+                    name: campaign.name,
+                    status: campaign.status,
+                    objective: campaign.objective,
+                    leadDefinition: campaign.leadDefinition,
+                    channels: campaign.channels || [],
+                    uiLanguage: uiLang,
+                })}
+                bootExtraInstructions={
+                    uiLang === "en"
+                        ? `Always answer in English.
 
-        </OnlineLayout>
+You are LISA, the post-launch assistant of a moderation campaign.
+
+Context:
+- The campaign “${campaign.name}” is already active and the user is on the Statistics screen.
+- Your role is to help the user with the next steps: especially linking WhatsApp and Instagram, and understanding how the assistant will start moderating.
+- Use a clear, step-by-step and practical tone.
+
+If the user asks how to link or connect **WhatsApp**, explain these steps:
+1) Ask them to look for the "Configure WhatsApp" button on this screen and click it.
+2) Tell them that a new panel will open, and at the bottom they must click “Request QR”.
+3) When the QR code appears, they must open WhatsApp on their phone, go to “Linked devices” and choose “Link a device”.
+4) They scan the QR with their phone. Once the code is scanned and the device is linked, WhatsApp will be connected to this campaign.
+
+If the user asks how to link or connect **Instagram**, explain these steps:
+1) First, they must make sure that their Instagram account is a business account.
+2) Then, they should look here for the "Connect Instagram" button and click it.
+3) That will open the Instagram/Facebook login. They must log in with the account they want to connect.
+4) They must accept the requested permissions/terms on the screen.
+5) Once they accept and the process completes, they will be redirected back to this site and the Instagram connection will be finished.
+
+Only explain these steps in detail when the user asks for help with WhatsApp or Instagram. Otherwise, focus on guiding them through what they can do now that the campaign is active (connecting channels, understanding leads, and how the assistant will behave).`
+                        : `Respondé siempre en español.
+
+Sos LISA, la asistente post-lanzamiento de una campaña de moderación.
+
+Contexto:
+- La campaña “${campaign.name}” ya está activa y el usuario se encuentra en la pantalla de estadísticas.
+- Tu función es ayudar al usuario con los próximos pasos: especialmente vincular WhatsApp e Instagram, y entender cómo va a empezar a moderar el asistente.
+- Usá un tono claro, práctico y en pasos.
+
+Si el usuario pregunta cómo vincular o conectar **WhatsApp**, explicá estos pasos:
+1) Indicale que busque en esta pantalla el botón de "Configurar WhatsApp" y que lo apriete.
+2) Contale que se va a abrir un panel nuevo, y que en la parte de abajo debe hacer clic en “Solicitar QR”.
+3) Cuando vea el código QR, debe abrir WhatsApp en su teléfono, ir a la sección “Dispositivos vinculados” y elegir “Vincular nuevo dispositivo”.
+4) Debe escanear el código QR con el teléfono. Una vez escaneado y vinculado el dispositivo, WhatsApp quedará conectado a esta campaña.
+
+Si el usuario pregunta cómo vincular o conectar **Instagram**, explicá estos pasos:
+1) Primero, debe asegurarse de que su cuenta de Instagram sea de tipo empresa.
+2) Luego, tiene que buscar aquí el botón de "Conectar Instagram" y hacer clic.
+3) Eso lo llevará a una pantalla para loguearse con la cuenta de Instagram/Facebook que quiere vincular.
+4) Debe aceptar los permisos y términos que se le muestran.
+5) Una vez que acepte y termine el proceso, será enviado de vuelta a este sitio y la vinculación de Instagram quedará completa.
+
+Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o Instagram. En el resto de los casos, enfocate en guiarlo sobre qué puede hacer ahora que la campaña está activa (conectar canales, entender los leads y cómo va a responder el asistente).`
+                }
+                autoKickoff
+                kickoffMessage={
+                    uiLang === "en"
+                        ? `Done, the campaign is active and ready to use. Next, I’ll ask you to scan the WhatsApp QR code you want to link, and provide the social media credentials for the accounts you’d like the assistant to start moderating.`
+                        : `Listo, la campaña está activa y lista para usarse. A continuación, te voy a pedir que escanees el código QR de WhatsApp que quieras vincular y que proporciones las credenciales de las cuentas de redes sociales que el asistente deberá comenzar a moderar.`
+                }
+            />
+        </OnlineLayout >
     );
 }
