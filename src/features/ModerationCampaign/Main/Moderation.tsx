@@ -294,7 +294,7 @@ const Moderation: React.FC = () => {
                         "Keep talking in english , your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
                 } else if (safeIndex === 2) {
                     focusText =
-                        "Keep talking in english , your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers * AT LEAST ONE), allowed topics and human escalation and calendars if users is interested.";
+                        "Keep talking in english , your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers *IMPORTANT MENTION ITS NEEDED AT LEAST ONE QUESTION AND ANSWER), allowed topics and human escalation and calendars if users is interested.";
                 } else {
                     focusText =
                         "Keep talking in english , your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
@@ -340,7 +340,7 @@ const Moderation: React.FC = () => {
                     "Sigue hablando en español, Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
             } else if (safeIndex === 2) {
                 focusText =
-                    "Sigue hablando en español, Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica conversacional, base de conocimiento (preguntas y respuestas), temas permitidos y escalamiento humano.";
+                    "Sigue hablando en español, Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica conversacional, base de conocimiento (preguntas y respuestas *IMPORTANTE MENCIONA ES NECESARIA AL MENOS UNA), temas permitidos y escalamiento humano.";
             } else {
                 focusText =
                     "Sigue hablando en español, Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, una vez hecho eso ofrece lanzar la campaña sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
