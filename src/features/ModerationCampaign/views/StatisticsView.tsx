@@ -19,6 +19,7 @@ export default function StatisticsView() {
     const userId = getUserId() || "";
     const [openWhatsAppSetup, setOpenWhatsAppSetup] = React.useState(false);
     const { i18n } = useTranslation();
+    const { t } = useTranslation('translations');
     const uiLang = i18n.language.startsWith("en") ? "en" : "es";
 
     React.useEffect(() => {
@@ -106,9 +107,9 @@ export default function StatisticsView() {
                             <MessageSquare className="h-4 w-4" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-[15px] font-semibold leading-tight">Configuración de cuentas pendiente</h3>
+                            <h3 className="text-[15px] font-semibold leading-tight">{t("pending_account_setup")}</h3>
                             <p className="text-sm opacity-80 mt-1">
-                                Configurá las cuentas de estos canales para activar la moderación:
+                                {t("setup_channel_accounts")}
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2">
                                 {(channelsToConfigure?.length ? channelsToConfigure : ["—"]).map((c) => (
@@ -124,7 +125,7 @@ export default function StatisticsView() {
                                         className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
                                         onClick={() => setOpenWhatsAppSetup(true)}
                                     >
-                                        Configurar WhatsApp
+                                        {t("setup_whatsapp")}
                                     </button>
                                 ) : (
                                     <button
@@ -132,7 +133,7 @@ export default function StatisticsView() {
                                         disabled
                                         title="No hay WhatsApp entre los canales"
                                     >
-                                        Configurar cuentas
+                                        {t("setup_accounts")}
                                     </button>
                                 )}
                             </div>
@@ -152,12 +153,12 @@ export default function StatisticsView() {
                             <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
                                 <ClipboardList className="h-4 w-4" />
                             </div>
-                            <h4 className="text-[15px] font-semibold leading-tight">Resumen</h4>
+                            <h4 className="text-[15px] font-semibold leading-tight">{t("summary")}</h4>
                         </div>
                         <dl className="grid md:grid-cols-2 gap-3 text-[15px] leading-6">
-                            <div><dt className="opacity-70">Objetivo</dt><dd>{campaign.objective || "—"}</dd></div>
-                            <div><dt className="opacity-70">Lead</dt><dd>{campaign.leadDefinition || "—"}</dd></div>
-                            <div><dt className="opacity-70">Canales</dt><dd>{(campaign.channels || []).join(", ") || "—"}</dd></div>
+                            <div><dt className="opacity-70">{t("objective")}</dt><dd>{campaign.objective || "—"}</dd></div>
+                            <div><dt className="opacity-70">{t("lead")}</dt><dd>{campaign.leadDefinition || "—"}</dd></div>
+                            <div><dt className="opacity-70">{t("channels")}</dt><dd>{(campaign.channels || []).join(", ") || "—"}</dd></div>
                         </dl>
                     </div>
 
@@ -166,16 +167,16 @@ export default function StatisticsView() {
                             <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
                                 <CalendarRange className="h-4 w-4" />
                             </div>
-                            <h4 className="text-[15px] font-semibold leading-tight">Actividad & Métricas</h4>
+                            <h4 className="text-[15px] font-semibold leading-tight">{t("activity_metrics")}</h4>
                         </div>
                         <div className="text-sm opacity-70">
-                            Próximamente: métricas, actividad, tickets escalados, etc.
+                            {t("coming_soon_metrics")}
                         </div>
                     </div>
                 </div>
 
                 <div className="pt-2">
-                    <Link to="/my_campaigns" className="text-emerald-600 hover:underline">← Volver a mis campañas</Link>
+                    <Link to="/my_campaigns" className="text-emerald-600 hover:underline">{t("back_to_campaigns")}</Link>
                 </div>
             </div>
 
@@ -188,12 +189,12 @@ export default function StatisticsView() {
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-[15px] font-semibold leading-tight">Configurar WhatsApp</h3>
+                                <h3 className="text-[15px] font-semibold leading-tight">{t("setup_whatsapp")}</h3>
                                 <button
                                     className="text-xs px-3 py-1 rounded bg-neutral-200/70 dark:bg-neutral-800/70"
                                     onClick={() => setOpenWhatsAppSetup(false)}
                                 >
-                                    Cerrar
+                                    {t("close")}
                                 </button>
                             </div>
 
@@ -219,7 +220,7 @@ export default function StatisticsView() {
                 mode="floating"
                 persistNamespace={`moderation_stats_${campaign.id || "unknown"}`}
                 userId={userId}
-                autoStart={true}
+                autoStart={false}
                 bootSummaryOverride={(() => {
                     const canales = (campaign.channels || []).join(", ") || (uiLang === "en" ? "none" : "ninguno");
                     const status = campaign.status || (uiLang === "en" ? "unknown" : "desconocido");

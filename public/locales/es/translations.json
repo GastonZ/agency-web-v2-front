@@ -201,5 +201,19 @@
     "messages5": "Estoy aqui para ayudarte",
     "campaign_created_successfully": "Campaña creada con éxito",
     "complete_before_saving": "Completá los datos requeridos antes de continuar",
-    "check_data": "Revisá los datos antes de continuar"
+    "check_data": "Revisá los datos antes de continuar",
+    "pending_account_setup": "Configuración de cuentas pendiente",
+    "setup_channel_accounts": "Configurá las cuentas de estos canales para activar la moderación:",
+    "setup_whatsapp": "Configurar WhatsApp",
+    "close": "Cerrar",
+    "setup_accounts": "Configurar cuentas",
+    "summary": "Resumen",
+    "objective": "Objetivo",
+    "lead": "Lead",
+    "activity_metrics": "Actividad & Métricas",
+    "coming_soon_metrics": "Próximamente: métricas, actividad, tickets escalados, etc.",
+    "back_to_campaigns": "← Volver a mis campañas",
+    "link_instagram_account": "Vincular cuenta de Instagram",
+    "redirect_to_instagram": "Te redirigiremos a Instagram para autorizar el acceso. Luego volveras a la app.",
+    "connect_instagram": "Conectar Instagram"
 }
