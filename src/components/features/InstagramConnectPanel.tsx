@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 
 type InstagramConnectPanelProps = {
   clientId?: string;
@@ -29,6 +30,7 @@ export default function InstagramConnectPanel({
   className = "",
 }: InstagramConnectPanelProps) {
   const [building, setBuilding] = React.useState(false);
+  const { t } = useTranslation('translations');
 
   const authUrl = React.useMemo(() => {
     const q = new URLSearchParams({
@@ -50,11 +52,10 @@ export default function InstagramConnectPanel({
     >
       <div className="space-y-2">
         <h3 className="text-[15px] font-semibold leading-tight">
-          Vincular cuenta de Instagram
+          {t("link_instagram_account")}
         </h3>
         <p className="text-sm opacity-80">
-          Te redirigiremos a Instagram para autorizar el acceso. Luego volveras a la app.
-        </p>
+          {t("redirect_to_instagram")}</p>
       </div>
 
       <div className="mt-4 flex gap-2">
@@ -67,7 +68,7 @@ export default function InstagramConnectPanel({
           }}
           className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
         >
-          {building ? "Abriendo autorización…" : "Conectar Instagram"}
+          {building ? "Abriendo autorización…" : t("connect_instagram")}
         </button>
       </div>
 
