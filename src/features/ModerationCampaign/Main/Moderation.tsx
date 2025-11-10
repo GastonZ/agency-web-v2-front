@@ -31,7 +31,7 @@ import { useModerationCalendarTools } from "../../../AIconversational/voice/tool
 import { useAutoScrollTools } from "../../../AIconversational/voice/tools/useAutoScrollTools";
 import { getResumeOfConversation } from "../../../services/ia";
 import { loadBotSnapshot } from "../../../AIconversational/voice/session/persistence";
-import { MODERATION_PLAYBOOK } from "../utils/campaignsInstructions";
+import { MODERATION_PLAYBOOK, MODERATION_PLAYBOOK_ES } from "../utils/campaignsInstructions";
 import ModerationSkeleton from "../components/ModerationSkeleton";
 import { useTranslation } from "react-i18next";
 
@@ -288,16 +288,16 @@ const Moderation: React.FC = () => {
             if (uiLang === "en") {
                 if (safeIndex === 0) {
                     focusText =
-                        "Keep talking in english , your role is to guide the user to complete the basic campaign data: name, goal, lead definition and the main target country (and, optionally, summary, city, culture and tone).";
+                        "Keep talking in english , your role is to guide the user to complete the basic campaign data: country , name, goal, and lead definition then, optionally, summary, city, culture and tone).";
                 } else if (safeIndex === 1) {
                     focusText =
-                        "Keep talking in english , Your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
+                        "Keep talking in english , your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
                 } else if (safeIndex === 2) {
                     focusText =
-                        "Keep talking in english , Your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers * AT LEAST ONE), allowed topics and human escalation and calendars if users is interested.";
+                        "Keep talking in english , your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers * AT LEAST ONE), allowed topics and human escalation and calendars if users is interested.";
                 } else {
                     focusText =
-                        "Keep talking in english , Your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
+                        "Keep talking in english , your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
                 }
 
                 const message =
@@ -334,7 +334,7 @@ const Moderation: React.FC = () => {
             // === español ===
             if (safeIndex === 0) {
                 focusText =
-                    "Sigue hablando en español, Tu rol es guiar al usuario para completar los datos básicos de la campaña: nombre, objetivo, definición de lead y país principal del público (y, opcionalmente, resumen, ciudad, cultura y tono).";
+                    "Sigue hablando en español, Tu rol es guiar al usuario para completar los datos básicos de la campaña: país principal del público, nombre, objetivo  y definición de lead, luego, opcionalmente, resumen, ciudad, cultura y tono.";
             } else if (safeIndex === 1) {
                 focusText =
                     "Sigue hablando en español, Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
@@ -619,7 +619,11 @@ const Moderation: React.FC = () => {
                                     userId={userId}
                                     autoStart={bootReady && toolsReady}
                                     bootSummaryOverride={bootSummary}
-                                    bootExtraInstructions={MODERATION_PLAYBOOK}
+                                    bootExtraInstructions={
+                                        uiLang === "en"
+                                            ? MODERATION_PLAYBOOK
+                                            : MODERATION_PLAYBOOK_ES
+                                    }
                                     getBusinessSnapshot={() => ({
                                         __summary: (() => {
                                             const name = data?.name || "Sin nombre";

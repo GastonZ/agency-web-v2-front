@@ -6,7 +6,7 @@ import ToneSection from "../components/stepOneComponents/ToneSection";
 export const StepOneTop: React.FC = () => {
   return (
     <div className="w-full">
-      <BasicsSection />
+      <AudienceSection />
     </div>
   );
 };
@@ -14,7 +14,7 @@ export const StepOneTop: React.FC = () => {
 export const StepOneBottom: React.FC = () => {
   return (
     <div className="w-full space-y-4 md:space-y-6">
-      <AudienceSection />
+      <BasicsSection />
       <ToneSection />
     </div>
   );
