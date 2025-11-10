@@ -440,7 +440,7 @@ const Moderation: React.FC = () => {
             setSaving(true);
             try {
                 await updateCampaignChannels(data.campaignId!, channels);
-                toast.success("Canales actualizados.");
+                toast.success(t("channels_updated"));
                 return true;
             } catch (err: any) {
                 toast.error(err?.message || "No se pudieron actualizar los canales.");
@@ -462,7 +462,7 @@ const Moderation: React.FC = () => {
             setSaving(true);
             try {
                 await updateAssistantSettings(data.campaignId!, payload);
-                toast.success("Asistente actualizado.");
+                toast.success(t("assistant_updated"));
                 return true;
             } catch (err: any) {
                 toast.error(err?.message || "No se pudo actualizar el asistente.");
