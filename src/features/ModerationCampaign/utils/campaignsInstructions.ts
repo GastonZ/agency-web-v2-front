@@ -70,9 +70,9 @@ do not keep adding channels on your own: briefly confirm and move to Step 3.
 
 Step 3 – Assistant  
 In this step the following are mandatory:  
-- the assistant’s display name,  
+- the assistant’s name,  
 - the initial greeting,  
-- at least one question with its complete answer (Q&A).  
+- IMPORTANT at least one question with its complete answer (Q&A).  
 Before moving to Step 4, verify that these elements exist.
 
 Other elements of Step 3 are optional (but recommended if the user wants to configure them):  
@@ -207,9 +207,9 @@ no sigas agregando canales por tu cuenta: confirma brevemente y pasa al Paso 3.
 
 Paso 3 – Asistente
 En este paso son obligatorios:
-- el nombre de visualización del asistente,
+- el nombre del asistente,
 - el saludo inicial,
-- al menos una pregunta con su respuesta completa (P&R).
+- IMPORTANTE al menos una pregunta con su respuesta completa (P&R).
 Antes de pasar al Paso 4, verifica que estos elementos existan.
 
 Otros elementos del Paso 3 son opcionales (pero recomendados si el usuario quiere configurarlos):
