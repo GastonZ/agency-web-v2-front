@@ -220,7 +220,7 @@ export default function StatisticsView() {
                 mode="floating"
                 persistNamespace={`moderation_stats_${campaign.id || "unknown"}`}
                 userId={userId}
-                autoStart={false}
+                autoStart={true}
                 bootSummaryOverride={(() => {
                     const canales = (campaign.channels || []).join(", ") || (uiLang === "en" ? "none" : "ninguno");
                     const status = campaign.status || (uiLang === "en" ? "unknown" : "desconocido");
