@@ -10,9 +10,6 @@ export default function InstagramCallback() {
   const code = sp.get("code");
   const campaignId = sp.get("state");
 
-  console.log("campaign id: ", campaignId);
-  console.log("instagram code: ", code);
-
   const [status, setStatus] = React.useState<"idle" | "working">("idle");
 
   React.useEffect(() => {
