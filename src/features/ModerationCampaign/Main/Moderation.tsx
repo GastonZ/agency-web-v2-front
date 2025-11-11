@@ -617,7 +617,7 @@ const Moderation: React.FC = () => {
                                     mode="floating"
                                     persistNamespace="moderation"
                                     userId={userId}
-                                    autoStart={false/* bootReady && toolsReady */}
+                                    autoStart={bootReady && toolsReady}
                                     bootSummaryOverride={bootSummary}
                                     bootExtraInstructions={
                                         uiLang === "en"
