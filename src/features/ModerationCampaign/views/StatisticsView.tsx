@@ -5,8 +5,9 @@ import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../..
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { MessageSquare, ClipboardList, CalendarRange, CheckCircle2 } from "lucide-react";
 import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
-import InstagramConnectPanel from "../../../components/features/InstagramConnectPanel";
+import InstagramConnectPanel from "../../../components/features/InstagramConnectButton";
 import { getUserId } from "../../../utils/helper";
+import InstagramConnectButton from "../../../components/features/InstagramConnectButton";
 import AgencyChatbot from "../../../components/features/AgencyChatbot";
 import { useTranslation } from "react-i18next";
 
@@ -145,7 +146,9 @@ export default function StatisticsView() {
                                 )}
                             </div>
                             {hasInstagram && (
-                                <InstagramConnectPanel
+                                <InstagramConnectButton
+                                    clientId={import.meta.env.VITE_IG_APP_ID!}
+                                    redirectUri={"https://2681585c4871.ngrok-free.app/instagram/callback"}
                                 />
                             )}
 
