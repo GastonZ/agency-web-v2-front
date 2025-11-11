@@ -4,16 +4,16 @@ import { useTranslation } from "react-i18next";
 
 type Props = {
   clientId: string;
-  redirectUri: string; // "http://localhost:5173/instagram/callback"
+  redirectUri: string;
   campaignId?: string;
 };
 
 export default function InstagramConnectButton({ clientId, redirectUri, campaignId }: Props) {
+
   const onClick = () => {
-    const url = buildInstagramAuthUrl({ clientId, redirectUri, forceReauth: true, campaignId });
-    // opcional: guarda el `state` que devuelve buildInstagramAuthUrl si prefieres controlarlo desde fuera
+    const url = buildInstagramAuthUrl({ clientId, redirectUri, forceReauth: true, state: campaignId });
     window.location.href = url;
-  };
+  }; 
 
   const { t } = useTranslation('translations');
 

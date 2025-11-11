@@ -1,9 +1,8 @@
 export type InstagramAuthOpts = {
   clientId: string;
-  redirectUri: string; // ej: "http://localhost:5173/instagram/callback"
+  redirectUri: string;
   forceReauth?: boolean;
-  state?: string;      // usa algo aleatorio/CSRF token
-  campaignId?: string;
+  state?: string;
 };
 
 const IG_SCOPES = [
@@ -27,7 +26,5 @@ export function buildInstagramAuthUrl(opts: InstagramAuthOpts) {
 
   if (forceReauth) params.set("force_reauth", "true");
 
-  // Nota: el endpoint de autorización correcto:
-  // https://www.instagram.com/oauth/authorize
   return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
 }
