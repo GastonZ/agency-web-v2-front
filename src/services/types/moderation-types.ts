@@ -28,7 +28,7 @@ export type ModerationCampaignItem = {
   communicationToneOther?: string;   // e.g. "Tonito"
   startAt?: string;                  // ISO
   endAt?: string;                    // ISO
-  channels?: Array<"instagram"|"facebook"|"whatsapp"|"email"|"x">;
+  channels?: Array<"instagram" | "facebook" | "whatsapp" | "email" | "x">;
   status?: string;                   // e.g. "draft"
   assistantName?: string;
   greeting?: string;
@@ -39,6 +39,12 @@ export type ModerationCampaignItem = {
   escalationContactNumber?: string;
   createdAt: string;
   updatedAt: string;
+  whatsappStatus?: {
+    qrScanned: boolean,
+    qrScannedAt: string | null;
+    qrScannedBy: string | null;
+    qrScannedByPhone: string | null;
+  },
 };
 
 export type ModerationCampaignSearchResponse = {
@@ -52,7 +58,7 @@ export type ModerationCampaignSearchResponse = {
 
 export type StepOneCtx = {
   name?: string;
-  goal?: string; 
+  goal?: string;
   summary?: string;
   leadDefinition?: string;
   audience: {
@@ -92,13 +98,13 @@ export type SearchParams = {
   userId: string;
   page?: number;
   pageSize?: number;
-  sortField?: string;        
+  sortField?: string;
   sortOrder?: "ASC" | "DESC";
 };
 
 export type ExtractQAResponse = { question: string; answer: string }[];
 
-export type CampaignStatus = "draft" |  "active" | "inactive" | "archived";
+export type CampaignStatus = "draft" | "active" | "inactive" | "archived";
 
 export type ExtractedQA = { question: string; answer: string };
 

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Label } from "../Primitives";
+import { useTranslation } from "react-i18next";
 
 const TagEditor: React.FC<{
   id: string;
@@ -9,7 +10,7 @@ const TagEditor: React.FC<{
   placeholder?: string;
 }> = ({ id , label, items, onChange, placeholder = "Escribe y agrega…" }) => {
   const [draft, setDraft] = React.useState("");
-
+  const { t } = useTranslation('translations')
   const add = (val: string) => {
     const v = val.trim();
     if (!v) return;
@@ -66,7 +67,7 @@ const TagEditor: React.FC<{
               onClick={() => add(draft)}
               className="px-3 py-1 text-sm rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
             >
-              Agregar
+              {t("add")}
             </button>
           </div>
         </div>

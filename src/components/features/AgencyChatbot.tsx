@@ -5,8 +5,9 @@ import useWebRTCAudio from "../../AIconversational/voice/useWebRTCAudio";
 import { navTools, useNavigationTools } from "../../AIconversational/voice";
 import { uiTools, useThemeTool } from "../../AIconversational/voice/tools/useThemeTool";
 import { botControlTools, useBotControlTools } from "../../AIconversational/voice/tools/useBotControlTools";
-
-// NUEVO: utilidades de persistencia genérica
+import { useTranslation } from "react-i18next";
+import { internalSummaryTool } from "../../AIconversational/voice/internal/internalSummaryTool";
+// utilidades de persistencia genérica
 import { useBotPersistence } from "../../AIconversational/voice/session/useBotPersistence";
 import { loadBotSnapshot, buildBootInstructions } from "../../AIconversational/voice/session/persistence";
 
@@ -48,6 +49,8 @@ type AgencyChatbotProps = {
     ) => void;
 
     bootExtraInstructions?: string;
+    autoKickoff?: boolean;
+    kickoffMessage?: string;
 };
 
 export default function AgencyChatbot({
@@ -66,32 +69,69 @@ export default function AgencyChatbot({
 
     onConversationChange,
     bootExtraInstructions,
+    autoKickoff,
+    kickoffMessage
 }: AgencyChatbotProps) {
-    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools], []);
+    const baseTools: ToolSpec[] = React.useMemo(() => [...navTools, ...uiTools, ...botControlTools, internalSummaryTool as any], []);
     const tools = React.useMemo(() => [...baseTools, ...extraTools], [baseTools, extraTools]);
+    const { t } = useTranslation('translations');
+    const [rollingSummary, setRollingSummary] = React.useState<string>("");
+    const hasKickedRef = React.useRef(false);
 
     const getBootInstructions = React.useCallback(() => {
         const snap = loadBotSnapshot(persistNamespace, userId);
-        if (!snap && !bootExtraInstructions) return;
 
-        const merged = bootSummaryOverride
-            ? { ...snap, business: { ...(snap?.business || {}), __summary: bootSummaryOverride } }
-            : snap;
+        // Si no hay nada de nada, devolvemos undefined
+        if (!snap && !bootExtraInstructions && !rollingSummary && !bootSummaryOverride) return;
 
-        const base = buildBootInstructions(merged as any) || "";
+        // 1) Construimos el snapshot “mergeado”
+        const merged: any = { ...(snap || {}), business: { ...(snap?.business || {}) } };
+
+        const liveSummary =
+            (bootSummaryOverride && String(bootSummaryOverride).trim()) ||
+            (rollingSummary && String(rollingSummary).trim()) ||
+            (merged.business?.__summary && String(merged.business.__summary).trim()) ||
+            "";
+
+        if (liveSummary) {
+            merged.business.__summary = liveSummary;
+        }
+
+        // 2) Texto base
+        const base = (buildBootInstructions(merged) || "").trim();
+
+        // 3) Sección de resumen 
+        const summarySection = liveSummary
+            ? [
+                "=== CONTEXT RESUME ===",
+                "[RESUMEN_BOOT_BEGIN]",
+                liveSummary,
+                "[RESUMEN_BOOT_END]",
+            ].join("\n")
+            : "";
+
+        // 4) Playbook / guía extra
         const extra = (bootExtraInstructions || "").trim();
+        const extraSection = extra ? `=== SPECIFIC GUIDE FOR THIS VIEW ===\n${extra}` : "";
 
-        const finalText = extra ? `${base}\n\nGuía específica de esta vista:\n${extra}` : base;
+        // 5) Ensamblado final
+        const finalText = [base, summarySection, extraSection].filter(Boolean).join("\n\n");
 
-        // Logs para chequear que entró
+        // Logs
         console.groupCollapsed("[Chatbot][boot] instructions");
-        console.log("hasSnapshot:", !!snap, "hasSummaryOverride:", !!bootSummaryOverride, "hasExtra:", !!extra);
-        console.log("instructions.len:", finalText.length);
-        console.log("instructions.preview:\n", finalText.slice(0, 600));
+        console.log("hasSnapshot:", !!snap);
+        console.log("hasSummaryOverride:", !!bootSummaryOverride, "len:", (bootSummaryOverride || "").length);
+        console.log("hasRollingSummary:", !!rollingSummary, "len:", (rollingSummary || "").length);
+        console.log("hasExtra:", !!extra);
+        console.log("final.len:", finalText.length);
+        console.log("final.preview:\n", finalText.slice(0, 800));
         console.groupEnd();
 
+        try { (window as any).__ALMA_LAST_BOOT = { at: new Date().toISOString(), finalText }; } catch { }
+
         return finalText;
-    }, [persistNamespace, userId, bootSummaryOverride, bootExtraInstructions]);
+    }, [persistNamespace, userId, bootSummaryOverride, bootExtraInstructions, rollingSummary]);
+
     const {
         isSessionActive,
         handleStartStopClick,
@@ -104,10 +144,14 @@ export default function AgencyChatbot({
         isThinking,
         startSession,
         stopSession,
+
+        sendSilentUserNote,
+        updateSessionContext,
+        nudgeResponse
     } = useWebRTCAudio("sage", tools as any, {
         autoStart,
         startDelayMs: 120,
-        debugLogs: false,
+        debugLogs: true,
         getBootInstructions,
     });
 
@@ -124,6 +168,17 @@ export default function AgencyChatbot({
         startSession,
         stopSession,
     });
+
+    React.useEffect(() => {
+        registerFunction("__setRollingSummary", async ({ summary }: { summary: string }) => {
+            const clean = (summary || "").slice(0, 800);
+            setRollingSummary(clean);
+
+            setTimeout(() => updateSessionContext?.(), 50);
+
+            return { ok: true };
+        });
+    }, [registerFunction, updateSessionContext]);
 
     React.useEffect(() => {
         registerFunction("goToCampaignSelection", goToCampaignSelection);
@@ -168,8 +223,79 @@ export default function AgencyChatbot({
         conversation,
         business,
         localNote,
-        maxHistory: 12,
+        maxHistory: 999,
     });
+
+    //  Silent note
+
+    const refreshCtxDebouncedRef = React.useRef<number | null>(null);
+    const refreshCtxDebounced = React.useCallback(() => {
+        if (refreshCtxDebouncedRef.current) window.clearTimeout(refreshCtxDebouncedRef.current);
+        refreshCtxDebouncedRef.current = window.setTimeout(() => {
+            updateSessionContext();
+        }, 350);
+    }, [updateSessionContext]);
+
+    React.useEffect(() => {
+        function onManualChange(ev: any) {
+            const d = ev?.detail || {};
+            const label = d?.label || d?.field || "campo_desconocido";
+            const rawValue = d?.value;
+            const val =
+                typeof rawValue === "string"
+                    ? rawValue
+                    : JSON.stringify(rawValue ?? "");
+            const ns = d?.namespace ? `[${d.namespace}] ` : "";
+            const note = `${ns}Cambio manual: "${label}" => ${val}`;
+
+            console.groupCollapsed("[Chatbot] Evento agency:manual-change recibido");
+            console.log("namespace:", d?.namespace || "(sin namespace)");
+            console.log("label:", label);
+            console.log("rawValue:", rawValue);
+            console.log("nota_final (silentNote):", note);
+            console.groupEnd();
+
+            try {
+                sendSilentUserNote(note);
+                console.log("[Chatbot] Silent note enviada correctamente a la sesión.");
+            } catch (err) {
+                console.warn("[Chatbot] Error al enviar silent note:", err);
+            }
+
+            refreshCtxDebounced();
+        }
+
+        window.addEventListener("agency:manual-change" as any, onManualChange);
+        return () =>
+            window.removeEventListener("agency:manual-change" as any, onManualChange);
+    }, [sendSilentUserNote, refreshCtxDebounced]);
+
+
+    React.useEffect(() => {
+        if (!autoKickoff || hasKickedRef.current || !isSessionActive) return;
+
+        const defaultKickoff =
+            "Lisa: iniciá la guía para crear una campaña de moderación. " +
+            "Saludá brevemente y preguntá si desea empezar por los datos básicos o " +
+            "que la guíes paso a paso.";
+
+        const kickoff = (kickoffMessage || defaultKickoff).trim();
+        if (!kickoff) return;
+
+        const t1 = setTimeout(() => {
+            sendSilentUserNote(kickoff, true, true);
+
+            hasKickedRef.current = true;
+
+            const t2 = setTimeout(() => {
+                nudgeResponse();
+            }, 1200);
+
+            return () => clearTimeout(t2);
+        }, 500);
+
+        return () => clearTimeout(t1);
+    }, [autoKickoff, kickoffMessage, isSessionActive, sendSilentUserNote, nudgeResponse]);
 
     // UI state
     const [text, setText] = React.useState("");
@@ -201,6 +327,22 @@ export default function AgencyChatbot({
         panelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, []);
 
+    React.useEffect(() => {
+        // si la sesión está activa, empujamos nuevas instrucciones
+        if (!isSessionActive) return;
+        // Esperá  para aglutinar cambios rápidos de UI
+        const id = window.setTimeout(() => {
+            try { updateSessionContext?.(); } catch { }
+        }, 150);
+        return () => window.clearTimeout(id);
+    }, [
+        isSessionActive,
+        bootSummaryOverride,
+        bootExtraInstructions,
+
+        getBusinessSnapshot,
+        getLocalNote,
+    ]);
 
     const ChatPanel = (
         <div
@@ -236,7 +378,7 @@ export default function AgencyChatbot({
             </div>
 
             <div className="absolute top-3 right-3 text-xs tracking-wider text-neutral-500 dark:text-neutral-400 select-none">
-                Alma Chatbot
+                LISA Chatbot
             </div>
 
             {/* HISTORIAL */}
@@ -333,11 +475,11 @@ export default function AgencyChatbot({
                         isStarting ? (
                             <>
                                 <Loader2 className="h-3.5 w-3.5 animate-spin opacity-90" />
-                                <span>Iniciando…</span>
+                                <span>{t("initiating")}</span>
                             </>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <span>Inactiva…</span>
+                                <span>{t("inactive")}</span>
                                 <span className="opacity-70">click</span>
                                 <ChevronDown className="h-3.5 w-3.5 opacity-80" />
                                 <ChevronRight className="h-3.5 w-3.5 opacity-80" />
@@ -346,23 +488,23 @@ export default function AgencyChatbot({
                         )
                     ) : isThinking ? (
                         <div className="flex items-center gap-2">
-                            <span className="sr-only">Pensando…</span>
+                            <span className="sr-only">{t("thinking")}</span>
                             <div className="flex items-center gap-1">
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "0ms" }} />
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "120ms" }} />
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "240ms" }} />
                             </div>
-                            <span>Pensando…</span>
+                            <span>{t("thinking")}</span>
                         </div>
                     ) : isTalking ? (
                         <div className="flex items-center gap-2">
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>Hablando…</span>
+                            <span>{t("talking")}</span>
                         </div>
                     ) : (
                         <>
                             <Ear className="h-3.5 w-3.5 opacity-90" />
-                            <span>Te escucho…</span>
+                            <span>{t("listening")}</span>
                         </>
                     )}
                     <div

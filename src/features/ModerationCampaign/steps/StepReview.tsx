@@ -7,6 +7,7 @@ import {
     MessageSquare,
 } from "lucide-react";
 import { useModeration } from "../../../context/ModerationContext";
+import { useTranslation } from "react-i18next";
 
 const Section: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string; children: React.ReactNode }> = ({ icon, title, subtitle, children }) => (
     <div className="rounded-xl p-4 md:p-6 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-xl ring-1 ring-emerald-400/20">
@@ -35,6 +36,8 @@ export default function StepReview() {
     const channels = data.channels ?? [];
     const audience = data?.audience ?? {};
 
+    const { t } = useTranslation('translations')
+
     return (
         <motion.div
             initial="hidden"
@@ -48,8 +51,8 @@ export default function StepReview() {
             <motion.div variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}>
                 <Section
                     icon={<ClipboardList className="h-4 w-4" />}
-                    title="Datos básicos"
-                    subtitle="Revisá el resumen principal"
+                    title={t("basic_data")}
+                    subtitle={t("review_summary")}
                 >
                     <ul className="grid gap-2 text-[15px] leading-6">
                         <Row label="Nombre" value={data?.name} />
@@ -62,8 +65,8 @@ export default function StepReview() {
             <motion.div variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}>
                 <Section
                     icon={<Users className="h-4 w-4" />}
-                    title="Audiencia & Tono"
-                    subtitle="A quién le hablamos y cómo"
+                    title={t("audience_and_tone")}
+                    subtitle={t("who_and_how")}
                 >
                     <ul className="grid gap-2 text-[15px] leading-6">
                         <Row label="Geo" value={
@@ -71,7 +74,7 @@ export default function StepReview() {
                                 ? `${audience.geo.country || audience.geo?.countryCode || "—"} ${audience.geo.city ? `· ${audience.geo.city}` : ""}`
                                 : "—"
                         } />
-                        <Row label="Tono" value={data?.customTone ? `Otro (${data.customTone})` : (data?.tone || "—")} />
+                        <Row label={t("tone")} value={data?.customTone ? `${t("other")} (${data.customTone})` : (data?.tone || "—")} />
                     </ul>
                 </Section>
             </motion.div>
@@ -79,8 +82,8 @@ export default function StepReview() {
             <motion.div variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}>
                 <Section
                     icon={<Megaphone className="h-4 w-4" />}
-                    title="Canales"
-                    subtitle="Dónde moderaremos"
+                    title={t("channels")}
+                    subtitle={t("where_moderate")}
                 >
                     {channels?.length ? (
                         <div className="flex flex-wrap gap-2">

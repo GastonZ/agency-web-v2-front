@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useModeration } from "../../../context/ModerationContext";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   className?: string;
@@ -10,7 +11,7 @@ type Props = {
 const EditModeBanner: React.FC<Props> = ({ className }) => {
   const { data, resetAll } = useModeration();
   const isEditing = Boolean(data.campaignId);
-
+  const { t } = useTranslation('translations');
   if (!isEditing) return null;
 
   const handleStartNew = () => {
@@ -32,11 +33,11 @@ const EditModeBanner: React.FC<Props> = ({ className }) => {
 
       <div className="flex-1">
         <div className="text-sm md:text-base font-medium text-amber-800 dark:text-amber-100">
-          Estás editando esta campaña
+          {t("editing_campaign")}
         </div>
         <div className="text-xs md:text-sm text-amber-800/80 dark:text-amber-200/80">
           <span className="font-medium">{data.name || "Campaña sin titulo"}</span>
-          {" — Si lo prefieres, puedes limpiar todo y empezar una nueva"}
+          {t("new_prefer")}
         </div>
       </div>
 
@@ -52,7 +53,7 @@ const EditModeBanner: React.FC<Props> = ({ className }) => {
         title="Start a new campaign"
       >
         <RotateCcw className="h-4 w-4" />
-        Empezar nueva
+        {t("start_new")}
       </button>
     </div>
   );

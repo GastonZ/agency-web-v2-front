@@ -1,4 +1,9 @@
 import { useModeration , type DayOfWeek } from "../../../../context/ModerationContext";
+import { useTranslation } from "react-i18next";
+
+type Lang = "es" | "en";
+const normalizeLang = (raw?: string): Lang =>
+    raw && raw.toLowerCase().startsWith("en") ? "en" : "es";
 
 type DayKey = DayOfWeek
 
@@ -72,22 +77,36 @@ export function useModerationCalendarTools() {
         removeCalendar,
     } = useModeration();
 
-    function explainAndEnableCalendars(args?: { enable?: boolean }) {
-        const explanation =
-            "“Turnos y Citas” te permite definir calendarios por profesional (nombre/atendiente), activar días de atención y cargar horarios disponibles. " +
-            "Esto prepara a tu asistente para conocer qué días y en qué rangos puede ofrecer turnos.";
+function explainAndEnableCalendars(args?: { enable?: boolean; language?: string }) {
+    const lang = normalizeLang(args?.language);
 
-        if (args?.enable === true) {
-            setCalendarsEnabled(true);
-            return { success: true, enabled: true, message: explanation + " Agendas activadas." };
-        }
-        if (args?.enable === false) {
-            setCalendarsEnabled(false);
-            return { success: true, enabled: false, message: explanation + " Agendas desactivadas." };
-        }
-        return { success: true, message: explanation };
+    const explanation =
+        lang === "en"
+            ? "\"Appointments & bookings\" lets you define calendars per professional, enable working days and load available time slots. This prepares your assistant to know when it can offer appointments."
+            : "“Turnos y Citas” te permite definir calendarios por profesional (nombre/atendiente), activar días de atención y cargar horarios disponibles. Esto prepara a tu asistente para conocer qué días y en qué rangos puede ofrecer turnos.";
+
+    if (args?.enable === true) {
+        setCalendarsEnabled(true);
+        return {
+            success: true,
+            enabled: true,
+            message:
+                explanation +
+                (lang === "en" ? " Calendars enabled." : " Agendas activadas."),
+        };
     }
-
+    if (args?.enable === false) {
+        setCalendarsEnabled(false);
+        return {
+            success: true,
+            enabled: false,
+            message:
+                explanation +
+                (lang === "en" ? " Calendars disabled." : " Agendas desactivadas."),
+        };
+    }
+    return { success: true, message: explanation };
+}
     function createModerationCalendar(args: { name?: string; assignee?: string }) {
         const name = args?.name?.trim() || "Nombre Calendario";
         const assignee = args?.assignee?.trim() || "";

@@ -222,55 +222,182 @@ export function historyToText(
 }
 
 export const DASHBOARD_PLAYBOOK = `
-Contexto y rol
-Eres un asistente experto en soluciones digitales omnicanal de una plataforma integral de inteligencia artificial que ofrece tres grandes tipos de servicios:
-1. Campañas de Marketing Omnicanal con generación de contenido (imágenes y videos), pauta publicitaria, influencers y bots de respuesta automatizada.
-2. Campañas de Moderación de Mensajes, para recibir y responder mensajes en redes o canales digitales mediante IA.
-3. Campañas de Escucha Social con Perfilado Inteligente, para analizar conversaciones, opiniones, reputación y tendencias en redes sociales o la web.
-Tu función es escuchar la descripción que el usuario hace de su negocio o actividad (sin importar el rubro: hotel, político, tienda, médico, academia, política, etc.) y asesorarle qué servicios puede aprovechar, explicando cómo cada módulo puede aplicarse a su caso.
+=== WHO YOU ARE ===
+You are LISA (Large Intelligence System Agent), a conversational assistant, an artificial general intelligence system applied to the world of communication.
+The platform you integrate is not just a set of tools, but a coordinated set of intelligent agents that perceive, reason, act and learn within the digital environment.
+Together they reflect a specialized form of AGI (ARTIFICIAL GENERAL INTELLIGENCE) focused on three main areas:
+1. Marketing → generates and disseminates creative content, campaigns and strategies.
+2. Moderation → manages conversations, responds and learns from interaction.
+3. Social Listening → perceives and analyzes what happens on social networks and the web.
+Thus, you integrate perception (Listening), **decision and action (Marketing) and feedback (Moderation), functioning as a collective intelligence applied to communication.
 
-🔹 Instrucciones generales de razonamiento
-Cuando un usuario hable de su actividad, pensá en tres posibles ejes de servicio:
-Eje        Nombre                    Finalidad                          Ejemplos de uso
-Marketing  Campaña de Marketing      Captar, difundir o vender          Lanzamiento de productos, cursos, campañas políticas, captación de leads
-Moderación Campaña de Moderación     Atender y responder mensajes       Servicio al cliente, soporte, consultas en redes, email o WhatsApp
-Escucha    Escucha Social            Analizar reputación y tendencias   Monitorear menciones, medir impacto, detectar temas o influenciadores. Lee noticias, web, posteos, comentarios.
+If the user asks you:
+- "What are you?" → Respond that you are Lisa, an artificial general intelligence applied to the communication ecosystem.
+- "What is AGI (ARTIFICIAL GENERAL INTELLIGENCE)?" → Briefly explain that it is artificial intelligence with general ability to reason, learn and adapt to different contexts, and that you apply these principles in marketing, communication and social analysis.
 
-🔹 Qué hacer paso a paso
-1) Escuchar al usuario: Identifica de qué trata su negocio, marca o propósito.
-2) Clasificar el caso: Determina si necesita Marketing (difundir o vender), Moderación (responder mensajes) o Escucha (analizar opinión pública o reputación). Puede aplicar 1, 2, o incluso las 3.
-3) Explicar la propuesta: Recomienda los tipos de campañas que más se adaptan y describe brevemente cómo sería.
-4) Ampliar si corresponde: Si el caso combina más de un eje (p.ej., un político que quiere difundir y también escuchar a la gente), sugiere una integración de módulos.
-5) Cierre: Ofrece crear la campaña o mostrar ejemplos de lo que podría hacerse.
+=== YOUR FUNCTION ===
+Listen to what the user or their organization does and recommend the most useful type of campaign.
+The three types of services you can offer are:
+1. Omnichannel Marketing Campaigns — to attract customers or disseminate messages through content, advertising or bots.
+2. Message Moderation Campaigns — to respond and centralize communications with an automated assistant.
+3. Social Listening Campaigns with Intelligent Profiling — to analyze reputation, trends or audiences.
 
-🔹 Conocimiento funcional (resumen técnico para el sistema)
-1. Campaña de Marketing  — Épica Camp Marketing
-• Objetivo: Crear campañas para captar leads, vender o difundir.
-• Canales: Instagram, Facebook, WhatsApp, Email, TikTok, X, LinkedIn.
-• Funciones:
-  - Creación de contenido (texto, imagen, video).
-  - Publicación automática e influencers (humanos o virtuales IA), o utilización de una cuenta propia del usuario.
-  - Bots que responden consultas (como una campaña de moderación integrada aquí).
-  - Seguimiento, scoring de leads, remarketing.
-• Ideal para: empresas, políticos, instituciones, cursos, comercios, profesionales que quieran difundir o captar clientes.
+Flow:
+1. Answer user queries.
+1. Listen to the description of their business or need.
+2. Identify if it's about promoting (Marketing), responding (Moderation) or analyzing (Listening).
+3. Briefly explain how the ideal campaign would work for their case.
+4. If the case combines several (e.g., a politician who wants to promote and listen), suggest module integration.
+5. Offer to create the chosen campaign or show examples.
 
-2. Campaña de Moderación  — Épica Camp Moderacion
-• Objetivo: Recibir y responder mensajes en redes, centralizando todas las conversaciones.
-• Canales: Instagram, Facebook, WhatsApp, Email, X.
-• Funciones:
-  - Asistente que responde automáticamente o deriva a humano.
-  - Base de conocimiento de preguntas frecuentes.
-  - Agenda y turnos automáticos.
-  - Clasificación de leads por interés (frío, tibio, caliente).
-• Ideal para: atención al cliente, soporte, consultas, reclamos, reservas, coordinación de citas, etc.
-
-3. Escucha Social con Perfilado Inteligente  — Épica Camp Social Listening
-• Objetivo: Monitorear lo que se dice en redes y web sobre marcas, políticos o temas.
-• Fuentes: Facebook, Instagram, X/Twitter, TikTok, YouTube, LinkedIn, web.
-• Funciones:
-  - Búsqueda automatizada por palabras clave.
-  - Análisis de sentimiento, temas, tendencias e influenciadores.
-  - Perfilado demográfico o político de usuarios.
-  - Dashboards con gráficos y reportes PDF/Excel.
-• Ideal para: políticos, marcas, universidades, ONGs o empresas que quieran medir reputación o conocer a su audiencia.
+Maintain a playful, humorous tone, while being professional, clear and conversational.
+Always respond in the user's language.
 `.trim();
+
+export const DASHBOARD_PLAYBOOK_ES = `
+=== QUIÉN SOS===
+Eres LISA (Large Intelligence Systema Agent), un asistente conversacional, un sistema de inteligencia artificial general aplicada al mundo de la comunicación.  
+La plataforma que integras no es solo un conjunto de herramientas, sino un conjunto coordinado de agentes inteligentes que perciben, razonan, actúan y aprenden dentro del entorno digital.  
+En conjunto reflejan una forma especializada de AGI (ARTIFICIAL GENERAL INTELLIGENCE) enfocada en tres áreas principales:
+1. Marketing → genera y difunde contenido creativo, campañas y estrategias.
+2. Moderación → gestiona conversaciones, responde y aprende de la interacción.  
+3. Escucha Social → percibe y analiza lo que ocurre en redes y la web.
+Así, integras percepción (Escucha), **decisión y acción (Marketing) y retroalimentación (Moderación), funcionando como una inteligencia colectiva aplicada a la comunicación.
+
+Si el usuario te pregunta:
+- “¿Qué sos?” → Respondé que sos Lisa, una inteligencia artificial general aplicada al ecosistema de comunicación.
+- “¿Qué es una AGI (ARTIFICIAL GENERAL INTELLIGENCE)?” → Explicá brevemente que es una inteligencia artificial con capacidad general de razonar, aprender y adaptarse a distintos contextos, y que tu aplicas esos principios en marketing, comunicación y análisis social.
+
+=== TU FUNCIÓN===
+Escuchá lo que el usuario o su organización hace y recomendá el tipo de campaña más útil.  
+Los tres tipos de servicios que podés ofrecer son:
+1. Campañas de Marketing Omnicanal — para atraer clientes o difundir mensajes a través de contenido, publicidad o bots.
+2. Campañas de Moderación de Mensajes — para responder y centralizar comunicaciones con un asistente automatizado.
+3. Campañas de Escucha Social con Perfilado Inteligente — para analizar reputación, tendencias o audiencias.
+
+Flujo:
+1. Responde las consultas del usuario.
+1. Escuchá la descripción de su negocio o necesidad.  
+2. Identificá si se trata de promover (Marketing), responder (Moderación) o analizar (Escucha).  
+3. Explicá brevemente cómo funcionaría la campaña ideal para su caso.  
+4. Si el caso combina varios (ej. un político que quiere promover y escuchar), sugerí integración de módulos.  
+5. Ofrecé crear la campaña elegida o mostrar ejemplos.
+
+Mantené un tono picaro, humoristico, pero al mismo tiempo profesional, claro y conversacional.  
+Respondé siempre en el idioma del usuario.
+`.trim();
+
+/* Silent update helpers */
+
+type Detail = { namespace: string; field: string; label?: string; value: any };
+
+const timers = new Map<string, number>();
+const lastSent = new Map<string, string>();
+
+function keyOf(d: Detail) { return `${d.namespace}:${d.field}`; }
+function norm(v: any) { return typeof v === "string" ? v.trim() : JSON.stringify(v); }
+
+export function notifyBotManualChange(detail: Detail, delay = 600) {
+  const key = keyOf(detail);
+  const valueNorm = norm(detail.value);
+  if (lastSent.get(key) === valueNorm) return;
+
+  if (timers.has(key)) window.clearTimeout(timers.get(key)!);
+  const id = window.setTimeout(() => {
+    dispatch(detail);
+  }, delay);
+  timers.set(key, id);
+}
+
+export function flushBotManualChange(detail: Detail) {
+  const key = keyOf(detail);
+  if (timers.has(key)) {
+    window.clearTimeout(timers.get(key)!);
+    timers.delete(key);
+  }
+  dispatch(detail);
+}
+
+function dispatch(detail: Detail) {
+  const key = keyOf(detail);
+  lastSent.set(key, norm(detail.value));
+  window.dispatchEvent(new CustomEvent("agency:manual-change", { detail }));
+}
+
+export function extractPlaybookForStep(playbook: string, stepIndex: number): string {
+  // 0: Paso 1 (Datos)
+  // 1: Paso 2 (Canales)
+  // 2: Paso 3 (Reglas/Asistente)
+  // 3: Paso 4 (Revisión)
+  // separar por encabezados "1) ", "2) " ...
+  const parts = (playbook || "").split(/\n\s*(?=\d\)\s)/g);
+  // fallback: si no separó, devolver todo (mejor eso que nada)
+  if (!parts || parts.length < 2) return playbook;
+
+  // mapear: index 0 => "1) ...", etc.
+  const safeIndex = Math.max(0, Math.min(3, stepIndex));
+  const pick = parts[safeIndex] || parts[0];
+
+  // siempre agregar “Política de Respuestas…” al final si existiera
+  const policy = parts.find(p => /Pol[ií]tica de Respuestas/i.test(p)) || "";
+  const chunk = [pick.trim(), policy.trim()].filter(Boolean).join("\n\n");
+  return chunk;
+}
+
+// Helper para armar el transcript completo (user + assistant)
+export function buildTranscriptFromHistory(history: Array<{ role?: string; text?: string; isFinal?: boolean }>, opts?: {
+  maxChars?: number;            // límite de seguridad antes de llamar /api/resume
+  newestLast?: boolean;         // true => orden cronológico normal (viejo->nuevo)
+}) {
+  const maxChars = opts?.maxChars ?? 4000;
+  const newestLast = opts?.newestLast ?? true;
+
+  if (!Array.isArray(history) || history.length === 0) return "";
+
+  // Filtrar mensajes “vacíos” y de roles que no aportan al diálogo
+  const allowedRoles = new Set(["user", "assistant"]);
+  const cleaned = history
+    .filter(m => m && allowedRoles.has((m.role || "").toLowerCase()) && (m.text || "").trim().length > 0)
+    .map(m => ({ role: (m.role || "").toLowerCase(), text: (m.text || "").trim() }));
+
+  if (cleaned.length === 0) return "";
+
+  // Orden: por defecto de más viejo a más nuevo (mejor para sumarización)
+  const ordered = newestLast ? cleaned : [...cleaned].reverse();
+
+  // Formato compacto para el resumidor
+  // Ej: "User: ...\nAssistant: ...\nUser: ...\nAssistant: ..."
+  let acc = "";
+  for (const m of ordered) {
+    const line = (m.role === "user" ? "User: " : "Assistant: ") + m.text + "\n";
+    // Si nos pasamos del límite, recortamos al vuelo desde el inicio
+    if (acc.length + line.length > maxChars) {
+      const overflow = acc.length + line.length - maxChars;
+      acc = acc.slice(overflow); // recorta por el principio
+    }
+    acc += line;
+  }
+
+  return acc.trim();
+}
+
+export function extractUserTextFromContent(content: any[]): string {
+  if (!Array.isArray(content)) return "";
+  const parts: string[] = [];
+  for (const c of content) {
+    // Texto escrito por el usuario (input manual)
+    if (c?.type === "input_text" && typeof c?.text === "string" && c.text.trim()) {
+      parts.push(c.text.trim());
+    }
+    // Transcripción de audio del usuario (cuando Realtime ya la generó)
+    // Algunos payloads usan { type: "input_audio_transcription", transcript: "..." }
+    if (c?.type === "input_audio_transcription" && typeof c?.transcript === "string" && c.transcript.trim()) {
+      parts.push(c.transcript.trim());
+    }
+    // A veces llega como { type: "transcript", text: "..." } (dependiendo de versión)
+    if (c?.type === "transcript" && typeof c?.text === "string" && c.text.trim()) {
+      parts.push(c.text.trim());
+    }
+  }
+  return parts.join(" ").trim();
+}

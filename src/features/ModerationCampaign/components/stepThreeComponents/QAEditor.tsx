@@ -1,12 +1,14 @@
 import * as React from "react";
 import { Label, TextInput } from "../Primitives";
 import { useModeration } from "../../../../context/ModerationContext";
+import { useTranslation } from "react-i18next";
 
 const QAEditor: React.FC = () => {
   const { data, addQA, updateQA, removeQA } = useModeration();
   const [q, setQ] = React.useState("");
   const [a, setA] = React.useState("");
 
+  const { t } = useTranslation('translations');
   const add = () => {
     if (!q.trim() || !a.trim()) return;
     addQA({ question: q.trim(), answer: a.trim() });
@@ -15,13 +17,13 @@ const QAEditor: React.FC = () => {
   
   return (
     <div className="space-y-3">
-      <div id="knowHow" className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <Label>Pregunta</Label>
+          <Label>{t("question")}</Label>
           <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="¿Cuál es el horario?" />
         </div>
         <div>
-          <Label>Respuesta</Label>
+          <Label>{t("answer")}</Label>
           <TextInput value={a} onChange={(e) => setA(e.target.value)} placeholder="Lun a Vie 9-18" />
         </div>
       </div>
@@ -31,7 +33,7 @@ const QAEditor: React.FC = () => {
           onClick={add}
           className="h-10 px-4 rounded-xl border bg-emerald-500/20 text-emerald-700 dark:text-emerald-200 border-emerald-400/60 hover:bg-emerald-500/30"
         >
-          Agregar preg. y resp.
+          {t("add_qa")}
         </button>
       </div>
 
@@ -58,13 +60,15 @@ const QAEditor: React.FC = () => {
                   onClick={() => removeQA(item.id)}
                   className="h-9 px-3 rounded-lg border border-red-400/50 text-red-600/90 hover:bg-red-500/10"
                 >
-                  Eliminar
+                  {t("delete")}
                 </button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <div id="knowHow"></div>
     </div>
   );
 };

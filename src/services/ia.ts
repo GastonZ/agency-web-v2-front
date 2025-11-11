@@ -1,18 +1,12 @@
 import api from "./api/api";
 
-export async function getResumeOfConversation(text: string, maxLength = 240, signal?: AbortSignal) {    
-    console.log('se metio a llamar al resume');
+export async function getResumeOfConversation(text: string, maxLength = 240, language = 'en', signal?: AbortSignal) {    
 
-    console.log(text);
-    
-    
   const { data } = await api.post(
     "resume",
-    { text, maxLength },
+    { text, maxLength, language },
     { signal }
   );
-
-  console.log(data);
   
   return String(data?.summary || "");
 }

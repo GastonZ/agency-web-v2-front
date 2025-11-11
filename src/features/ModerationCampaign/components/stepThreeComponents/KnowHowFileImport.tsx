@@ -2,12 +2,14 @@ import * as React from "react";
 import { Label } from "../Primitives";
 import { useModeration } from "../../../../context/ModerationContext";
 import { extractQAFromFile } from "../../../../services/campaigns";
+import { useTranslation } from "react-i18next";
 
 const KnowHowFileImport: React.FC = () => {
   const { addQA } = useModeration();
   const [err, setErr] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
-
+  const { t } = useTranslation('translations')
+  
   const handleFile = async (file: File) => {
     setErr(null);
     
@@ -36,7 +38,7 @@ const KnowHowFileImport: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      <Label>Base de conocimiento (CSV/TXT/PDF)</Label>
+      <Label>{t("knowledge_base")}</Label>
       <input
         type="file"
         accept=".csv,.txt,.pdf"
@@ -46,10 +48,10 @@ const KnowHowFileImport: React.FC = () => {
           file:bg-white/70 dark:file:bg-neutral-900/40 
           file:text-neutral-700 dark:file:text-neutral-200"
       />
-      {loading && <p className="text-sm text-neutral-500">Procesando archivo…</p>}
+      {loading && <p className="text-sm text-neutral-500">{t("proccess_file")}…</p>}
       {err && <p className="text-sm text-red-500">{err}</p>}
       <p className="text-xs text-neutral-500">
-        Se usará para auto-generar preguntas y respuestas.
+        {t("knowledge_what")}
       </p>
     </div>
   );

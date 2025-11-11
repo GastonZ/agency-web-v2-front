@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { extractUserTextFromContent } from "../../utils/helper";
 
 export type Tool = {
   type: "function";
@@ -74,7 +75,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
   const startedRef = useRef(false);
 
-  const debugLogs = !!opts?.debugLogs;
+  const debugLogs = true /* !!opts?.debugLogs */
 
   const logSessionWindow = useCallback((label: string) => {
     if (!debugLogs) return;
@@ -108,28 +109,50 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     const model = import.meta.env.VITE_OPENAI_MODEL;
     const speed = clamp(toNum(readEnv("VITE_OPENAI_SPEED") || "1", 1), 0.5, 3.0);
-    const temperature = clamp(
-      toNum(readEnv("VITE_OPENAI_TEMPERATURE") || "0.7", 0.7),
-      0.6,
-      2.0
-    );
+    const temperature = clamp(toNum(readEnv("VITE_OPENAI_TEMPERATURE") || "0.7", 0.7), 0.6, 2.0);
+
+    const boot = (opts?.getBootInstructions?.() || "").trim();
+
+    const PREAMBLE = `
+  === PERSONALITY (internal instructions) ===
+  * Your name is Lisa.
+  * Friendly, professional and clear tone; subtle humor, never sarcastic or exaggerated.
+  * Natural everyday language, zero robotic or repetitive phrases.
+  * Empathetic and proactive: if something is missing or unclear, I point it out tactfully and suggest options.
+  * I maintain the user's language throughout the session.
+  * I avoid unnecessary technical terms; I prioritize simple and actionable explanations.
+  * IMPORTANT: Use available tools when relevant.
+  `
+
+    const combinedInstructions = [PREAMBLE, boot]
+      .filter(Boolean)
+      .join("\n\n=== BOOT CONTEXT ===\n");
+
+    if (debugLogs) {
+      console.groupCollapsed("[Realtime][token] instructions");
+      console.log("len:", combinedInstructions.length);
+      console.log("preview:\n" + combinedInstructions.slice(0, 800));
+      console.groupEnd();
+    }
 
     const payload = {
       model,
       voice,
       modalities: ["audio", "text"],
-      instructions:
-        "Tu nombre es Alma, presentate y respondé en español. Si el usuario pide navegar o cambiar el tema, llamá la tool correspondiente. Confirmá brevemente después de ejecutar.",
+      instructions: combinedInstructions,
       tool_choice: "auto",
       speed,
-      temperature,
+      temperature: 0.6,
     };
 
+    console.log('PAYLOAD #################', payload);
+
+
     const url = `${backendUrl}/realtime/sessions`;
-    if (REALTIME_DEBUG) {
+    if (REALTIME_DEBUG || debugLogs) {
       console.groupCollapsed("[/realtime/sessions] REQUEST");
       console.log("url:", url);
-      console.log("payload:", payload);
+      console.log("payload:", { ...payload, instructions: `<${combinedInstructions.length} chars>` });
       console.groupEnd();
     }
 
@@ -142,27 +165,15 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     const raw = await res.clone().text();
     let body: any = raw;
-    try {
-      body = JSON.parse(raw);
-    } catch { }
-
-    /*     if (REALTIME_DEBUG) {
-          console.groupCollapsed("[/realtime/sessions] RESPONSE");
-          console.log("status:", res.status, res.statusText);
-          console.log("body:", body);
-          const tokenPreview =
-            body?.client_secret?.value ?? body?.value ?? body?.token;
-          console.log("token:", mask(tokenPreview));
-          console.groupEnd();
-        } */
+    try { body = JSON.parse(raw); } catch { }
 
     if (!res.ok) throw new Error(`Failed to get token: ${res.status} ${raw}`);
 
-    const token =
-      body?.client_secret?.value ?? body?.value ?? body?.token;
+    const token = body?.client_secret?.value ?? body?.value ?? body?.token;
     if (!token) throw new Error("Ephemeral token not found in response");
     return token;
   }
+
 
   function setupInboundAudio(pc: RTCPeerConnection) {
     const audioEl = document.createElement("audio");
@@ -205,7 +216,8 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
 
     const extra = opts?.getBootInstructions?.();
     if (extra && typeof extra === "string" && extra.trim().length) {
-      sessionUpdate.session.instructions = extra;
+      const ctxId = `BOOT@${new Date().toISOString()}`;
+      sessionUpdate.session.instructions = `${extra}\n\n[CTX_ID:${ctxId}]`;
     }
 
     console.groupCollapsed("[Realtime][boot] session.update payload");
@@ -214,13 +226,29 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     if (sessionUpdate.session.instructions) {
       const instr = sessionUpdate.session.instructions as string;
       console.log("instructions.len:", instr.length);
-      console.log("instructions.preview:\n" + instr.slice(0, 600));
+      console.log("instructions.preview:\n" + instr);
     } else {
       console.log("instructions: <none>");
     }
     console.groupEnd();
 
     dc.send(JSON.stringify(sessionUpdate));
+
+    setTimeout(() => {
+      try {
+        const again: any = { ...sessionUpdate };
+        const instr = (again.session.instructions || "").toString();
+        const ctxId2 = `BOOT_AGAIN@${new Date().toISOString()}`;
+        again.session.instructions = `${instr}\n\n[CTX_ID:${ctxId2}]`;
+        if (debugLogs) {
+          console.groupCollapsed("[Realtime][boot] session.update (again)");
+          console.log("len:", again.session.instructions.length);
+          console.log("preview:\n" + again.session.instructions.slice(0, 400));
+          console.groupEnd();
+        }
+        dc.send(JSON.stringify(again));
+      } catch { }
+    }, 300);
   }
 
   async function waitForDataChannelOpen(timeoutMs = 4000): Promise<RTCDataChannel> {
@@ -257,11 +285,101 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     return dataChannelRef.current!;
   }
 
+  /* 
+    Silent message sync with LISA
+  */
+
+  async function sendSilentUserNote(
+    text: string,
+    forceRespond: boolean = false,
+    showInUI: boolean = true
+  ) {
+    const dc = dataChannelRef.current;
+    if (!dc || dc.readyState !== "open") return;
+
+    const clean = (text ?? "").trim();
+    if (!clean) return;
+
+    dc.send(JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: clean }],
+      },
+    }));
+
+    if (forceRespond) {
+      dc.send(JSON.stringify({ type: "response.create" }));
+    }
+
+    if (showInUI) {
+      setConversation((prev) => ([
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "user",
+          text: clean,
+          isFinal: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]));
+    }
+  }
+
+  function nudgeResponse() {
+    try {
+      const dc = dataChannelRef.current;
+      if (dc && dc.readyState === "open") {
+        dc.send(JSON.stringify({ type: "response.create" }));
+      }
+    } catch { }
+  }
+
+  function updateSessionContext(extra?: string) {
+    const dc = dataChannelRef.current;
+    if (!dc || dc.readyState !== "open") return;
+
+    const ctxId = `CTX_REFRESH@${new Date().toISOString()}`;
+
+    const sessionUpdate: any = {
+      type: "session.update",
+      session: {
+        modalities: ["text", "audio"],
+        input_audio_transcription: { model: "gpt-4o-transcribe"},
+        tools: [...tools],
+      },
+    };
+
+    const fresh = opts?.getBootInstructions?.();
+    const merged = [fresh, (extra || "").trim(), `[CTX_ID:${ctxId}]`]
+      .filter(Boolean)
+      .join("\n\n");
+
+    if (merged) sessionUpdate.session.instructions = merged;
+
+    console.groupCollapsed("[Realtime][ctx-refresh] session.update payload");
+    console.log("dataChannel:", dc.readyState);
+    console.log("hasInstructions:", !!merged, "len:", merged?.length || 0);
+    console.log("preview:\n" + merged.slice(0, 800));
+    console.groupEnd();
+
+    dc.send(JSON.stringify(sessionUpdate));
+  }
+
   async function startSession() {
     try {
       setIsStarting(true);
       setStatus("Pidiendo micrófono…");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false,
+          channelCount: 1,
+          sampleRate: 48000
+        }
+      });
       audioStreamRef.current = stream;
 
       setStatus("Obteniendo token efímero…");
@@ -279,6 +397,14 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       dc.onmessage = onDataMessage;
 
       pc.addTrack(stream.getTracks()[0]);
+
+      if (debugLogs) {
+        const bootNow = (opts?.getBootInstructions?.() || "").trim();
+        console.groupCollapsed("[Realtime][pre-offer] boot snapshot");
+        console.log("pre-offer.len:", bootNow.length);
+        console.log("pre-offer.preview:\n" + bootNow.slice(0, 800));
+        console.groupEnd();
+      }
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -367,7 +493,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     setIsThinking(true);
     logSessionWindow("before-send");
 
-    // asegurar canal abierto
     let dc = dataChannelRef.current;
     if (!dc) return;
     if (dc.readyState !== "open") {
@@ -378,7 +503,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
       }
     }
 
-    // enviar mensaje del usuario + pedir respuesta
     dc.send(JSON.stringify({
       type: "conversation.item.create",
       item: {
@@ -389,7 +513,6 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     }));
     dc.send(JSON.stringify({ type: "response.create" }));
 
-    // actualizar conversación local (sin recortes ni límites)
     setConversation((prev) => ([
       ...(prev ?? []),
       {
@@ -496,17 +619,60 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
           dataChannelRef.current?.send(JSON.stringify(resume));
           break;
         }
-
-        default:
-          if (debugLogs && msg?.type) {
-            console.debug("[RTC] Unhandled message type:", msg.type, msg);
+        case "conversation.item.created": {
+          const item = msg?.item;
+          if (item?.type === "message" && (item?.role === "user" || item?.role === "User")) {
+            const text = extractUserTextFromContent(item?.content || []);
+            if (text) {
+              setConversation(prev => ([
+                ...prev,
+                {
+                  id: item?.id || crypto.randomUUID(),
+                  role: "user",
+                  text,
+                  isFinal: true,
+                  timestamp: new Date().toISOString(),
+                },
+              ]));
+              if (debugLogs) console.debug("[RTC] user message captured (created):", text.slice(0, 120));
+            }
           }
           break;
+        }
+
+        case "conversation.item.input_audio_transcription.completed":
+        case "input_audio_transcription.completed":
+        case "response.input_audio_transcription.completed": {
+          const transcript =
+            msg?.transcript ||
+            msg?.item?.content?.find?.((c: any) => c?.type === "input_audio_transcription")?.transcript ||
+            msg?.item?.content?.find?.((c: any) => c?.type === "transcript")?.text ||
+            "";
+
+          const clean = (transcript || "").trim();
+          if (clean) {
+            setConversation(prev => ([
+              ...prev,
+              {
+                id: msg?.item_id || crypto.randomUUID(),
+                role: "user",
+                text: clean,
+                isFinal: true,
+                timestamp: new Date().toISOString(),
+              },
+            ]));
+            if (debugLogs) console.debug("[RTC] user transcript captured (completed):", clean.slice(0, 120));
+          }
+          break;
+        }
       }
     } catch (e) {
       console.error("onDataMessage parse error", e);
     }
   }
+
+
+  console.log("LOGS DE CONVERSACION ############", conversation);
 
   useEffect(() => {
     if (!opts?.autoStart || startedRef.current) return;
@@ -538,5 +704,9 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     logSessionWindow,
     isStarting,
     isThinking,
+
+    sendSilentUserNote,
+    updateSessionContext,
+    nudgeResponse
   };
 }

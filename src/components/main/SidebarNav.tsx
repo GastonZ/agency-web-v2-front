@@ -124,7 +124,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             <span className="size-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600" />
           ) : (
             <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              v1.0.0
+              v1.0.6
             </span>
           )}
         </div>

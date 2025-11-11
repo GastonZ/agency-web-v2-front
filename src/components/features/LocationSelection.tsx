@@ -31,6 +31,7 @@ const LocationSelection: React.FC<Props> = ({
   showPostalCode = false,
 }) => {
   const { i18n } = useTranslation();
+  const { t } = useTranslation('translations')
   const language = languageOverride || (i18n?.language as any) || "es";
 
   const [countries, setCountries] = React.useState<CountryItem[]>([]);
@@ -108,7 +109,7 @@ const LocationSelection: React.FC<Props> = ({
       )}
 
       <div>
-        <Label htmlFor="geoCountry">País</Label>
+        <Label htmlFor="geoCountry">{t("country")}</Label>
         <select
           id="geoCountry"
           value={selectedCountryId}
@@ -121,7 +122,7 @@ const LocationSelection: React.FC<Props> = ({
             "focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400/50",
           ].join(" ")}
         >
-          <option value="">{loadingCountries ? "Cargando..." : "Seleccionar país"}</option>
+          <option value="">{loadingCountries ? t("loading") : t("select_country")}</option>
           {countries.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -131,7 +132,7 @@ const LocationSelection: React.FC<Props> = ({
       </div>
 
       <div>
-        <Label htmlFor="geoProvince">Provincia/Región</Label>
+        <Label htmlFor="geoProvince">{t("province_region")}</Label>
         <select
           id="geoProvince"
           value={selectedStateId}
@@ -146,10 +147,10 @@ const LocationSelection: React.FC<Props> = ({
         >
           <option value="">
             {!selectedCountryId
-              ? "Seleccionar país primero"
+              ? t("select_country_first")
               : loadingStates
-              ? "Cargando..."
-              : "Seleccionar provincia/región"}
+              ? t("loading")
+              : t("province_region")}
           </option>
           {states.map((s) => (
             <option key={s.id} value={s.id}>
@@ -160,7 +161,7 @@ const LocationSelection: React.FC<Props> = ({
       </div>
 
       <div className="sm:col-span-2">
-        <Label htmlFor="geoCity">Ciudad</Label>
+        <Label htmlFor="geoCity">{t("city")}</Label>
         <TextInput
           id="geoCity"
           placeholder="San Miguel de Tucumán"
@@ -171,7 +172,7 @@ const LocationSelection: React.FC<Props> = ({
 
       {showPostalCode && (
         <div className="sm:col-span-2">
-          <Label htmlFor="geoPostal">Código postal</Label>
+          <Label htmlFor="geoPostal">{t("postal_code_optional")}</Label>
           <TextInput
             id="geoPostal"
             placeholder="1406"
