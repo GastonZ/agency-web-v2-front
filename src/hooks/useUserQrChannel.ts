@@ -1,14 +1,23 @@
-// src/hooks/useUserQrChannel.ts
 import { useEffect, useRef, useState, useCallback } from "react";
 import { initSocket, getSocket } from "../services/socket/socket";
 
-export type QrPayload = { data: string; [k: string]: any };
+export type QrPayload = { data: string;[k: string]: any };
+
+export type QrScannedPayload = {
+  agentId?: string;
+  campaignId?: string;
+  userId?: string;
+  phoneNumber?: string;
+  scannedAt?: string;
+  qrScanRecord?: any;
+  [k: string]: any;
+};
 
 type UseUserQrChannelOpts = {
   userId: string;
   socketUrl?: string;
   token?: string;
-  autoStart?: boolean; // NEW (default true)
+  autoStart?: boolean;
 };
 
 export function useUserQrChannel({
@@ -20,17 +29,21 @@ export function useUserQrChannel({
   const [connected, setConnected] = useState(false);
   const [qr, setQr] = useState<QrPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastScan, setLastScan] = useState<QrScannedPayload | null>(null);
+
 
   const subscribedOnce = useRef(false);
   const listenersAttached = useRef(false);
 
-  const resetQr = useCallback(() => setQr(null), []);
+  const resetQr = useCallback(() => {
+    setQr(null);
+    setError(null);
+    setLastScan(null);
+  }, []);
 
-  // shared handlers (stable)
   const onConnect = useCallback(() => {
     setConnected(true);
     setError(null);
-    // subscribe once per mount
     const socket = getSocket();
     if (socket && !subscribedOnce.current && userId) {
       socket.emit("subscribe-user", { event: "subscribe-user", userId });
@@ -45,7 +58,6 @@ export function useUserQrChannel({
   }, []);
 
   const onQrGenerated = useCallback((payload: any) => {
-    // Be tolerant with shapes; store string in .data
     const maybe =
       (typeof payload === "string" ? payload : null) ??
       payload?.data ??
@@ -68,6 +80,9 @@ export function useUserQrChannel({
     socket.on("disconnect", onDisconnect);
     socket.on("connect_error", onConnectError);
     socket.on("qr-generated", onQrGenerated);
+    socket.on("qr-scanned", (payload: QrScannedPayload) => {
+      setLastScan(payload || null);
+    });
     listenersAttached.current = true;
   }, [onConnect, onDisconnect, onConnectError, onQrGenerated]);
 
@@ -77,6 +92,7 @@ export function useUserQrChannel({
     socket.off("disconnect", onDisconnect);
     socket.off("connect_error", onConnectError);
     socket.off("qr-generated", onQrGenerated);
+    socket.off("qr-scanned");
     listenersAttached.current = false;
   }, [onConnect, onDisconnect, onConnectError, onQrGenerated]);
 
@@ -126,5 +142,5 @@ export function useUserQrChannel({
     socket.disconnect();
   }, []);
 
-  return { connected, qr, error, resetQr, startSocket, disconnect, getSocket };
+  return { connected, qr, error, resetQr, startSocket, disconnect, getSocket, lastScan };
 }

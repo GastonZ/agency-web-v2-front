@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../../utils/helper";
 import OnlineLayout from "../../../layout/OnlineLayout";
-import { MessageSquare, ClipboardList, CalendarRange } from "lucide-react";
+import { MessageSquare, ClipboardList, CalendarRange, CheckCircle2 } from "lucide-react";
 import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
 import InstagramConnectPanel from "../../../components/features/InstagramConnectPanel";
 import { getUserId } from "../../../utils/helper";
@@ -21,6 +21,13 @@ export default function StatisticsView() {
     const { i18n } = useTranslation();
     const { t } = useTranslation('translations');
     const uiLang = i18n.language.startsWith("en") ? "en" : "es";
+
+    const [whatsappLinkedInfo, setWhatsappLinkedInfo] = React.useState<{
+        phoneNumber?: string;
+        scannedAt?: string;
+    } | null>(null);
+
+    const [showWhatsappSuccess, setShowWhatsappSuccess] = React.useState(false);
 
     React.useEffect(() => {
         let mounted = true;
@@ -209,6 +216,48 @@ export default function StatisticsView() {
                                         campaignId={id!}
                                         socketUrl={import.meta.env.VITE_API_URL}
                                         campaignStatus={campaign.status}
+                                        whatsappStatus={campaign.whatsappStatus}
+                                        onQrScanned={(payload: any) => {
+                                            const record = payload.qrScanRecord || {};
+
+                                            const rawPhone =
+                                                record.scannedByPhone ||
+                                                record.scannedBy ||
+                                                payload.phoneNumber ||
+                                                null;
+
+                                            const scannedAt =
+                                                record.scannedAt ||
+                                                payload.scannedAt ||
+                                                payload.timestamp ||
+                                                null;
+
+                                            const prettyPhone = rawPhone
+                                                ? String(rawPhone).replace(/@.+$/, "")
+                                                : null;
+
+                                            setWhatsappLinkedInfo({
+                                                phoneNumber: (prettyPhone || rawPhone || undefined) as string | undefined,
+                                                scannedAt: (scannedAt || undefined) as string | undefined,
+                                            });
+
+                                            setCampaign((prev: any) => {
+                                                if (!prev) return prev;
+
+                                                return {
+                                                    ...prev,
+                                                    whatsappStatus: {
+                                                        qrScanned: true,
+                                                        qrScannedAt: scannedAt,
+                                                        qrScannedBy: record.scannedBy || payload.agentId || null,
+                                                        qrScannedByPhone: prettyPhone,
+                                                    },
+                                                };
+                                            });
+
+                                            setShowWhatsappSuccess(true);
+                                            setOpenWhatsAppSetup(false);
+                                        }}
                                     />
                                 </div>
                             )}
@@ -220,7 +269,7 @@ export default function StatisticsView() {
                 mode="floating"
                 persistNamespace={`moderation_stats_${campaign.id || "unknown"}`}
                 userId={userId}
-                autoStart={true}
+                autoStart={false}
                 bootSummaryOverride={(() => {
                     const canales = (campaign.channels || []).join(", ") || (uiLang === "en" ? "none" : "ninguno");
                     const status = campaign.status || (uiLang === "en" ? "unknown" : "desconocido");
@@ -297,6 +346,68 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
                         : `Listo, la campaña está activa y lista para usarse. A continuación, te voy a pedir que escanees el código QR de WhatsApp que quieras vincular y que proporciones las credenciales de las cuentas de redes sociales que el asistente deberá comenzar a moderar.`
                 }
             />
+            {showWhatsappSuccess && (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl w-full max-w-md p-6 ring-1 ring-emerald-400/40">
+                        <div className="flex items-start gap-3">
+                            <div className="mt-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/40 p-2">
+                                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-[15px] font-semibold leading-tight">
+                                    {uiLang === "en"
+                                        ? "WhatsApp connected successfully"
+                                        : "WhatsApp vinculado correctamente"}
+                                </h3>
+                                <p className="mt-1 text-sm opacity-80">
+                                    {uiLang === "en"
+                                        ? "From now on, this campaign will be able to receive and send messages through this WhatsApp number."
+                                        : "A partir de ahora esta campaña va a poder recibir y enviar mensajes a través de este número de WhatsApp."}
+                                </p>
+
+                                {whatsappLinkedInfo?.phoneNumber && (
+                                    <p className="mt-3 text-sm">
+                                        <span className="opacity-70">
+                                            {uiLang === "en" ? "Phone:" : "Teléfono:"}
+                                        </span>{" "}
+                                        <span className="font-mono">
+                                            {whatsappLinkedInfo.phoneNumber}
+                                        </span>
+                                    </p>
+                                )}
+
+                                {whatsappLinkedInfo?.scannedAt && (
+                                    <p className="mt-1 text-xs opacity-70">
+                                        {uiLang === "en" ? "Linked at: " : "Vinculado el: "}
+                                        {(() => {
+                                            const d = new Date(whatsappLinkedInfo.scannedAt!);
+                                            return isNaN(d.getTime())
+                                                ? whatsappLinkedInfo.scannedAt
+                                                : d.toLocaleString();
+                                        })()}
+                                    </p>
+                                )}
+
+                                <div className="mt-4 flex justify-end gap-2">
+                                    <button
+                                        className="text-sm px-3 py-1.5 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70"
+                                        onClick={() => setShowWhatsappSuccess(false)}
+                                    >
+                                        {t("close")}
+                                    </button>
+                                    <button
+                                        className="text-sm px-3 py-1.5 rounded-lg bg-emerald-600 text-white"
+                                        onClick={() => setShowWhatsappSuccess(false)}
+                                    >
+                                        {uiLang === "en" ? "Got it" : "Perfecto"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </OnlineLayout >
     );
 }
