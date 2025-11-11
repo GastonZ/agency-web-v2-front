@@ -148,7 +148,7 @@ export default function StatisticsView() {
                             {hasInstagram && (
                                 <InstagramConnectButton
                                     clientId={import.meta.env.VITE_IG_APP_ID!}
-                                    redirectUri={"https://2681585c4871.ngrok-free.app/instagram/callback"}
+                                    redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
                                 />
                             )}
 
