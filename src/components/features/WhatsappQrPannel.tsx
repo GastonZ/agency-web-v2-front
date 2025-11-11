@@ -268,29 +268,9 @@ const WhatsappQrPanel: React.FC<Props> = ({
                         </p>
                     )}
                 </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleReconnect}
-                        className="text-xs px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-800"
-                    >
-                        Re-conectar
-                    </button>
-                    <button
-                        onClick={handleDisconnect}
-                        className="text-xs px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-800"
-                    >
-                        Desconectar
-                    </button>
-                </div>
             </div>
 
             <div className="flex flex-wrap gap-3 items-start">
-                <button
-                    onClick={hardResetQr}
-                    className="h-9 px-3 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70 text-sm"
-                >
-                    Limpiar QR
-                </button>
 
                 <button
                     onClick={requestQr}
@@ -322,7 +302,7 @@ const WhatsappQrPanel: React.FC<Props> = ({
             <div className="rounded-xl border border-emerald-500/20 bg-white h-[400px] w-[400px] p-4 flex items-center justify-center">
                 {!rawValue ? (
                     <span className="text-sm opacity-60 text-center">
-                        {info || "Esperando QR…"}
+                        {info || "Esperando solicitud..."}
                     </span>
                 ) : isImageDataUrl ? (
                     <img src={rawValue} alt="QR" className="h-[400px] w-[400px]" />
