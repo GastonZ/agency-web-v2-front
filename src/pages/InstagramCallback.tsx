@@ -18,16 +18,17 @@ export default function InstagramCallback() {
     (async () => {
       try {
         setStatus("working");
-        await setModerationInstagramCode(campaignId!, code!);
+        const res = await setModerationInstagramCode(campaignId!, code!);
         if (aborted) return;
 
+        console.log('setting ig data to campaign',res);
+        
         toast.success("Instagram conectado a la campaña.");
         navigate(`/my_moderation_campaign/${campaignId}/statistics`, { replace: true });
       } catch (e) {
         if (aborted) return;
         console.error(e);
         toast.error("No se pudo asociar Instagram a la campaña.");
-        navigate(-1);
       }
     })();
 
