@@ -671,8 +671,7 @@ export default function useWebRTCAudio(voice: string, tools: Tool[], opts?: UseR
     }
   }
 
-
-  console.log("LOGS DE CONVERSACION ############", conversation);
+  //console.log("LOGS DE CONVERSACION ############", conversation);
 
   useEffect(() => {
     if (!opts?.autoStart || startedRef.current) return;

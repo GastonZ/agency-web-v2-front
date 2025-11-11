@@ -3,6 +3,7 @@ export type InstagramAuthOpts = {
   redirectUri: string; // ej: "http://localhost:5173/instagram/callback"
   forceReauth?: boolean;
   state?: string;      // usa algo aleatorio/CSRF token
+  campaignId?: string;
 };
 
 const IG_SCOPES = [

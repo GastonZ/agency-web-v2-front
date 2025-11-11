@@ -8,7 +8,7 @@ export default function InstagramCallback() {
   const navigate = useNavigate();
 
   const code = sp.get("code");
-  const campaignId = sp.get("campaignId") || sp.get("id") || "";
+  const campaignId = sp.get("state") || sp.get("id") || "";
   const error = sp.get("error");
   const errorDesc = sp.get("error_description");
 
