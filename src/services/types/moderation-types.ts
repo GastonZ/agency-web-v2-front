@@ -119,3 +119,12 @@ export type ActivateWhatsappBotResponse = {
   channels: string[];
   qrGenerated: boolean;
 };
+
+export type Lead = {
+  id: string;
+  name: string;
+  summary: string;
+  score: number;
+  channel?: "whatsapp" | "instagram" | "facebook" | "email" | "x" | "unknown";
+  channelLink?: string;
+};

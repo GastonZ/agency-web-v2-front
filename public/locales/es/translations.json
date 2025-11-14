@@ -215,5 +215,19 @@
     "back_to_campaigns": "← Volver a mis campañas",
     "link_instagram_account": "Vincular cuenta de Instagram",
     "redirect_to_instagram": "Te redirigiremos a Instagram para autorizar el acceso. Luego volveras a la app.",
-    "connect_instagram": "Conectar Instagram"
+    "connect_instagram": "Conectar Instagram",
+    "linked_accounts": "Cuentas vinculadas",
+    "ready_channels": "Estos canales ya están conectados y listos para recibir/enviar mensajes.",
+    "connected": "conectado",
+    "number": "Número",
+    "unknown" : "desconocido",
+    "since": "Desde",
+    "ready_messages": "Listo para recibir mensajes.",
+    "whatsapp_linked": "WhatsApp vinculado correctamente",
+    "now_on": "A partir de ahora esta campaña va a poder recibir y enviar mensajes a través de este número de WhatsApp.",
+    "telephone": "Teléfono",
+    "linked_at": "Vinculado el",
+    "got_it": "Perfecto",
+    "loading_campaigns": "Cargando campañas",
+    "campaign_not_found": "No se encontro la campaña"
 }

@@ -3,13 +3,24 @@ import { useParams, Link } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../../utils/helper";
 import OnlineLayout from "../../../layout/OnlineLayout";
-import { MessageSquare, ClipboardList, CalendarRange, CheckCircle2 } from "lucide-react";
+import { MessageSquare, ClipboardList, CalendarRange, CheckCircle2, Users, Zap, Star } from "lucide-react";
 import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
 import InstagramConnectPanel from "../../../components/features/InstagramConnectButton";
 import { getUserId } from "../../../utils/helper";
 import InstagramConnectButton from "../../../components/features/InstagramConnectButton";
 import AgencyChatbot from "../../../components/features/AgencyChatbot";
 import { useTranslation } from "react-i18next";
+import ConnectedAccountsPanel from "../../../components/features/statisticsComponents/ConnectedAccountsPanel";
+import { LeadsTable } from "../../../components/features/statisticsComponents/leads/LeadsTable";
+import { LeadDetailsModal } from "../../../components/features/statisticsComponents/leads/LeadDetailsModal";
+import { mockLeads } from "../../../components/features/statisticsComponents/leads/mockLeads";
+import type { Lead } from "../../../services/types/moderation-types";
+import { kpisFromLeads, deriveChannelCounts, deriveScoreBins, mockLeadsOverTime, mockFunnel } from "../../../components/features/statisticsComponents/leads/mockMetrics";
+import { KpiCards } from "../../../components/features/statisticsComponents/leads/metrics/KpiCards";
+import { LeadsByChannelDonut } from "../../../components/features/statisticsComponents/leads/metrics/LeadsByChannelDonut";
+import { LeadQualityBars } from "../../../components/features/statisticsComponents/leads/metrics/LeadQualityBars";
+import { LeadsOverTimeArea } from "../../../components/features/statisticsComponents/leads/metrics/LeadsOverTimeArea";
+import { ConversionFunnel } from "../../../components/features/statisticsComponents/leads/metrics/ConversionFunnel";
 
 export default function StatisticsView() {
     const { id } = useParams<{ id: string }>();
@@ -22,6 +33,25 @@ export default function StatisticsView() {
     const { i18n } = useTranslation();
     const { t } = useTranslation('translations');
     const uiLang = i18n.language.startsWith("en") ? "en" : "es";
+
+    // lead
+    const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
+    const [openModal, setOpenModal] = React.useState(false);
+
+    const handleOpenLead = (lead: Lead) => {
+        setSelectedLead(lead);
+        setOpenModal(true);
+    };
+
+    const handleClose = () => setOpenModal(false);
+
+    // Lead metrics
+
+    const kpis = React.useMemo(() => kpisFromLeads(mockLeads), []);
+    const channelData = React.useMemo(() => deriveChannelCounts(mockLeads), []);
+    const scoreBins = React.useMemo(() => deriveScoreBins(mockLeads), []);
+    const timeSeries = React.useMemo(() => mockLeadsOverTime(), []);
+    const funnelData = React.useMemo(() => mockFunnel(), []);
 
     const [whatsappLinkedInfo, setWhatsappLinkedInfo] = React.useState<{
         phoneNumber?: string;
@@ -65,12 +95,24 @@ export default function StatisticsView() {
         return arr.some((c: string) => (c || "").toLowerCase().includes("instagram"));
     }, [channelsToConfigure, campaign]);
 
+    const isWhatsAppConnected = React.useMemo(() => {
+        return Boolean(campaign?.whatsappStatus?.qrScanned);
+    }, [campaign]);
+
+    const isInstagramConnected = React.useMemo(() => {
+        return Boolean(campaign?.instagramCredentials?.username);
+    }, [campaign]);
+
+    console.log(campaign);
+    
+
+    const hasAnyConnected = isWhatsAppConnected || isInstagramConnected;
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-neutral-950">
             <div className="text-center space-y-3">
                 <div className="w-6 h-6 mx-auto border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-600 dark:text-gray-300 text-sm">Cargando campañas</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">{t("loading_campaigns")}</p>
             </div>
         </div>
     )
@@ -84,7 +126,7 @@ export default function StatisticsView() {
     if (!campaign) return (
         <div className="flex items-center justify-center min-h-screen bg-neutral-950">
             <div className="text-center space-y-3">
-                <p className="text-red-600 text-sm">No se encontro la campaña</p>
+                <p className="text-red-600 text-sm">{t("campaign_not_found")}</p>
             </div>
         </div>
     )
@@ -96,7 +138,6 @@ export default function StatisticsView() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">{campaign.name}</h2>
-                        {/* <p className="text-sm opacity-70">ID: {campaign.id}</p> */}
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ring-1 ${(() => {
                         const v = (campaign.status || "").toLowerCase();
@@ -109,54 +150,175 @@ export default function StatisticsView() {
                 </div>
 
                 {/* Banner post-lanzamiento */}
-                <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
-                    <div className="flex items-start gap-3">
-                        <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
-                            <MessageSquare className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-[15px] font-semibold leading-tight">{t("pending_account_setup")}</h3>
-                            <p className="text-sm opacity-80 mt-1">
-                                {t("setup_channel_accounts")}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {(channelsToConfigure?.length ? channelsToConfigure : ["—"]).map((c) => (
-                                    <span key={c} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-lg ring-1 ring-emerald-400/30 bg-emerald-500/10">
-                                        <MessageSquare className="h-3.5 w-3.5 opacity-70" />
-                                        {c}
-                                    </span>
-                                ))}
+                <div className={`grid grid-cols-1 ${hasAnyConnected ? "md:grid-cols-2 gap-4" : ""}`}>
+                    <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
+                        <div className="flex items-start gap-3">
+                            <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
+                                <MessageSquare className="h-4 w-4" />
                             </div>
-                            <div className="mt-4 flex gap-2">
-                                {hasWhatsApp ? (
-                                    <button
-                                        className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
-                                        onClick={() => setOpenWhatsAppSetup(true)}
-                                    >
-                                        {t("setup_whatsapp")}
-                                    </button>
-                                ) : (
-                                    <button
-                                        className="rounded-xl px-5 h-11 ring-1 ring-neutral-400/30 bg-neutral-500/10 text-[15px]"
-                                        disabled
-                                        title="No hay WhatsApp entre los canales"
-                                    >
-                                        {t("setup_accounts")}
-                                    </button>
+                            <div className="flex-1">
+                                <h3 className="text-[15px] font-semibold leading-tight">{t("pending_account_setup")}</h3>
+                                <p className="text-sm opacity-80 mt-1">
+                                    {t("setup_channel_accounts")}
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {(channelsToConfigure?.length ? channelsToConfigure : ["—"]).map((c) => (
+                                        <span key={c} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-lg ring-1 ring-emerald-400/30 bg-emerald-500/10">
+                                            <MessageSquare className="h-3.5 w-3.5 opacity-70" />
+                                            {c}
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className="mt-4 flex gap-2">
+                                    {hasWhatsApp ? (
+                                        <button
+                                            className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
+                                            onClick={() => setOpenWhatsAppSetup(true)}
+                                        >
+                                            {t("setup_whatsapp")}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="rounded-xl px-5 h-11 ring-1 ring-neutral-400/30 bg-neutral-500/10 text-[15px]"
+                                            disabled
+                                            title="No hay WhatsApp entre los canales"
+                                        >
+                                            {t("setup_accounts")}
+                                        </button>
+                                    )}
+                                </div>
+                                {hasInstagram && (
+                                    <InstagramConnectButton
+                                        clientId={import.meta.env.VITE_IG_APP_ID!}
+                                        redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
+                                        campaignId={campaign.id}
+                                    />
                                 )}
                             </div>
-                            {hasInstagram && (
-                                <InstagramConnectButton
-                                    clientId={import.meta.env.VITE_IG_APP_ID!}
-                                    redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
-                                    campaignId={campaign.id}
-                                />
-                            )}
-
                         </div>
                     </div>
+                    {hasAnyConnected && (
+                        <ConnectedAccountsPanel
+                            whatsappStatus={campaign?.whatsappStatus}
+                            instagramCredentials={campaign?.instagramCredentials}
+                        />
+                    )}
                 </div>
+                {hasWhatsApp && openWhatsAppSetup && (
+                    <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20 mt-6">
+                        <div className="flex items-start gap-3 mb-3">
+                            <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
+                                <MessageSquare className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[15px] font-semibold leading-tight">{t("setup_whatsapp")}</h3>
+                                    <button
+                                        className="text-xs px-3 py-1 rounded bg-neutral-200/70 dark:bg-neutral-800/70"
+                                        onClick={() => setOpenWhatsAppSetup(false)}
+                                    >
+                                        {t("close")}
+                                    </button>
+                                </div>
 
+                                {!userId ? (
+                                    <div className="mt-3 text-sm text-amber-600">
+                                        No se encontró <code>aiaUserId</code>. Iniciá sesión para continuar.
+                                    </div>
+                                ) : (
+                                    <div className="mt-4">
+                                        <WhatsappQrPanel
+                                            userId={userId}
+                                            campaignId={id!}
+                                            socketUrl={import.meta.env.VITE_API_URL}
+                                            campaignStatus={campaign.status}
+                                            whatsappStatus={campaign.whatsappStatus}
+                                            onQrScanned={(payload: any) => {
+                                                const record = payload.qrScanRecord || {};
+
+                                                const rawPhone =
+                                                    record.scannedByPhone ||
+                                                    record.scannedBy ||
+                                                    payload.phoneNumber ||
+                                                    null;
+
+                                                const scannedAt =
+                                                    record.scannedAt ||
+                                                    payload.scannedAt ||
+                                                    payload.timestamp ||
+                                                    null;
+
+                                                const prettyPhone = rawPhone
+                                                    ? String(rawPhone).replace(/@.+$/, "")
+                                                    : null;
+
+                                                setWhatsappLinkedInfo({
+                                                    phoneNumber: (prettyPhone || rawPhone || undefined) as string | undefined,
+                                                    scannedAt: (scannedAt || undefined) as string | undefined,
+                                                });
+
+                                                setCampaign((prev: any) => {
+                                                    if (!prev) return prev;
+
+                                                    return {
+                                                        ...prev,
+                                                        whatsappStatus: {
+                                                            qrScanned: true,
+                                                            qrScannedAt: scannedAt,
+                                                            qrScannedBy: record.scannedBy || payload.agentId || null,
+                                                            qrScannedByPhone: prettyPhone,
+                                                        },
+                                                    };
+                                                });
+
+                                                setShowWhatsappSuccess(true);
+                                                setOpenWhatsAppSetup(false);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <section className="mt-4">
+                    <KpiCards
+                        items={[
+                            { title: "Total leads", value: kpis.total, icon: <Users className="h-5 w-5" /> },
+                            { title: "Tasa de respuesta", value: `${kpis.responseRate}%`, icon: <Zap className="h-5 w-5" /> },
+                            { title: "Puntaje promedio", value: kpis.avgScore, icon: <Star className="h-5 w-5" /> },
+                            { title: "Canal más activo", value: kpis.topChannel, icon: <MessageSquare className="h-5 w-5" /> },
+                        ]}
+                    />
+                </section>
+                <section className="mt-2">
+                    <LeadsTable leads={mockLeads} onOpenLead={handleOpenLead} />
+                </section>
+
+
+                <LeadDetailsModal open={openModal} lead={selectedLead} onClose={handleClose} />
+
+
+
+
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <LeadsByChannelDonut data={channelData} />
+                    <LeadQualityBars data={scoreBins} />
+                </section>
+
+
+                <section className="grid grid-cols-1 gap-4">
+                    <LeadsOverTimeArea data={timeSeries} />
+                </section>
+
+
+                <section className="grid grid-cols-1 gap-4">
+                    <ConversionFunnel data={funnelData} />
+                </section>
+
+                <div className="pt-2">
+                    <Link to="/my_campaigns" className="text-emerald-600 hover:underline">{t("back_to_campaigns")}</Link>
+                </div>
                 {/* Overview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div className="rounded-xl p-4 md:p-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-emerald-400/20">
@@ -173,102 +335,13 @@ export default function StatisticsView() {
                         </dl>
                     </div>
 
-                    <div className="rounded-xl p-4 md:p-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-emerald-400/20">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
-                                <CalendarRange className="h-4 w-4" />
-                            </div>
-                            <h4 className="text-[15px] font-semibold leading-tight">{t("activity_metrics")}</h4>
-                        </div>
-                        <div className="text-sm opacity-70">
-                            {t("coming_soon_metrics")}
-                        </div>
-                    </div>
                 </div>
 
-                <div className="pt-2">
-                    <Link to="/my_campaigns" className="text-emerald-600 hover:underline">{t("back_to_campaigns")}</Link>
-                </div>
+
             </div>
 
             {/* Configurar WhatsApp (solo si el canal está habilitado y el usuario lo abrió) */}
-            {hasWhatsApp && openWhatsAppSetup && (
-                <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
-                    <div className="flex items-start gap-3 mb-3">
-                        <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
-                            <MessageSquare className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-[15px] font-semibold leading-tight">{t("setup_whatsapp")}</h3>
-                                <button
-                                    className="text-xs px-3 py-1 rounded bg-neutral-200/70 dark:bg-neutral-800/70"
-                                    onClick={() => setOpenWhatsAppSetup(false)}
-                                >
-                                    {t("close")}
-                                </button>
-                            </div>
 
-                            {!userId ? (
-                                <div className="mt-3 text-sm text-amber-600">
-                                    No se encontró <code>aiaUserId</code>. Iniciá sesión para continuar.
-                                </div>
-                            ) : (
-                                <div className="mt-4">
-                                    <WhatsappQrPanel
-                                        userId={userId}
-                                        campaignId={id!}
-                                        socketUrl={import.meta.env.VITE_API_URL}
-                                        campaignStatus={campaign.status}
-                                        whatsappStatus={campaign.whatsappStatus}
-                                        onQrScanned={(payload: any) => {
-                                            const record = payload.qrScanRecord || {};
-
-                                            const rawPhone =
-                                                record.scannedByPhone ||
-                                                record.scannedBy ||
-                                                payload.phoneNumber ||
-                                                null;
-
-                                            const scannedAt =
-                                                record.scannedAt ||
-                                                payload.scannedAt ||
-                                                payload.timestamp ||
-                                                null;
-
-                                            const prettyPhone = rawPhone
-                                                ? String(rawPhone).replace(/@.+$/, "")
-                                                : null;
-
-                                            setWhatsappLinkedInfo({
-                                                phoneNumber: (prettyPhone || rawPhone || undefined) as string | undefined,
-                                                scannedAt: (scannedAt || undefined) as string | undefined,
-                                            });
-
-                                            setCampaign((prev: any) => {
-                                                if (!prev) return prev;
-
-                                                return {
-                                                    ...prev,
-                                                    whatsappStatus: {
-                                                        qrScanned: true,
-                                                        qrScannedAt: scannedAt,
-                                                        qrScannedBy: record.scannedBy || payload.agentId || null,
-                                                        qrScannedByPhone: prettyPhone,
-                                                    },
-                                                };
-                                            });
-
-                                            setShowWhatsappSuccess(true);
-                                            setOpenWhatsAppSetup(false);
-                                        }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
             <AgencyChatbot
                 mode="floating"
                 persistNamespace={`moderation_stats_${campaign.id || "unknown"}`}
@@ -359,20 +432,15 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-[15px] font-semibold leading-tight">
-                                    {uiLang === "en"
-                                        ? "WhatsApp connected successfully"
-                                        : "WhatsApp vinculado correctamente"}
+                                    {t("whatsapp_linked")}
                                 </h3>
                                 <p className="mt-1 text-sm opacity-80">
-                                    {uiLang === "en"
-                                        ? "From now on, this campaign will be able to receive and send messages through this WhatsApp number."
-                                        : "A partir de ahora esta campaña va a poder recibir y enviar mensajes a través de este número de WhatsApp."}
+                                    {t("now_on")}
                                 </p>
-
                                 {whatsappLinkedInfo?.phoneNumber && (
                                     <p className="mt-3 text-sm">
                                         <span className="opacity-70">
-                                            {uiLang === "en" ? "Phone:" : "Teléfono:"}
+                                            {t("telephone")}
                                         </span>{" "}
                                         <span className="font-mono">
                                             {whatsappLinkedInfo.phoneNumber}
@@ -382,7 +450,7 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
 
                                 {whatsappLinkedInfo?.scannedAt && (
                                     <p className="mt-1 text-xs opacity-70">
-                                        {uiLang === "en" ? "Linked at: " : "Vinculado el: "}
+                                        {t("linked_at")}
                                         {(() => {
                                             const d = new Date(whatsappLinkedInfo.scannedAt!);
                                             return isNaN(d.getTime())
@@ -403,7 +471,7 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
                                         className="text-sm px-3 py-1.5 rounded-lg bg-emerald-600 text-white"
                                         onClick={() => setShowWhatsappSuccess(false)}
                                     >
-                                        {uiLang === "en" ? "Got it" : "Perfecto"}
+                                        {t("got_it")}
                                     </button>
                                 </div>
                             </div>
