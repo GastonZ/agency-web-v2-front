@@ -108,7 +108,7 @@ const MarketingSummary: React.FC = () => {
             <div className="text-xs opacity-70 mb-2">Imágenes</div>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {data.content.persistedImages.map((p) => (
-                <img key={p} src={import.meta.env.VITE_API_URL + p} alt={p} className="w-full h-28 object-cover rounded-xl ring-1 ring-emerald-400/15" />
+                <img key={p} src={import.meta.env.VITE_API_URL + '/'+ p} alt={p} className="w-full h-28 object-cover rounded-xl ring-1 ring-emerald-400/15" />
               ))}
             </div>
           </div>
