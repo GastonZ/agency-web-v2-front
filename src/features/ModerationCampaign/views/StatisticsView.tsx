@@ -284,10 +284,10 @@ export default function StatisticsView() {
                 <section className="mt-4">
                     <KpiCards
                         items={[
-                            { title: "Total leads", value: kpis.total, icon: <Users className="h-5 w-5" /> },
-                            { title: "Tasa de respuesta", value: `${kpis.responseRate}%`, icon: <Zap className="h-5 w-5" /> },
-                            { title: "Puntaje promedio", value: kpis.avgScore, icon: <Star className="h-5 w-5" /> },
-                            { title: "Canal más activo", value: kpis.topChannel, icon: <MessageSquare className="h-5 w-5" /> },
+                            { title: t("stats_total_leads"), value: kpis.total, icon: <Users className="h-5 w-5" /> },
+                            { title: t("stats_response_rate"), value: `${kpis.responseRate}%`, icon: <Zap className="h-5 w-5" /> },
+                            { title: t("stats_average_score"), value: kpis.avgScore, icon: <Star className="h-5 w-5" /> },
+                            { title: t("stats_most_active_channel"), value: kpis.topChannel, icon: <MessageSquare className="h-5 w-5" /> },
                         ]}
                     />
                 </section>

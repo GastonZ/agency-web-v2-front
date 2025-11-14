@@ -1,14 +1,15 @@
 import * as React from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { TimePoint } from "../mockMetrics";
-
+import { useTranslation } from "react-i18next";
 
 export function LeadsOverTimeArea({ data }: { data: TimePoint[] }) {
+    const { t } = useTranslation("translations");
     return (
         <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl p-4">
             <div className="mb-3">
-                <h4 className="text-sm font-semibold">Evolución de leads</h4>
-                <p className="text-xs opacity-70">Nuevos leads por día</p>
+                <h4 className="text-sm font-semibold">{t("stats_leads_trend")}</h4>
+                <p className="text-xs opacity-70">{t("stats_new_leads_per_day")}</p>
             </div>
             <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ExternalLink, MessageSquare, Instagram, Facebook } from "lucide-react";
 import type { Lead } from "../../../../services/types/moderation-types";
-
+import { useTranslation } from "react-i18next";
 
 function scoreClasses(score: number) {
     if (score >= 9) return "bg-emerald-500/15 text-emerald-400 ring-emerald-400/30";
@@ -33,11 +33,11 @@ interface LeadsTableProps {
 }
 
 export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
+    const { t } = useTranslation("translations");
     return (
         <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-emerald-400/10">
                 <h3 className="text-sm font-semibold">Leads</h3>
-                <p className="text-xs opacity-70">Datos de muestra (mock)</p>
             </div>
 
 
@@ -45,10 +45,10 @@ export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
                 <table className="min-w-full text-sm">
                     <thead className="text-left">
                         <tr className="border-b border-emerald-400/10">
-                            <th className="px-4 py-2">Nombre</th>
-                            <th className="px-4 py-2">Resumen</th>
-                            <th className="px-4 py-2">Puntaje</th>
-                            <th className="px-4 py-2">Conversación</th>
+                            <th className="px-4 py-2">{t("stats_name")}</th>
+                            <th className="px-4 py-2">{t("stats_summary")}</th>
+                            <th className="px-4 py-2">{t("stats_score")}</th>
+                            <th className="px-4 py-2">{t("stats_conversation")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,7 +88,7 @@ export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
                                             title="Abrir conversación"
                                         >
                                             <ChannelIcon channel={l.channel} />
-                                            <span className="hidden sm:inline">Abrir</span>
+                                            <span className="hidden sm:inline">{t("open")}</span>
                                         </a>
                                     ) : (
                                         <span className="text-xs opacity-60">—</span>
