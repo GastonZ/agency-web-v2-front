@@ -21,6 +21,7 @@ import { LeadsByChannelDonut } from "../../../components/features/statisticsComp
 import { LeadQualityBars } from "../../../components/features/statisticsComponents/leads/metrics/LeadQualityBars";
 import { LeadsOverTimeArea } from "../../../components/features/statisticsComponents/leads/metrics/LeadsOverTimeArea";
 import { ConversionFunnel } from "../../../components/features/statisticsComponents/leads/metrics/ConversionFunnel";
+import FacebookConnectPanel from "../../../components/features/FacebookConnectPanel";
 
 export default function StatisticsView() {
     const { id } = useParams<{ id: string }>();
@@ -95,6 +96,13 @@ export default function StatisticsView() {
         return arr.some((c: string) => (c || "").toLowerCase().includes("instagram"));
     }, [channelsToConfigure, campaign]);
 
+    const hasFacebook = React.useMemo(() => {
+        const arr =
+            (channelsToConfigure?.length ? channelsToConfigure : campaign?.channels) ??
+            [];
+        return arr.some((c: string) => (c || "").toLowerCase().includes("facebook"));
+    }, [channelsToConfigure, campaign]);
+
     const isWhatsAppConnected = React.useMemo(() => {
         return Boolean(campaign?.whatsappStatus?.qrScanned);
     }, [campaign]);
@@ -104,7 +112,7 @@ export default function StatisticsView() {
     }, [campaign]);
 
     console.log(campaign);
-    
+
 
     const hasAnyConnected = isWhatsAppConnected || isInstagramConnected;
 
@@ -192,6 +200,12 @@ export default function StatisticsView() {
                                         clientId={import.meta.env.VITE_IG_APP_ID!}
                                         redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
                                         campaignId={campaign.id}
+                                    />
+                                )}
+
+                                {hasFacebook && (
+                                    <FacebookConnectPanel
+                                        state={campaign.id}
                                     />
                                 )}
                             </div>
