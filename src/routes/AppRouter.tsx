@@ -21,6 +21,7 @@ import DatacivisLanding from '../WebLanding';
 import { I18nProvider } from '../WebLanding/lib/i18n';
 
 import InstagramCallback from '../pages/InstagramCallback';
+import FacebookCallback from '../pages/FacebookCallback';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -83,6 +84,7 @@ const AppRouter: React.FC = () => (
             </I18nProvider>} />
 
             <Route path="/instagram/callback" element={<InstagramCallback />} />
+            <Route path="/facebook/callback" element={<FacebookCallback />} />
             {/* (opcional) 404 */}
             <Route path="*" element={<NotFound />} />
         </Routes>

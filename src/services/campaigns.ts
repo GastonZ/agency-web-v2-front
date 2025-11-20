@@ -218,3 +218,11 @@ export async function setModerationInstagramCode(campaignId: string, code: strin
   );
   return data;
 }
+
+export async function setModerationFacebookCode(campaignId: string, code: string) {
+  const { data } = await api.put(
+    `moderation-campaigns/${campaignId}/facebook-credentials`,
+    { code }
+  );
+  return data;
+}
