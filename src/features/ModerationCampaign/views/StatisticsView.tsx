@@ -103,6 +103,10 @@ export default function StatisticsView() {
         return arr.some((c: string) => (c || "").toLowerCase().includes("facebook"));
     }, [channelsToConfigure, campaign]);
 
+    const facebookCredentials =
+        (campaign as any)?.facebookCredentials ??
+        [];
+
     const isWhatsAppConnected = React.useMemo(() => {
         return Boolean(campaign?.whatsappStatus?.qrScanned);
     }, [campaign]);
@@ -213,6 +217,7 @@ export default function StatisticsView() {
                     </div>
                     {hasAnyConnected && (
                         <ConnectedAccountsPanel
+                            facebookCredentials={campaign?.facebookCredentials}
                             whatsappStatus={campaign?.whatsappStatus}
                             instagramCredentials={campaign?.instagramCredentials}
                         />

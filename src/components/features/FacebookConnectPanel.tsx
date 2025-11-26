@@ -54,17 +54,6 @@ export default function FacebookConnectPanel({
 
   return (
     <div className={["mt-4", className].join(" ")}>
-      <div className="space-y-2">
-        <h3 className="text-[15px] font-semibold leading-tight">
-          {t("link_facebook_page", "Vincular página de Facebook")}
-        </h3>
-        <p className="text-sm opacity-80">
-          {t(
-            "redirect_to_facebook",
-            "Te vamos a redirigir a Facebook para que autorices el acceso."
-          )}
-        </p>
-      </div>
 
       <div className="mt-4 flex gap-2">
         <button

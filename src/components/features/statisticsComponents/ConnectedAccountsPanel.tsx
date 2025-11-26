@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
-import { MessageSquare, Instagram as InstagramIcon, CheckCircle2 } from "lucide-react";
+import {
+  MessageSquare,
+  Instagram as InstagramIcon,
+  CheckCircle2,
+  Facebook as FacebookIcon, // 👈 si no existe, cambia a otro icono (p.ej. Globe2)
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type WhatsappStatus = {
@@ -15,15 +20,23 @@ type InstagramCredentials = {
   username: string;
 } | null | undefined;
 
+type FacebookCredential = {
+  id: string;
+  name: string;
+  category?: string;
+};
+
 type Props = {
   whatsappStatus?: WhatsappStatus;
   instagramCredentials?: InstagramCredentials;
+  facebookCredentials?: FacebookCredential[] | null; // 👈 NUEVO
   className?: string;
 };
 
 export default function ConnectedAccountsPanel({
   whatsappStatus,
   instagramCredentials,
+  facebookCredentials,
   className = "",
 }: Props) {
   const { i18n } = useTranslation();
@@ -36,7 +49,10 @@ export default function ConnectedAccountsPanel({
 
   const isIgConnected = Boolean(instagramCredentials?.username);
 
-  const showAnything = isWhatsConnected || isIgConnected;
+  const mainFb = facebookCredentials?.[0] ?? null;
+  const isFbConnected = Boolean(mainFb?.id);
+
+  const showAnything = isWhatsConnected || isIgConnected || isFbConnected;
   if (!showAnything) return null;
 
   return (
@@ -68,7 +84,9 @@ export default function ConnectedAccountsPanel({
           <p className="text-sm opacity-80 mt-1">
             {t("ready_channels")}
           </p>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* WHATSAPP */}
             {isWhatsConnected && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
@@ -90,7 +108,7 @@ export default function ConnectedAccountsPanel({
                     <div className="mt-0.5 text-xs opacity-80">
                       {t("number")}{" "}
                       <span className="font-mono">
-                        {whatsPhone || t("unknown") }
+                        {whatsPhone || t("unknown")}
                       </span>
                     </div>
                     {whatsWhen && (
@@ -98,7 +116,9 @@ export default function ConnectedAccountsPanel({
                         {t("since")}{" "}
                         {(() => {
                           const d = new Date(whatsWhen);
-                          return isNaN(d.getTime()) ? whatsWhen : d.toLocaleString();
+                          return isNaN(d.getTime())
+                            ? whatsWhen
+                            : d.toLocaleString();
                         })()}
                       </div>
                     )}
@@ -107,6 +127,7 @@ export default function ConnectedAccountsPanel({
               </motion.div>
             )}
 
+            {/* INSTAGRAM */}
             {isIgConnected && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
@@ -115,19 +136,51 @@ export default function ConnectedAccountsPanel({
               >
                 <div className="flex items-start gap-3">
                   <motion.div
-                    className="inline-flex items-center justify-center rounded-md h-12 w-12 bg-emerald-600/15 ring-1 ring-emerald-400/40"
+                    className="inline-flex items-center justify-center rounded-md h-9 w-9 bg-emerald-600/15 ring-1 ring-emerald-400/40"
                     animate={{ y: [0, -2, 0] }}
                     transition={{ duration: 3, repeat: Infinity }}
                   >
-                    <img className="h-8 w-8 rounded-full" src={instagramCredentials?.picture} alt="User ig profile pic" />
+                    <InstagramIcon className="h-4 w-4 text-emerald-500" />
                   </motion.div>
                   <div className="flex-1">
                     <div className="text-[13px] font-semibold">
-                      Instagram <strong>{instagramCredentials?.username}</strong> {t("connected")}
+                      Instagram{" "}
+                      <strong>{instagramCredentials?.username}</strong>{" "}
+                      {t("connected")}
                     </div>
                     <div className="mt-0.5 text-xs opacity-80">
                       {t("ready_messages")}
                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* FACEBOOK */}
+            {isFbConnected && mainFb && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="rounded-xl ring-1 ring-emerald-400/30 bg-emerald-500/10 p-3"
+              >
+                <div className="flex items-start gap-3">
+                  <motion.div
+                    className="inline-flex items-center justify-center rounded-md h-9 w-9 bg-emerald-600/15 ring-1 ring-emerald-400/40"
+                    animate={{ y: [0, -2, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    <FacebookIcon className="h-4 w-4 text-emerald-500" />
+                  </motion.div>
+                  <div className="flex-1">
+                    <div className="text-[13px] font-semibold">
+                      Facebook{" "}
+                      <strong>{mainFb.name}</strong> {t("connected")}
+                    </div>
+                    {mainFb.category && (
+                      <div className="mt-0.5 text-xs opacity-80">
+                        {mainFb.category}
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
