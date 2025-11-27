@@ -226,3 +226,10 @@ export async function setModerationFacebookCode(campaignId: string, code: string
   );
   return data;
 }
+
+export async function getModerationAccounts(campaignId: string) {
+  const { data } = await api.get(
+    `moderation-campaigns/${campaignId}/social-accounts`
+  );
+  return data;
+}
