@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useParams, Link } from "react-router-dom";
-import { getModerationCampaignById } from "../../../services/campaigns";
+import { getModerationAccounts, getModerationCampaignById } from "../../../services/campaigns";
 import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../../utils/helper";
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { MessageSquare, ClipboardList, CalendarRange, CheckCircle2, Users, Zap, Star } from "lucide-react";
@@ -28,6 +28,7 @@ export default function StatisticsView() {
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
     const [campaign, setCampaign] = React.useState<any>(null);
+    const [accountsData, setAccountsData] = React.useState<any>(null);
     const [channelsToConfigure, setChannelsToConfigure] = React.useState<string[]>([]);
     const userId = getUserId() || "";
     const [openWhatsAppSetup, setOpenWhatsAppSetup] = React.useState(false);
@@ -67,8 +68,12 @@ export default function StatisticsView() {
             try {
                 setLoading(true);
                 const data = await getModerationCampaignById(id!);
+
+                const socialAccs = await getModerationAccounts(id!)
+
                 if (!mounted) return;
                 setCampaign(data);
+                setAccountsData(socialAccs)
 
                 const last = getLastLaunchedModeration();
                 if (last?.id === id && last?.channels?.length) {
@@ -217,9 +222,8 @@ export default function StatisticsView() {
                     </div>
                     {hasAnyConnected && (
                         <ConnectedAccountsPanel
-                            facebookCredentials={campaign?.facebookCredentials}
+                            socialAccsData={accountsData}
                             whatsappStatus={campaign?.whatsappStatus}
-                            instagramCredentials={campaign?.instagramCredentials}
                         />
                     )}
                 </div>

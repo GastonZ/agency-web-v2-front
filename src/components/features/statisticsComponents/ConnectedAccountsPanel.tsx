@@ -1,9 +1,7 @@
 import { motion } from "framer-motion";
 import {
   MessageSquare,
-  Instagram as InstagramIcon,
   CheckCircle2,
-  Facebook as FacebookIcon, // 👈 si no existe, cambia a otro icono (p.ej. Globe2)
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -14,29 +12,29 @@ type WhatsappStatus = {
   qrScannedByPhone?: string | null;
 } | null | undefined;
 
-type InstagramCredentials = {
-  name: string;
-  picture: string;
-  username: string;
-} | null | undefined;
-
-type FacebookCredential = {
-  id: string;
-  name: string;
-  category?: string;
+type SocialAccsData = {
+  instagram?: {
+    username?: string;
+    profilePicture?: string;
+    name?: string;
+  };
+  facebook?: {
+    id?: string;
+    name?: string;
+    category?: string;
+    profilePicture?: string;
+  };
 };
 
 type Props = {
+  socialAccsData?: SocialAccsData | null;
   whatsappStatus?: WhatsappStatus;
-  instagramCredentials?: InstagramCredentials;
-  facebookCredentials?: FacebookCredential[] | null; // 👈 NUEVO
   className?: string;
 };
 
 export default function ConnectedAccountsPanel({
+  socialAccsData,
   whatsappStatus,
-  instagramCredentials,
-  facebookCredentials,
   className = "",
 }: Props) {
   const { i18n } = useTranslation();
@@ -47,13 +45,17 @@ export default function ConnectedAccountsPanel({
   const whatsPhone = whatsappStatus?.qrScannedByPhone || null;
   const whatsWhen = whatsappStatus?.qrScannedAt || null;
 
-  const isIgConnected = Boolean(instagramCredentials?.username);
+  const ig = socialAccsData?.instagram;
+  const fb = socialAccsData?.facebook;
 
-  const mainFb = facebookCredentials?.[0] ?? null;
-  const isFbConnected = Boolean(mainFb?.id);
+  const isIgConnected = Boolean(ig && (ig.username || ig.profilePicture || ig.name));
+  const isFbConnected = Boolean(fb && (fb.id || fb.name || fb.profilePicture));
 
   const showAnything = isWhatsConnected || isIgConnected || isFbConnected;
   if (!showAnything) return null;
+
+  console.log(socialAccsData);
+  
 
   return (
     <motion.div
@@ -99,7 +101,7 @@ export default function ConnectedAccountsPanel({
                     animate={{ rotate: [0, -4, 0, 4, 0] }}
                     transition={{ duration: 6, repeat: Infinity }}
                   >
-                    <MessageSquare className="h-4 w-4 text-emerald-500" />
+                    <MessageSquare className="h-4 w-4" />
                   </motion.div>
                   <div className="flex-1">
                     <div className="text-[13px] font-semibold">
@@ -127,8 +129,8 @@ export default function ConnectedAccountsPanel({
               </motion.div>
             )}
 
-            {/* INSTAGRAM */}
-            {isIgConnected && (
+            {/* INSTAGRAM (desde socialAccsData.instagram) */}
+            {isIgConnected && ig && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -140,12 +142,20 @@ export default function ConnectedAccountsPanel({
                     animate={{ y: [0, -2, 0] }}
                     transition={{ duration: 3, repeat: Infinity }}
                   >
-                    <InstagramIcon className="h-4 w-4 text-emerald-500" />
+                    {ig.profilePicture ? (
+                      <img
+                        className="h-6 w-6 rounded-full object-cover"
+                        src={ig.profilePicture}
+                        alt="Instagram profile picture"
+                      />
+                    ) : (
+                      <div className="h-6 w-6 rounded-full bg-emerald-500/40" />
+                    )}
                   </motion.div>
                   <div className="flex-1">
                     <div className="text-[13px] font-semibold">
                       Instagram{" "}
-                      <strong>{instagramCredentials?.username}</strong>{" "}
+                      <strong>{ig.username || ig.name || "Cuenta"}</strong>{" "}
                       {t("connected")}
                     </div>
                     <div className="mt-0.5 text-xs opacity-80">
@@ -156,8 +166,8 @@ export default function ConnectedAccountsPanel({
               </motion.div>
             )}
 
-            {/* FACEBOOK */}
-            {isFbConnected && mainFb && (
+            {/* FACEBOOK (desde socialAccsData.facebook) */}
+            {isFbConnected && fb && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -169,18 +179,29 @@ export default function ConnectedAccountsPanel({
                     animate={{ y: [0, -2, 0] }}
                     transition={{ duration: 3, repeat: Infinity }}
                   >
-                    <FacebookIcon className="h-4 w-4 text-emerald-500" />
+                    {fb.profilePicture ? (
+                      <img
+                        className="h-6 w-6 rounded-full object-cover"
+                        src={fb.profilePicture}
+                        alt="Facebook profile picture"
+                      />
+                    ) : (
+                      <div className="h-6 w-6 rounded-full bg-emerald-500/40" />
+                    )}
                   </motion.div>
                   <div className="flex-1">
                     <div className="text-[13px] font-semibold">
                       Facebook{" "}
-                      <strong>{mainFb.name}</strong> {t("connected")}
+                      <strong>{fb.name || "Página"}</strong> {t("connected")}
                     </div>
-                    {mainFb.category && (
+                    {fb.category && (
                       <div className="mt-0.5 text-xs opacity-80">
-                        {mainFb.category}
+                        {fb.category}
                       </div>
                     )}
+                    <div className="mt-0.5 text-xs opacity-80">
+                      {t("ready_messages")}
+                    </div>
                   </div>
                 </div>
               </motion.div>
