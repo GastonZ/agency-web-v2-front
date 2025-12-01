@@ -189,7 +189,7 @@ export default function StatisticsView() {
                                 {hasInstagram && (
                                     <InstagramConnectButton
                                         clientId={import.meta.env.VITE_IG_APP_ID!}
-                                        redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
+                                        redirectUri={"https://datacivis.com.ar/" + "instagram/callback"}
                                         campaignId={campaign.id}
                                     />
                                 )}
