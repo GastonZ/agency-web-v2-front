@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Label } from "../Primitives";
+import { Label, SectionTitle } from "../Primitives";
 import { useModeration } from "../../../../context/ModerationContext";
 import { extractQAFromFile } from "../../../../services/campaigns";
 import { useTranslation } from "react-i18next";
@@ -38,7 +38,7 @@ const KnowHowFileImport: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      <Label>{t("knowledge_base")}</Label>
+      <SectionTitle title={t("knowledge_base")}  />
       <input
         type="file"
         accept=".csv,.txt,.pdf"
