@@ -28,20 +28,6 @@ type CardSpec = {
 
 const CARDS: CardSpec[] = [
     {
-        id: "marketing",
-        title: "Marketing Campaign",
-        icon: Megaphone,
-        short:
-            "Omnicanal + IA para captar, calificar y nutrir leads con analítica y mini-CRM.",
-        bullets: [
-            "Objetivos, audiencia, contenidos e influencers guiados",
-            "Calendario + pauta + lógica de interacción omnicanal",
-            "Seguimiento y remarketing integrados",
-        ],
-        badge: "Leads",
-        goto: '/campaign_marketing_creation'
-    },
-    {
         id: "moderation",
         title: "Moderation Campaign",
         icon: ShieldCheck,
@@ -54,20 +40,6 @@ const CARDS: CardSpec[] = [
         ],
         badge: "Atención",
         goto: '/campaign_moderation_creation'
-    },
-    {
-        id: "listening",
-        title: "Social Listening",
-        icon: Waves,
-        short:
-            "Monitoreo de conversaciones, opiniones y tendencias en redes y web.",
-        bullets: [
-            "Google Query + scraping multi-plataforma",
-            "Sinónimos + búsquedas booleanas + filtro por ubicación",
-            "Dashboards con KPIs, perfiles y segmentación opcional",
-        ],
-        badge: "Insights",
-        goto: '/'
     },
 ];
 
@@ -92,13 +64,9 @@ export default function CampaignCreation({
                     aria-label="Create a campaign"
                     className="relative w-full h-full"
                 >
-                    <AgencyChatbot mode="floating"/>
                     <header className="mb-6 flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-semibold tracking-tight">Nueva campaña</h1>
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                Elegí el tipo de campaña. Todo es <span className="text-emerald-500">asistido por nuestra IA</span>.
-                            </p>
+                            <h1 className="text-xl font-semibold tracking-tight">New campaign</h1>
                         </div>
                     </header>
 

@@ -27,15 +27,5 @@ export const CHANNEL_META: Record<
     title: "WhatsApp",
     subtitle: "",
     Icon: IconWhatsApp,
-  },
-  email: {
-    title: "Email",
-    subtitle: "",
-    Icon: IconEmail,
-  },
-  x: {
-    title: "X / Twitter",
-    subtitle: "",
-    Icon: IconX,
-  },
+  }
 };
