@@ -233,3 +233,27 @@ export async function getModerationAccounts(campaignId: string) {
   );
   return data;
 }
+
+export type ModerationChannel = "whatsapp" | "instagram" | "facebook" | "webchat";
+
+export async function pauseModerationChannel(
+  campaignId: string,
+  channel: ModerationChannel
+) {
+  const { data } = await api.post(
+    `moderation-campaigns/${campaignId}/pause-channel`,
+    { channel }
+  );
+  return data;
+}
+
+export async function unpauseModerationChannel(
+  campaignId: string,
+  channel: ModerationChannel
+) {
+  const { data } = await api.post(
+    `moderation-campaigns/${campaignId}/unpause-channel`,
+    { channel }
+  );
+  return data;
+}

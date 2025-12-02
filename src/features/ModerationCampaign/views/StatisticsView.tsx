@@ -71,6 +71,9 @@ export default function StatisticsView() {
 
                 const socialAccs = await getModerationAccounts(id!)
 
+                console.log(socialAccs);
+
+
                 if (!mounted) return;
                 setCampaign(data);
                 setAccountsData(socialAccs)
@@ -120,11 +123,14 @@ export default function StatisticsView() {
         return Boolean(campaign?.instagramCredentials?.username);
     }, [campaign]);
 
+    const isFacebookConnected = React.useMemo(() => {
+        return Boolean(accountsData?.facebookCredentials?.pages?.length);
+    }, [accountsData]);
+
     console.log(campaign);
 
 
-    const hasAnyConnected = isWhatsAppConnected || isInstagramConnected;
-
+    const hasAnyConnected = isWhatsAppConnected || isInstagramConnected || isFacebookConnected
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-neutral-950">
             <div className="text-center space-y-3">
@@ -222,8 +228,32 @@ export default function StatisticsView() {
                     </div>
                     {hasAnyConnected && (
                         <ConnectedAccountsPanel
-                            socialAccsData={accountsData}
-                            whatsappStatus={campaign?.whatsappStatus}
+                            campaignId={campaign.id}
+                            socialAccsData={{
+                                instagram: accountsData?.instagram
+                                    ? {
+                                        username: accountsData.instagram.username,
+                                        profilePicture: accountsData.instagram.profilePicture,
+                                        name: campaign.instagramCredentials?.name ?? accountsData.instagram.username,
+                                        paused: campaign.instagramCredentials?.paused,
+                                    }
+                                    : undefined,
+                                facebook: accountsData?.facebook
+                                    ? {
+                                        id: accountsData.facebook.id,
+                                        name: accountsData.facebook.name,
+                                        profilePicture: accountsData.facebook.profilePicture,
+                                        paused: campaign.facebookCredentials?.paused,
+                                    }
+                                    : undefined,
+                            }}
+                            whatsappStatus={{
+                                qrScanned: campaign.whatsappStatus?.qrScanned,
+                                qrScannedAt: campaign.whatsappStatus?.qrScannedAt,
+                                qrScannedBy: campaign.whatsappStatus?.qrScannedBy,
+                                qrScannedByPhone: campaign.whatsappStatus?.qrScannedByPhone,
+                                paused: campaign.whatsappStatus?.paused,
+                            }}
                         />
                     )}
                 </div>
