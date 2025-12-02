@@ -136,7 +136,7 @@ const Dashboard: React.FC = () => {
                   channelsLabel: "Channels",
               }
             : {
-                  title: "Mis campañas de moderación",
+                  title: "My moderation campaigns",
                   rightLabel: campaigns.length
                       ? `${campaigns.length} campaña(s)`
                       : undefined,

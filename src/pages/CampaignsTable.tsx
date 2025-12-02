@@ -96,15 +96,15 @@ export default function CampaignsTable() {
 
         {/* Tabla Moderación */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight">Mis campañas de moderación</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">My moderation campaigns</h2>
           <div className="ring-1 ring-gray-300 dark:ring-gray-600">
             <table className="min-w-full text-[15px] leading-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl">
               <thead className="bg-white/70 dark:bg-neutral-900/70">
                 <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
-                  <th className="p-3 font-semibold">Nombre</th>
-                  <th className="p-3 font-semibold">Estado</th>
-                  <th className="p-3 font-semibold">Actualizada</th>
-                  <th className="p-3 font-semibold">Canales</th>
+                  <th className="p-3 font-semibold">Name</th>
+                  <th className="p-3 font-semibold">State</th>
+                  <th className="p-3 font-semibold">Updated</th>
+                  <th className="p-3 font-semibold">Channels</th>
                   <th className="p-3 w-12"></th>
                 </tr>
               </thead>
