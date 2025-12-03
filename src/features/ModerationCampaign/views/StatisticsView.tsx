@@ -520,16 +520,12 @@ export default function StatisticsView() {
                     </div>
                 )}
 
-{/*                 <section className="mt-4 rounded-xl p-4 md:p-5 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-dashed ring-emerald-400/40">
+                <section className="mt-4 rounded-xl p-4 md:p-5 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-dashed ring-emerald-400/40">
                     <div className="flex items-center justify-between gap-2 mb-3">
                         <div>
                             <h4 className="text-[14px] font-semibold leading-tight">
-                                {t("stats_ai_analysis_dev_title") || "AI lead analysis (dev)"}
+                                {t("stats_ai_analysis")}
                             </h4>
-                            <p className="text-[12px] opacity-70 mt-1">
-                                {t("stats_ai_analysis_dev_hint") ||
-                                    "Usá estos botones para probar los endpoints de análisis. Mirá la consola del navegador para ver la respuesta."}
-                            </p>
                         </div>
                         {analysisLoading && (
                             <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/40">
@@ -541,55 +537,15 @@ export default function StatisticsView() {
                     <div className="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            onClick={handleExecuteAnalysisPreview}
-                            disabled={analysisLoading}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            Preview execute (dryRun)
-                        </button>
-
-                        <button
-                            type="button"
                             onClick={handleExecuteAnalysisReal}
                             disabled={analysisLoading}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <MessageSquare className="h-3.5 w-3.5" />
-                            Run execute
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={handleFetchAnalysisSummary}
-                            disabled={analysisLoading}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-neutral-400/40 bg-neutral-500/10 hover:bg-neutral-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <ClipboardList className="h-3.5 w-3.5" />
-                            Get summary
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={handleFetchAnalysisMetrics}
-                            disabled={analysisLoading}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-neutral-400/40 bg-neutral-500/10 hover:bg-neutral-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <CalendarRange className="h-3.5 w-3.5" />
-                            Get metrics
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={handleFetchHotLeads}
-                            disabled={analysisLoading}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-neutral-400/40 bg-neutral-500/10 hover:bg-neutral-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Users className="h-3.5 w-3.5" />
-                            Get hot leads
+                            {t("analyze_new_conversations")}
                         </button>
                     </div>
-                </section> */}
+                </section>
                 <section className="mt-4">
                     <KpiCards
                         items={[

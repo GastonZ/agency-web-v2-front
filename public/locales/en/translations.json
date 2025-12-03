@@ -250,5 +250,8 @@
     "qa_chars_used": "characters used",
     "webchat_domain_label": "Website domain where you'll use the webchat",
     "webchat_domain_placeholder": "e.g., mywebsite.com",
-    "webchat_domain_help": "Enter the domain of the website where you plan to implement the webchat. This helps ensure proper configuration and functionality."
+    "webchat_domain_help": "Enter the domain of the website where you plan to implement the webchat. This helps ensure proper configuration and functionality.",
+    "stats_no_leads_yet": "No leads yet to display statistics.",
+    "stats_ai_analysis": "AI lead analysis",
+    "analyze_new_conversations": "Analyze conversations"
 }

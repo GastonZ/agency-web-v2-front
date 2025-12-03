@@ -248,5 +248,8 @@
     "qa_chars_used": "caracteres usados",
     "webchat_domain_label": "Dominio del sitio web donde usarás el webchat",
     "webchat_domain_placeholder": "Ej., misitio.com",
-    "webchat_domain_help": "Ingresá el dominio del sitio web donde planeas implementar el webchat. Esto ayuda a asegurar una configuración y funcionalidad adecuadas."
+    "webchat_domain_help": "Ingresá el dominio del sitio web donde planeas implementar el webchat. Esto ayuda a asegurar una configuración y funcionalidad adecuadas.",
+    "stats_no_leads_yet": "Aún no hay leads para mostrar estadísticas.",
+    "stats_ai_analysis": "Análisis de leads con IA",
+    "analyze_new_conversations": "Analizar conversaciones"
 }
