@@ -42,6 +42,11 @@ type Props = {
   whatsappStatus?: WhatsappStatus;
   campaignId: string;
   className?: string;
+
+  // 🔁 nuevos props para revincular
+  onReconnectWhatsapp?: () => void;
+  instagramReconnectButton?: React.ReactNode;
+  facebookReconnectButton?: React.ReactNode;
 };
 
 export default function ConnectedAccountsPanel({
@@ -49,6 +54,9 @@ export default function ConnectedAccountsPanel({
   whatsappStatus,
   campaignId,
   className = "",
+  onReconnectWhatsapp,
+  instagramReconnectButton,
+  facebookReconnectButton,
 }: Props) {
   const { i18n } = useTranslation();
   const { t } = useTranslation("translations");
@@ -110,9 +118,9 @@ export default function ConnectedAccountsPanel({
     } catch (e: any) {
       setErrorMsg(
         e?.message ||
-          (uiLang === "en"
-            ? "There was an error updating the channel status."
-            : "Hubo un error al actualizar el estado del canal.")
+        (uiLang === "en"
+          ? "There was an error updating the channel status."
+          : "Hubo un error al actualizar el estado del canal.")
       );
     } finally {
       setLoadingChannel(null);
@@ -125,8 +133,8 @@ export default function ConnectedAccountsPanel({
         ? "Paused: the assistant will NOT reply on this channel."
         : "Pausado: el asistente NO va a responder en este canal."
       : uiLang === "en"
-      ? "Active: the assistant will reply on this channel."
-      : "Activo: el asistente va a responder en este canal.";
+        ? "Active: the assistant will reply on this channel."
+        : "Activo: el asistente va a responder en este canal.";
 
   const btnText = (paused: boolean) =>
     paused
@@ -134,8 +142,8 @@ export default function ConnectedAccountsPanel({
         ? "Resume channel"
         : "Reanudar canal"
       : uiLang === "en"
-      ? "Pause channel"
-      : "Pausar canal";
+        ? "Pause channel"
+        : "Pausar canal";
 
   return (
     <motion.div
@@ -220,24 +228,35 @@ export default function ConnectedAccountsPanel({
                       <p className="mt-1 text-xs opacity-80">
                         {pausedLabel(localPaused.whatsapp)}
                       </p>
+                      <div className="flex flex-col w-max">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleChannel("whatsapp")}
+                          disabled={loadingChannel === "whatsapp"}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-60"
+                        >
+                          {localPaused.whatsapp ? (
+                            <PlayCircle className="h-3.5 w-3.5" />
+                          ) : (
+                            <PauseCircle className="h-3.5 w-3.5" />
+                          )}
+                          {loadingChannel === "whatsapp"
+                            ? uiLang === "en"
+                              ? "Updating..."
+                              : "Actualizando..."
+                            : btnText(localPaused.whatsapp)}
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleToggleChannel("whatsapp")}
-                        disabled={loadingChannel === "whatsapp"}
-                        className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-60"
-                      >
-                        {localPaused.whatsapp ? (
-                          <PlayCircle className="h-3.5 w-3.5" />
-                        ) : (
-                          <PauseCircle className="h-3.5 w-3.5" />
+                        {onReconnectWhatsapp && (
+                          <button
+                            type="button"
+                            onClick={onReconnectWhatsapp}
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ring-1 ring-neutral-400/40 bg-neutral-500/5 hover:bg-neutral-500/10"
+                          >
+                            {uiLang === "en" ? "Relink WhatsApp" : "Re-vincular WhatsApp"}
+                          </button>
                         )}
-                        {loadingChannel === "whatsapp"
-                          ? uiLang === "en"
-                            ? "Updating..."
-                            : "Actualizando..."
-                          : btnText(localPaused.whatsapp)}
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -294,6 +313,12 @@ export default function ConnectedAccountsPanel({
                             : "Actualizando..."
                           : btnText(localPaused.instagram)}
                       </button>
+
+                      {instagramReconnectButton && (
+                        <div className="mt-2">
+                          {instagramReconnectButton}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -354,6 +379,12 @@ export default function ConnectedAccountsPanel({
                             : "Actualizando..."
                           : btnText(localPaused.facebook)}
                       </button>
+
+                      {facebookReconnectButton && (
+                        <div className="mt-2">
+                          {facebookReconnectButton}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>

@@ -18,9 +18,6 @@ const StepTwo: React.FC = () => {
 
   const hasWebchat = data.channels?.includes("webchat");
 
-  console.log(data);
-  
-
   return (
     <div className="w-full space-y-4 md:space-y-6">
       <GlassCard>

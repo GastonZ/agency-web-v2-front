@@ -312,10 +312,19 @@ export default function StatisticsView() {
         return Boolean(accountsData?.facebookCredentials?.pages?.length);
     }, [accountsData]);
 
-    console.log(campaign);
-
-
     const hasAnyConnected = isWhatsAppConnected || isInstagramConnected || isFacebookConnected
+
+    const isWhatsConnected = Boolean(campaign?.whatsappStatus?.qrScanned);
+    const isIgConnected = Boolean(accountsData?.instagram);
+    const isFbConnected = Boolean(accountsData?.facebook);
+
+    const needsWhatsSetup = hasWhatsApp && !isWhatsConnected;
+    const needsInstagramSetup = hasInstagram && !isIgConnected;
+    const needsFacebookSetup = hasFacebook && !isFbConnected;
+
+    const showPendingPanel = needsWhatsSetup || needsInstagramSetup || needsFacebookSetup;
+    const twoCols = showPendingPanel && hasAnyConnected;
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-neutral-950">
             <div className="text-center space-y-3">
@@ -358,59 +367,69 @@ export default function StatisticsView() {
                 </div>
 
                 {/* Banner post-lanzamiento */}
-                <div className={`grid grid-cols-1 ${hasAnyConnected ? "md:grid-cols-2 gap-4" : ""}`}>
-                    <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
-                        <div className="flex items-start gap-3">
-                            <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
-                                <MessageSquare className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-[15px] font-semibold leading-tight">{t("pending_account_setup")}</h3>
-                                <p className="text-sm opacity-80 mt-1">
-                                    {t("setup_channel_accounts")}
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {(channelsToConfigure?.length ? channelsToConfigure : ["—"]).map((c) => (
-                                        <span key={c} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-lg ring-1 ring-emerald-400/30 bg-emerald-500/10">
-                                            <MessageSquare className="h-3.5 w-3.5 opacity-70" />
-                                            {c}
-                                        </span>
-                                    ))}
+                <div className={`grid grid-cols-1 ${twoCols ? "md:grid-cols-2 gap-4" : ""}`}>
+                    {/* PANEL DE CUENTAS PENDIENTES DE VINCULAR */}
+                    {showPendingPanel && (
+                        <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
+                            <div className="flex items-start gap-3">
+                                <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
+                                    <MessageSquare className="h-4 w-4" />
                                 </div>
-                                <div className="mt-4 flex gap-2">
-                                    {hasWhatsApp ? (
-                                        <button
-                                            className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
-                                            onClick={() => setOpenWhatsAppSetup(true)}
-                                        >
-                                            {t("setup_whatsapp")}
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="rounded-xl px-5 h-11 ring-1 ring-neutral-400/30 bg-neutral-500/10 text-[15px]"
-                                            disabled
-                                            title="No hay WhatsApp entre los canales"
-                                        >
-                                            {t("setup_accounts")}
-                                        </button>
+                                <div className="flex-1">
+                                    <h3 className="text-[15px] font-semibold leading-tight">
+                                        {t("pending_account_setup")}
+                                    </h3>
+                                    <p className="text-sm opacity-80 mt-1">
+                                        {t("setup_channel_accounts")}
+                                    </p>
+
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {(channelsToConfigure?.length ? channelsToConfigure : ["—"]).map((c) => (
+                                            <span
+                                                key={c}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-lg ring-1 ring-emerald-400/30 bg-emerald-500/10"
+                                            >
+                                                <MessageSquare className="h-3.5 w-3.5 opacity-70" />
+                                                {c}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    {/* WHATSAPP: solo si hay canal y NO está vinculado */}
+                                    {needsWhatsSetup && (
+                                        <div className="mt-4 flex gap-2">
+                                            <button
+                                                className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
+                                                onClick={() => setOpenWhatsAppSetup(true)}
+                                            >
+                                                {t("setup_whatsapp")}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* INSTAGRAM: solo si falta vincular */}
+                                    {needsInstagramSetup && (
+                                        <div className="mt-3">
+                                            <InstagramConnectButton
+                                                clientId={import.meta.env.VITE_IG_APP_ID!}
+                                                redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
+                                                campaignId={campaign.id}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* FACEBOOK: solo si falta vincular */}
+                                    {needsFacebookSetup && (
+                                        <div className="mt-3">
+                                            <FacebookConnectPanel state={campaign.id} />
+                                        </div>
                                     )}
                                 </div>
-                                {hasInstagram && (
-                                    <InstagramConnectButton
-                                        clientId={import.meta.env.VITE_IG_APP_ID!}
-                                        redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
-                                        campaignId={campaign.id}
-                                    />
-                                )}
-
-                                {hasFacebook && (
-                                    <FacebookConnectPanel
-                                        state={campaign.id}
-                                    />
-                                )}
                             </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* PANEL DE CUENTAS YA VINCULADAS */}
                     {hasAnyConnected && (
                         <ConnectedAccountsPanel
                             campaignId={campaign.id}
@@ -439,6 +458,29 @@ export default function StatisticsView() {
                                 qrScannedByPhone: campaign.whatsappStatus?.qrScannedByPhone,
                                 paused: campaign.whatsappStatus?.paused,
                             }}
+                            onReconnectWhatsapp={
+                                isWhatsConnected && hasWhatsApp
+                                    ? () => setOpenWhatsAppSetup(true)
+                                    : undefined
+                            }
+                            instagramReconnectButton={
+                                isIgConnected && hasInstagram ? (
+                                    <InstagramConnectButton
+                                        clientId={import.meta.env.VITE_IG_APP_ID!}
+                                        redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
+                                        campaignId={campaign.id}
+                                        variant="reconnect"
+                                    />
+                                ) : undefined
+                            }
+                            facebookReconnectButton={
+                                isFbConnected && hasFacebook ? (
+                                    <FacebookConnectPanel
+                                        state={campaign.id}
+                                        variant="reconnect"
+                                    />
+                                ) : undefined
+                            }
                         />
                     )}
                 </div>
@@ -573,12 +615,6 @@ export default function StatisticsView() {
                         {timeSeries.length > 0 && (
                             <section className="grid grid-cols-1 gap-4">
                                 <LeadsOverTimeArea data={timeSeries} />
-                            </section>
-                        )}
-
-                        {funnelData.length > 0 && (
-                            <section className="grid grid-cols-1 gap-4">
-                                <ConversionFunnel data={funnelData} />
                             </section>
                         )}
                     </>

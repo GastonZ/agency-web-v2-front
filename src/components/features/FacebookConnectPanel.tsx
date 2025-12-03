@@ -7,13 +7,12 @@ type FacebookConnectPanelProps = {
   scope?: string[];
   state?: string;
   openInNewTab?: boolean;
+  variant?: "connect" | "reconnect";
   className?: string;
 };
 
 const DEFAULT_CLIENT_ID = import.meta.env.VITE_FB_APP_ID ?? "";
 
-// Si querés, podés definir VITE_FB_REDIRECT_URI en .env,
-// si no, usamos /facebook/callback en el dominio actual.
 const DEFAULT_REDIRECT =
   (import.meta as any).env.VITE_FB_REDIRECT_URI ||
   (typeof window !== "undefined"
@@ -35,10 +34,13 @@ export default function FacebookConnectPanel({
   scope = DEFAULT_SCOPE,
   state = "random_state_string",
   openInNewTab = false,
+  variant = "connect",
   className = "",
 }: FacebookConnectPanelProps) {
   const [building, setBuilding] = React.useState(false);
   const { t } = useTranslation("translations");
+
+  const isReconnect = variant === "reconnect";
 
   const authUrl = React.useMemo(() => {
     const q = new URLSearchParams({
@@ -53,26 +55,31 @@ export default function FacebookConnectPanel({
   }, [clientId, redirectUri, scope, state]);
 
   return (
-    <div className={["mt-4", className].join(" ")}>
+    <div className={["mt-2", className].join(" ")}>
 
-      <div className="mt-4 flex gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            setBuilding(true);
-            if (openInNewTab) {
-              window.open(authUrl, "_blank", "noopener,noreferrer");
-            } else {
-              window.location.href = authUrl;
-            }
-          }}
-          className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
-        >
-          {building
-            ? t("opening_facebook_auth", "Abriendo autorización…")
-            : t("connect_facebook", "Conectar Facebook")}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setBuilding(true);
+          if (openInNewTab) {
+            window.open(authUrl, "_blank", "noopener,noreferrer");
+          } else {
+            window.location.href = authUrl;
+          }
+        }}
+        className={[
+          "transition",
+          isReconnect
+          ? "ring-1 text-xs p-2 rounded-lg ring-neutral-400/40 bg-neutral-500/5 hover:bg-neutral-500/10"
+          : "ring-1 px-5 h-11 rounded-xl  ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20",
+        ].join(" ")}
+      >
+        {building
+          ? t("opening_facebook_auth", "Abriendo autorización…")
+          : isReconnect
+          ? t("reconnect_facebook", "Re-vincular Facebook")
+          : t("connect_facebook", "Conectar Facebook")}
+      </button>
     </div>
   );
 }

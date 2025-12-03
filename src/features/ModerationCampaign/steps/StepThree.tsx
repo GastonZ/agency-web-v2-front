@@ -23,7 +23,6 @@ export const StepThreeBottom: React.FC = () => {
         <KnowHowFileImport />
         <QAEditor />
       </div>
-      <ScopeCard />
       <EscalationCard />
 
       <CalendarCard />
@@ -40,7 +39,6 @@ const StepThree: React.FC = () => {
         <KnowHowFileImport />
         <QAEditor />
       </div>
-      <ScopeCard />
       <EscalationCard />
       <CalendarCard />
     </div>
