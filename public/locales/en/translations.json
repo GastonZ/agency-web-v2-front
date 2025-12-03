@@ -91,7 +91,7 @@
     "invalid_format_contact": "Invalid format. Use +NN NNNNNNNNN.",
     "error_process_file": "Could not process the file",
     "empty_file": "Empty file",
-    "knowledge_base": "How your chatbot will respond",
+    "knowledge_base": "Questions and Answers (Q&A) - Knowledge Base",
     "question": "Question",
     "answer": "Answer",
     "add_qa": "Add Q&A",
@@ -246,5 +246,9 @@
     "stats_count_by_score_range": "Count by score range",
     "stats_leads_trend": "Leads trend",
     "stats_new_leads_per_day": "New leads per day",
-    "open": "Open"
+    "open": "Open",
+    "qa_chars_used": "characters used",
+    "webchat_domain_label": "Website domain where you'll use the webchat",
+    "webchat_domain_placeholder": "e.g., mywebsite.com",
+    "webchat_domain_help": "Enter the domain of the website where you plan to implement the webchat. This helps ensure proper configuration and functionality."
 }

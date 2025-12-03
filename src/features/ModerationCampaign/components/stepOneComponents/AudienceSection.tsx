@@ -15,11 +15,20 @@ const AudienceSection: React.FC = () => {
     <GlassCard>
       <SectionTitle title={t("target_audience")} subtitle={t("segment_geo_demo")} />
 
+
       <LocationSelection
         value={{
-          countryId: (data as any).audience?.geo?.countryId || "",
-          stateId: (data as any).audience?.geo?.stateId || "",
-          city: data.audience.geo.city || "",
+          countryId:
+            (data as any).audience?.geo?.countryId ||
+            (data as any).audience?.geo?.countryCode ||
+            (data as any).audience?.geo?.country ||
+            "",
+          stateId:
+            (data as any).audience?.geo?.stateId ||
+            (data as any).audience?.geo?.regionCode ||
+            (data as any).audience?.geo?.region ||
+            "",
+          city: (data as any).audience?.geo?.city || "",
         }}
         onChange={(patch) => {
           setGeo(patch);

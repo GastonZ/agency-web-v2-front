@@ -12,7 +12,8 @@ export type GeoLean = {
   countryId?: string;
   stateId?: string;
   city?: string;
-  // postalCode?: string;  // opcional: no lo enviaremos
+  countryCode?: string;
+  regionCode?: string;
 };
 
 type Props = {
@@ -20,7 +21,7 @@ type Props = {
   onChange: (patch: Partial<GeoLean>) => void;
   className?: string;
   languageOverride?: string;
-  showPostalCode?: boolean; // si algún día lo querés mostrar, igual no lo enviaremos
+  showPostalCode?: boolean;
 };
 
 const LocationSelection: React.FC<Props> = ({
@@ -40,7 +41,18 @@ const LocationSelection: React.FC<Props> = ({
   const [loadingStates, setLoadingStates] = React.useState(false);
   const [geoError, setGeoError] = React.useState<string | null>(null);
 
-  const selectedCountryId = value.countryId || "";
+  const selectedCountryId = React.useMemo(() => {
+    if (!value.countryId) return "";
+
+    const byId = countries.find((c) => String(c.id) === String(value.countryId));
+    if (byId) return String(byId.id);
+
+    const byCode = countries.find((c) => c.code === value.countryId);
+    if (byCode) return String(byCode.id);
+
+    return "";
+  }, [countries, value.countryId]);
+
   const selectedStateId = value.stateId || "";
 
   React.useEffect(() => {
@@ -50,6 +62,9 @@ const LocationSelection: React.FC<Props> = ({
         setGeoError(null);
         setLoadingCountries(true);
         const res = await fetchCountries(language);
+
+        console.log('countries res', res);
+
         if (!alive) return;
         setCountries(res.filter((c) => (c as any).isAvailable ?? true));
       } catch {
@@ -91,13 +106,28 @@ const LocationSelection: React.FC<Props> = ({
 
   const onCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCountryId = e.target.value || "";
-    // ✅ Solo propagamos ids; al cambiar país, reseteamos stateId
-    onChange({ countryId: newCountryId, stateId: "" });
+
+    const selected = countries.find((c) => String(c.id) === newCountryId);
+    const newCountryCode = selected?.code || "";
+
+    onChange({
+      countryId: newCountryId,
+      countryCode: newCountryCode,
+      stateId: "",
+      regionCode: "",
+    });
   };
 
   const onStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStateId = e.target.value || "";
-    onChange({ stateId: newStateId });
+
+    const selected = states.find((s) => String(s.id) === newStateId);
+    const newRegionCode = (selected as any)?.code || "";
+
+    onChange({
+      stateId: newStateId,
+      regionCode: newRegionCode,
+    });
   };
 
   return (
@@ -149,8 +179,8 @@ const LocationSelection: React.FC<Props> = ({
             {!selectedCountryId
               ? t("select_country_first")
               : loadingStates
-              ? t("loading")
-              : t("province_region")}
+                ? t("loading")
+                : t("province_region")}
           </option>
           {states.map((s) => (
             <option key={s.id} value={s.id}>
@@ -177,7 +207,7 @@ const LocationSelection: React.FC<Props> = ({
             id="geoPostal"
             placeholder="1406"
             // value={value.postalCode || ""}
-            onChange={() => {}}
+            onChange={() => { }}
             disabled
           />
         </div>

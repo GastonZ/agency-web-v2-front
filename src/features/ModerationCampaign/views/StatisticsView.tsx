@@ -1,6 +1,13 @@
 import * as React from "react";
 import { useParams, Link } from "react-router-dom";
-import { getModerationAccounts, getModerationCampaignById } from "../../../services/campaigns";
+import {
+    getModerationAccounts,
+    getModerationCampaignById,
+    executeModerationAnalysis,
+    getModerationAnalysisSummary,
+    getModerationAnalysisMetrics,
+    getModerationHotLeads,
+} from "../../../services/campaigns";
 import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../../utils/helper";
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { MessageSquare, ClipboardList, CalendarRange, CheckCircle2, Users, Zap, Star } from "lucide-react";
@@ -13,9 +20,8 @@ import { useTranslation } from "react-i18next";
 import ConnectedAccountsPanel from "../../../components/features/statisticsComponents/ConnectedAccountsPanel";
 import { LeadsTable } from "../../../components/features/statisticsComponents/leads/LeadsTable";
 import { LeadDetailsModal } from "../../../components/features/statisticsComponents/leads/LeadDetailsModal";
-import { mockLeads } from "../../../components/features/statisticsComponents/leads/mockLeads";
 import type { Lead } from "../../../services/types/moderation-types";
-import { kpisFromLeads, deriveChannelCounts, deriveScoreBins, mockLeadsOverTime, mockFunnel } from "../../../components/features/statisticsComponents/leads/mockMetrics";
+import { deriveChannelCounts, deriveScoreBins } from "../../../components/features/statisticsComponents/leads/mockMetrics";
 import { KpiCards } from "../../../components/features/statisticsComponents/leads/metrics/KpiCards";
 import { LeadsByChannelDonut } from "../../../components/features/statisticsComponents/leads/metrics/LeadsByChannelDonut";
 import { LeadQualityBars } from "../../../components/features/statisticsComponents/leads/metrics/LeadQualityBars";
@@ -36,9 +42,71 @@ export default function StatisticsView() {
     const { t } = useTranslation('translations');
     const uiLang = i18n.language.startsWith("en") ? "en" : "es";
 
-    // lead
+    const [analysisLoading, setAnalysisLoading] = React.useState(false);
+
+    const callAnalysisEndpoint = React.useCallback(
+        async (label: string, fn: () => Promise<any>) => {
+            if (!id) return;
+            try {
+                setAnalysisLoading(true);
+                console.log(`[ModerationAnalysis] Calling ${label} for campaign`, id);
+                const res = await fn();
+                console.log(`[ModerationAnalysis] Result from ${label}`, res);
+            } catch (err) {
+                console.error(`[ModerationAnalysis] Error in ${label}`, err);
+            } finally {
+                setAnalysisLoading(false);
+            }
+        },
+        [id]
+    );
+
+    const handleExecuteAnalysisPreview = React.useCallback(
+        () =>
+            callAnalysisEndpoint("POST /analysis/execute (dryRun)", () =>
+                executeModerationAnalysis(id!, { dryRun: true })
+            ),
+        [callAnalysisEndpoint, id]
+    );
+
+    const handleExecuteAnalysisReal = React.useCallback(
+        () =>
+            callAnalysisEndpoint("POST /analysis/execute", () =>
+                executeModerationAnalysis(id!, { dryRun: false })
+            ),
+        [callAnalysisEndpoint, id]
+    );
+
+    const handleFetchAnalysisSummary = React.useCallback(
+        () =>
+            callAnalysisEndpoint("GET /analysis/summary", () =>
+                getModerationAnalysisSummary(id!)
+            ),
+        [callAnalysisEndpoint, id]
+    );
+
+    const handleFetchAnalysisMetrics = React.useCallback(
+        () =>
+            callAnalysisEndpoint("GET /analysis/metrics", () =>
+                getModerationAnalysisMetrics(id!)
+            ),
+        [callAnalysisEndpoint, id]
+    );
+
+    const handleFetchHotLeads = React.useCallback(
+        () =>
+            callAnalysisEndpoint("GET /analysis/hot-leads", () =>
+                getModerationHotLeads(id!)
+            ),
+        [callAnalysisEndpoint, id]
+    );
+
     const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
     const [openModal, setOpenModal] = React.useState(false);
+
+    const [leads, setLeads] = React.useState<Lead[]>([]);
+    const [analysisMetrics, setAnalysisMetrics] = React.useState<any | null>(null);
+    const [analysisSummary, setAnalysisSummary] = React.useState<any | null>(null);
 
     const handleOpenLead = (lead: Lead) => {
         setSelectedLead(lead);
@@ -47,13 +115,130 @@ export default function StatisticsView() {
 
     const handleClose = () => setOpenModal(false);
 
-    // Lead metrics
+    const kpis = React.useMemo(() => {
+        if (!leads.length) {
+            return {
+                total: 0,
+                avgScore: 0,
+                responseRate: 0,
+                topChannel: "—",
+            };
+        }
 
-    const kpis = React.useMemo(() => kpisFromLeads(mockLeads), []);
-    const channelData = React.useMemo(() => deriveChannelCounts(mockLeads), []);
-    const scoreBins = React.useMemo(() => deriveScoreBins(mockLeads), []);
-    const timeSeries = React.useMemo(() => mockLeadsOverTime(), []);
-    const funnelData = React.useMemo(() => mockFunnel(), []);
+        const m = analysisMetrics?.metrics;
+
+        const totalLeads = leads.length;
+
+        const hotFromMetrics = m?.hotLeads ?? totalLeads;
+        const totalAnalyses = m?.totalAnalyses ?? totalLeads;
+        const responseRate = totalAnalyses
+            ? Math.round((hotFromMetrics / totalAnalyses) * 100)
+            : 0;
+
+        const byChannel = deriveChannelCounts(leads);
+        const topChannel =
+            byChannel.sort((a, b) => b.value - a.value)[0]?.name || "—";
+
+        const avgScore =
+            leads.reduce((acc, l) => acc + (l.score || 0), 0) / totalLeads;
+
+        return {
+            total: totalLeads,
+            avgScore: Number(avgScore.toFixed(1)),
+            responseRate,
+            topChannel,
+        };
+    }, [analysisMetrics, leads]);
+
+    const channelData = React.useMemo(
+        () => deriveChannelCounts(leads),
+        [leads],
+    );
+    const scoreBins = React.useMemo(
+        () => deriveScoreBins(leads),
+        [leads],
+    )
+
+    const timeSeries = React.useMemo(() => [] as any[], [leads]);
+
+    const funnelData = React.useMemo(() => {
+        const m = analysisMetrics?.metrics;
+        if (!m) return [];
+
+        const hot = m.hotLeads ?? 0;
+        const warm = m.warmLeads ?? 0;
+        const cold = m.coldAnalyses ?? 0;
+        const totalAnalyses = m.totalAnalyses ?? hot + warm + cold;
+        const totalLeads = hot + warm + cold;
+
+        if (!totalAnalyses && !totalLeads) return [];
+
+        return [
+            { name: "Conversaciones analizadas", value: totalAnalyses || totalLeads },
+            { name: "Leads detectados", value: totalLeads },
+            { name: "Leads calientes", value: hot },
+        ];
+    }, [analysisMetrics]);
+
+    React.useEffect(() => {
+        if (!id) return;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const [metricsRes, hotLeadsRes, summaryRes] = await Promise.all([
+                    getModerationAnalysisMetrics(id),
+                    getModerationHotLeads(id),
+                    getModerationAnalysisSummary(id),
+                ]);
+
+                if (cancelled) return;
+
+                if (metricsRes) setAnalysisMetrics(metricsRes);
+                if (summaryRes) setAnalysisSummary(summaryRes);
+
+                const apiLeads = Array.isArray((hotLeadsRes as any)?.leads)
+                    ? (hotLeadsRes as any).leads
+                    : [];
+
+                if (apiLeads.length) {
+                    const mapped: Lead[] = apiLeads.map((l: any) => ({
+                        id:
+                            l.conversationId ||
+                            l.id ||
+                            `${l.contactNumber || "lead"}-${l.analyzedAt || ""
+                            }`,
+                        name:
+                            (l.extractedData && l.extractedData.name) ||
+                            l.contactName ||
+                            l.contactNumber ||
+                            "Lead sin nombre",
+                        summary: l.summary,
+                        score:
+                            typeof l.finalScore === "number"
+                                ? l.finalScore
+                                : 0,
+                        channel: (l.channel || "unknown") as Lead["channel"],
+                        // cuando tengamos link directo al hilo se lo agregamos acá
+                        channelLink: undefined,
+                    }));
+
+                    setLeads(mapped);
+                } else {
+                    setLeads([]);
+                }
+            } catch (err) {
+                console.error(
+                    "[StatisticsView] Error loading analysis data",
+                    err,
+                );
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
 
     const [whatsappLinkedInfo, setWhatsappLinkedInfo] = React.useState<{
         phoneNumber?: string;
@@ -334,6 +519,77 @@ export default function StatisticsView() {
                         </div>
                     </div>
                 )}
+
+{/*                 <section className="mt-4 rounded-xl p-4 md:p-5 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-dashed ring-emerald-400/40">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h4 className="text-[14px] font-semibold leading-tight">
+                                {t("stats_ai_analysis_dev_title") || "AI lead analysis (dev)"}
+                            </h4>
+                            <p className="text-[12px] opacity-70 mt-1">
+                                {t("stats_ai_analysis_dev_hint") ||
+                                    "Usá estos botones para probar los endpoints de análisis. Mirá la consola del navegador para ver la respuesta."}
+                            </p>
+                        </div>
+                        {analysisLoading && (
+                            <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/40">
+                                {t("loading") || "Cargando..."}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={handleExecuteAnalysisPreview}
+                            disabled={analysisLoading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            Preview execute (dryRun)
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleExecuteAnalysisReal}
+                            disabled={analysisLoading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            Run execute
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleFetchAnalysisSummary}
+                            disabled={analysisLoading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-neutral-400/40 bg-neutral-500/10 hover:bg-neutral-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ClipboardList className="h-3.5 w-3.5" />
+                            Get summary
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleFetchAnalysisMetrics}
+                            disabled={analysisLoading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-neutral-400/40 bg-neutral-500/10 hover:bg-neutral-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <CalendarRange className="h-3.5 w-3.5" />
+                            Get metrics
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleFetchHotLeads}
+                            disabled={analysisLoading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-neutral-400/40 bg-neutral-500/10 hover:bg-neutral-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Users className="h-3.5 w-3.5" />
+                            Get hot leads
+                        </button>
+                    </div>
+                </section> */}
                 <section className="mt-4">
                     <KpiCards
                         items={[
@@ -345,29 +601,39 @@ export default function StatisticsView() {
                     />
                 </section>
                 <section className="mt-2">
-                    <LeadsTable leads={mockLeads} onOpenLead={handleOpenLead} />
+                    <LeadsTable leads={leads} onOpenLead={handleOpenLead} />
                 </section>
 
 
-                <LeadDetailsModal open={openModal} lead={selectedLead} onClose={handleClose} />
+                {leads.length > 0 && (
+                    <>
+                        {(channelData.length > 0 || scoreBins.length > 0) && (
+                            <section className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {channelData.length > 0 && <LeadsByChannelDonut data={channelData} />}
+                                {scoreBins.length > 0 && <LeadQualityBars data={scoreBins} />}
+                            </section>
+                        )}
 
+                        {timeSeries.length > 0 && (
+                            <section className="grid grid-cols-1 gap-4">
+                                <LeadsOverTimeArea data={timeSeries} />
+                            </section>
+                        )}
 
+                        {funnelData.length > 0 && (
+                            <section className="grid grid-cols-1 gap-4">
+                                <ConversionFunnel data={funnelData} />
+                            </section>
+                        )}
+                    </>
+                )}
 
-
-                <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <LeadsByChannelDonut data={channelData} />
-                    <LeadQualityBars data={scoreBins} />
-                </section>
-
-
-                <section className="grid grid-cols-1 gap-4">
-                    <LeadsOverTimeArea data={timeSeries} />
-                </section>
-
-
-                <section className="grid grid-cols-1 gap-4">
-                    <ConversionFunnel data={funnelData} />
-                </section>
+                {leads.length === 0 && (
+                    <div className="mt-4 rounded-2xl ring-1 ring-dashed ring-emerald-400/30 bg-emerald-50/40 dark:bg-neutral-900/60 p-4 text-sm">
+                        {t("stats_no_leads_yet") ||
+                            "Todavía no hay leads analizados. Cuando la campaña genere leads vas a ver las métricas acá."}
+                    </div>
+                )}
 
                 <div className="pt-2">
                     <Link to="/my_campaigns" className="text-emerald-600 hover:underline">{t("back_to_campaigns")}</Link>

@@ -8,7 +8,7 @@ import { StepThreeTop, StepThreeBottom } from "../steps/StepThree";
 import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
-import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus } from "../../../services/campaigns";
+import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus, updateWebchatConfig } from "../../../services/campaigns";
 import { buildTranscriptFromHistory, clampStep, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep, getUserId } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
@@ -37,14 +37,20 @@ import { useTranslation } from "react-i18next";
 
 const STEPS = [
     { id: 1, title: "Datos" },
-    { id: 2, title: "Canales" },
     { id: 3, title: "Reglas" },
+    { id: 2, title: "Canales" },
     { id: 4, title: "Revisión" },
 ];
 
 const Moderation: React.FC = () => {
 
     const navigate = useNavigate();
+
+    const scrollToTop = () => {
+        try {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch { }
+    };
 
     const { getModerationOverview, explainModerationField, updateModerationBasics } = useModerationBasicsTools();
     const { updateModerationGeoByName } = useModerationGeoTools();
@@ -86,8 +92,8 @@ const Moderation: React.FC = () => {
 
     const STEPS_T = [
         { id: 1, title: t("data") },
-        { id: 2, title: t("channels") },
-        { id: 3, title: t("rules") },
+        { id: 2, title: t("rules") },
+        { id: 3, title: t("channels") },
         { id: 4, title: t("review") },
     ];
 
@@ -157,14 +163,14 @@ const Moderation: React.FC = () => {
 
                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-/*                     const summary = await getResumeOfConversation(chosenText, 10000, uiLang, ctrl.signal);
-                    if (!aborted) {
-                        setBootSummary(summary || undefined);
-                        console.groupCollapsed("[Moderation][boot] resumen recibido");
-                        console.log("summary.len:", (summary || "").length);
-                        console.log("summary.preview:", (summary || "").slice(0, 240));
-                        console.groupEnd();
-                    } */
+                    /*                     const summary = await getResumeOfConversation(chosenText, 10000, uiLang, ctrl.signal);
+                                        if (!aborted) {
+                                            setBootSummary(summary || undefined);
+                                            console.groupCollapsed("[Moderation][boot] resumen recibido");
+                                            console.log("summary.len:", (summary || "").length);
+                                            console.log("summary.preview:", (summary || "").slice(0, 240));
+                                            console.groupEnd();
+                                        } */
                 } else {
                     console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
                 }
@@ -229,7 +235,20 @@ const Moderation: React.FC = () => {
 
     function missingFromStep1(data: any) {
         const arr = Array.isArray(data.channels) ? data.channels : [];
-        return arr.length ? [] : ["channels"];
+        const missing: string[] = [];
+
+        if (!arr.length) {
+            missing.push("channels");
+        }
+
+        if (arr.includes("webchat")) {
+            const domain = (data as any).webchatDomain?.trim?.() ?? "";
+            if (!domain) {
+                missing.push("webchat.domain");
+            }
+        }
+
+        return missing;
     }
 
     function missingFromStep2(data: any) {
@@ -249,6 +268,14 @@ const Moderation: React.FC = () => {
         if (!assistantNameOk) missing.push("assistant.name");
         if (!hasAtLeastOneQA) missing.push("knowHow");
 
+        const hasEscalationItems =
+            Array.isArray(data?.escalationItems) && data.escalationItems.length > 0;
+        const phone = (data?.escalationPhone || "").trim();
+
+        if (hasEscalationItems && !phone) {
+            missing.push("escalation.phone");
+        }
+
         return missing;
     }
 
@@ -257,10 +284,10 @@ const Moderation: React.FC = () => {
             return missingFromStep0(data).length === 0;
         }
         if (index === 1) {
-            return missingFromStep1(data).length === 0;
+            return missingFromStep2(data).length === 0;
         }
         if (index === 2) {
-            return missingFromStep2(data).length === 0;
+            return missingFromStep1(data).length === 0;
         }
         return true;
     }, [data]);
@@ -275,8 +302,8 @@ const Moderation: React.FC = () => {
             const humanIndex = safeIndex + 1;
 
             // títulos por paso
-            const stepTitlesEs = ["Datos", "Canales", "Reglas", "Revisión"];
-            const stepTitlesEn = ["Basics", "Channels", "Assistant rules", "Review"];
+            const stepTitlesEs = ["Datos", "Reglas", "Canales", "Revisión"];
+            const stepTitlesEn = ["Basics", "Assistant rules", "Channels", "Review"];
 
             const stepTitleEs = stepTitlesEs[safeIndex] ?? `Paso ${humanIndex}`;
             const stepTitleEn = stepTitlesEn[safeIndex] ?? `Step ${humanIndex}`;
@@ -291,10 +318,10 @@ const Moderation: React.FC = () => {
                         "Keep talking in english , your role is to guide the user to complete the basic campaign data: country , name, goal, and lead definition then, optionally, summary, city, culture and tone).";
                 } else if (safeIndex === 1) {
                     focusText =
-                        "Keep talking in english , your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
+                        "Keep talking in english , your role is to define the assistant rules: assistant name, initial greet, conversational logic, knowledge base (question and answers *IMPORTANT: mention that at least one Q&A is needed), allowed topics, human escalation and calendars if the user is interested.";
                 } else if (safeIndex === 2) {
                     focusText =
-                        "Keep talking in english , your role is to define the assistant rules: assistant name, initial greet, conversational logic,  knowledge base (question and answers *IMPORTANT MENTION ITS NEEDED AT LEAST ONE QUESTION AND ANSWER), allowed topics and human escalation and calendars if users is interested.";
+                        "Keep talking in english , your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
                 } else {
                     focusText =
                         "Keep talking in english , your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
@@ -337,10 +364,10 @@ const Moderation: React.FC = () => {
                     "Sigue hablando en español, Tu rol es guiar al usuario para completar los datos básicos de la campaña: país principal del público, nombre, objetivo  y definición de lead, luego, opcionalmente, resumen, ciudad, cultura y tono.";
             } else if (safeIndex === 1) {
                 focusText =
-                    "Sigue hablando en español, Tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
+                    "Sigue hablando en español, tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, lógica conversacional, base de conocimiento (preguntas y respuestas *IMPORTANTE: menciona que es necesaria al menos una), temas permitidos y escalamiento humano, y calendarios si el usuario está interesado.";
             } else if (safeIndex === 2) {
                 focusText =
-                    "Sigue hablando en español, Tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, logica conversacional, base de conocimiento (preguntas y respuestas *IMPORTANTE MENCIONA ES NECESARIA AL MENOS UNA), temas permitidos y escalamiento humano.";
+                    "Sigue hablando en español, tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
             } else {
                 focusText =
                     "Sigue hablando en español, Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, una vez hecho eso ofrece lanzar la campaña sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
@@ -382,6 +409,7 @@ const Moderation: React.FC = () => {
         if (i <= current || validateStep(current)) {
             const next = clampStep(i);
             setCurrent(next);
+            scrollToTop();
             sendStepSilentNote(next);
         }
     };
@@ -430,27 +458,7 @@ const Moderation: React.FC = () => {
         if (current === 0) return await saveStepOne();
 
         if (current === 1) {
-            const channels = (data.channels || []) as Array<"instagram" | "facebook" | "whatsapp" | "email" | "x">;
-
-            if (!channels.length) {
-                toast.warning("Elegí al menos un canal.");
-                return false;
-            }
-
-            setSaving(true);
-            try {
-                await updateCampaignChannels(data.campaignId!, channels);
-                toast.success(t("channels_updated"));
-                return true;
-            } catch (err: any) {
-                toast.error(err?.message || "No se pudieron actualizar los canales.");
-                return false;
-            } finally {
-                setSaving(false);
-            }
-        }
-
-        if (current === 2) {
+            // Paso 2 - ASISTENTE / REGLAS
             const payload = mapAssistantSettingsFromContext({
                 assistant: data.assistant || {},
                 knowHow: data.knowHow || [],
@@ -472,6 +480,40 @@ const Moderation: React.FC = () => {
             }
         }
 
+        if (current === 2) {
+            // Paso 3 - CANALES
+            const channels = (data.channels || []) as Array<"instagram" | "facebook" | "whatsapp" | "webchat">;
+
+            if (!channels.length) {
+                toast.warning("Elegí al menos un canal.");
+                return false;
+            }
+
+            const hasWebchat = channels.includes("webchat");
+            const webchatDomain = (data as any).webchatDomain?.trim?.() ?? "";
+
+            if (hasWebchat && !webchatDomain) {
+                toast.warning("Agregá la URL de tu dominio para usar el Webchat.");
+                return false;
+            }
+
+            setSaving(true);
+            try {
+                await updateCampaignChannels(data.campaignId!, channels);
+
+                if (hasWebchat) {
+                    await updateWebchatConfig(data.campaignId!, { domain: webchatDomain });
+                }
+                toast.success(t("channels_updated"));
+                return true;
+            } catch (err: any) {
+                toast.error(err?.message || "No se pudieron actualizar los canales.");
+                return false;
+            } finally {
+                setSaving(false);
+            }
+        }
+
         return true;
     }, [current, data, saveStepOne, validateStep]);
 
@@ -479,6 +521,7 @@ const Moderation: React.FC = () => {
         setCurrent((c) => {
             const next = Math.max(0, c - 1);
             sendStepSilentNote(next);
+            scrollToTop();
             return next;
         });
 
@@ -517,6 +560,7 @@ const Moderation: React.FC = () => {
         setCurrent((c) => {
             const next = Math.min(3, c + 1);
             sendStepSilentNote(next);
+            scrollToTop();
             return next;
         });
     }, [saveCurrentStep, current, data, navigate, resetAll, setSaving, sendStepSilentNote]);
@@ -528,7 +572,7 @@ const Moderation: React.FC = () => {
 
         if (miss0.length || miss1.length || miss2.length) {
             const failingStep = miss0.length ? 0 : miss1.length ? 1 : 2;
-            const stepName = ["Datos", "Canales", "Reglas"][failingStep] ?? String(failingStep);
+            const stepName = ["Datos", "Reglas", "Canales"][failingStep] ?? String(failingStep);
             return {
                 success: false,
                 message: `Faltan completar datos para finalizar. Revisá el paso "${stepName}".`,
@@ -580,6 +624,7 @@ const Moderation: React.FC = () => {
         try {
             resetAll();
             setCurrent(0);
+            scrollToTop();
             sendStepSilentNote(0);
             return {
                 success: true,
@@ -627,7 +672,7 @@ const Moderation: React.FC = () => {
                                     getBusinessSnapshot={() => ({
                                         __summary: (() => {
                                             const name = data?.name || "Sin nombre";
-                                            const stepNames = ["Datos", "Canales", "Reglas", "Revisión"];
+                                            const stepNames = ["Datos", "Reglas", "Canales", "Revisión"];
                                             const step = stepNames[current] ?? String(current);
                                             return `Campaña de Moderación “${name}”, paso ${step}.`;
                                         })(),
@@ -748,6 +793,7 @@ const Moderation: React.FC = () => {
                                             const next = clampStep(current + 1);
                                             setCurrent(next);
                                             sendStepSilentNote(next);
+                                            scrollToTop();
 
                                             return { success: true, advancedTo: next };
                                         });
@@ -763,6 +809,7 @@ const Moderation: React.FC = () => {
                                             const next = clampStep(current - 1);
                                             setCurrent(next);
                                             sendStepSilentNote(next);
+                                            scrollToTop();
 
                                             return { success: true, movedTo: next };
                                         });
@@ -969,9 +1016,7 @@ const Moderation: React.FC = () => {
                                 </>
                             )}
 
-                            {current === 1 && <div className="lg:col-span-12"><StepTwo /></div>}
-
-                            {current === 2 && (
+                            {current === 1 && (
                                 <>
                                     <div className="lg:col-span-12">
                                         <StepThreeTop />
@@ -981,6 +1026,8 @@ const Moderation: React.FC = () => {
                                     </div>
                                 </>
                             )}
+
+                            {current === 2 && <div className="lg:col-span-12"><StepTwo /></div>}
 
                             {current === 3 && (
                                 <div className="lg:col-span-12">
@@ -998,9 +1045,9 @@ const Moderation: React.FC = () => {
                                         current === 0
                                             ? (saving ? (data.campaignId ? t("saving") : t("creating")) : t("next"))
                                             : current === 1
-                                                ? (saving ? t("saving_channels") : t("next"))
+                                                ? (saving ? t("saving_assistant") : t("next"))
                                                 : current === 2
-                                                    ? (saving ? t("saving_assistant") : t("next"))
+                                                    ? (saving ? t("saving_channels") : t("next"))
                                                     : (saving ? t("creating") : t("create_campaign"))
                                     }
                                 />

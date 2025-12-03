@@ -28,7 +28,7 @@ export type ModerationCampaignItem = {
   communicationToneOther?: string;   // e.g. "Tonito"
   startAt?: string;                  // ISO
   endAt?: string;                    // ISO
-  channels?: Array<"instagram" | "facebook" | "whatsapp" | "email" | "x">;
+  channels?: Array<"instagram" | "facebook" | "whatsapp" | "webchat">;
   status?: string;                   // e.g. "draft"
   assistantName?: string;
   greeting?: string;

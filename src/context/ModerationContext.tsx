@@ -30,8 +30,8 @@ export const TONES: ToneOption[] = [
   "other",
 ];
 
-export type Channel = "instagram" | "facebook" | "whatsapp" | "email" | "x";
-export const CHANNELS: Channel[] = ["instagram", "facebook", "whatsapp", "email", "x"];
+export type Channel = "instagram" | "facebook" | "whatsapp" | "webchat";
+export const CHANNELS: Channel[] = ["instagram", "facebook", "whatsapp", "webchat"];
 
 export type DayOfWeek = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
 
@@ -120,6 +120,7 @@ export interface ModerationCampaign {
   tone: ToneOption;
   customTone?: string;
   channels: Channel[];
+  webchatDomain?: string;
 
   assistant: AssistantConfig;
   knowHow: QA[];
@@ -311,6 +312,7 @@ interface ModerationContextValue {
   addChannel: (c: Channel) => void;
   removeChannel: (c: Channel) => void;
   setChannels: (c: Channel[]) => void;
+  setWebchatDomain: (domain?: string) => void;
 
   // Assistant
   setAssistant: (p: Partial<AssistantConfig>) => void;
@@ -439,6 +441,10 @@ export const ModerationProvider: React.FC<{
     setData((prev) => ({ ...prev, channels: sanitized }));
   }, []);
 
+  const setWebchatDomain = useCallback<ModerationContextValue["setWebchatDomain"]>((domain) => {
+    setData((prev) => ({ ...prev, webchatDomain: domain ?? "" }));
+  }, []);
+
   // ---------- Assistant
   const setAssistant = useCallback<ModerationContextValue["setAssistant"]>((p) => {
     setData((prev) => ({ ...prev, assistant: { ...prev.assistant, ...p } }));
@@ -488,7 +494,7 @@ export const ModerationProvider: React.FC<{
     setData((prev) => ({ ...prev, calendarsEnabled: !!v }));
   }, []);
 
-    const setCalendars = React.useCallback<ModerationContextValue["setCalendars"]>((calendars) => {
+  const setCalendars = React.useCallback<ModerationContextValue["setCalendars"]>((calendars) => {
     // reutilizamos reviveCalendars para sanear estructura por si el backend no viene 100% alineado
     const sane = reviveCalendars(calendars as any);
     setData((prev) => ({ ...prev, calendars: sane }));
@@ -678,7 +684,8 @@ export const ModerationProvider: React.FC<{
     resetAll,
     importFromJSON,
     exportToJSON,
-    setCampaignId
+    setCampaignId,
+    setWebchatDomain
   }), [
     data,
     setBasics,
@@ -712,7 +719,8 @@ export const ModerationProvider: React.FC<{
     resetAll,
     importFromJSON,
     exportToJSON,
-    setCampaignId
+    setCampaignId,
+    setWebchatDomain
   ]);
 
   return <ModerationContext.Provider value={value}>{children}</ModerationContext.Provider>;

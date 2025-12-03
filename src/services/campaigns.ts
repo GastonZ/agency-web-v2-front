@@ -62,7 +62,7 @@ export async function updateModerationCampaignFromStepOne(campaignId: string, ct
  * ======================================================= */
 export async function updateCampaignChannels(
   campaignId: string,
-  channels: Array<"instagram" | "facebook" | "whatsapp" | "email" | "x">
+  channels: Array<"instagram" | "facebook" | "whatsapp" | "webchat">
 ) {
   const payload = prune({ channels });
   const res: AxiosResponse<{ id: string }> = await api.put(
@@ -254,6 +254,58 @@ export async function unpauseModerationChannel(
   const { data } = await api.post(
     `moderation-campaigns/${campaignId}/unpause-channel`,
     { channel }
+  );
+  return data;
+}
+
+export type ModerationAnalysisExecuteOptions = {
+  dryRun?: boolean;
+  limit?: number;
+  batchSize?: number;
+};
+
+export async function executeModerationAnalysis(
+  campaignId: string,
+  options?: ModerationAnalysisExecuteOptions
+) {
+  const { data } = await api.post(
+    `moderation-campaigns/${campaignId}/analysis/execute`,
+    {},
+    {
+      params: prune(options || {}),
+    }
+  );
+  return data;
+}
+
+export async function getModerationAnalysisSummary(campaignId: string) {
+  const { data } = await api.get(
+    `moderation-campaigns/${campaignId}/analysis/summary`
+  );
+  return data;
+}
+
+export async function getModerationAnalysisMetrics(campaignId: string) {
+  const { data } = await api.get(
+    `moderation-campaigns/${campaignId}/analysis/metrics`
+  );
+  return data;
+}
+
+export async function getModerationHotLeads(campaignId: string) {
+  const { data } = await api.get(
+    `moderation-campaigns/${campaignId}/analysis/hot-leads`
+  );
+  return data;
+}
+
+export async function updateWebchatConfig(
+  campaignId: string,
+  payload: { domain: string }
+) {
+  const { data } = await api.put(
+    `moderation-campaigns/${campaignId}/webchat-config`,
+    payload
   );
   return data;
 }

@@ -7,7 +7,8 @@ import { mapApiToWizard } from "./mapApiToWizard";
 type CtxSetters = {
   setCampaignId?: (id: string) => void;
   setBasics?: (payload: StepOneCtx) => void;
-  setChannels?: (arr: Array<"instagram"|"facebook"|"whatsapp"|"email"|"x">) => void;
+  setChannels?: (arr: Array<"instagram" | "facebook" | "whatsapp" | "webchat">) => void;
+  setWebchatDomain?: (domain: string) => void;
 
   setAssistant?: (payload: { name?: string; greeting?: string; conversationLogic?: string }) => void;
   clearQA?: () => void;
@@ -32,6 +33,10 @@ export function fillContextFromApi(
   setters.setBasics?.(data.stepOne);
 
   setters.setChannels?.(data.channels as any);
+
+  if (data.webchatDomain) {
+    setters.setWebchatDomain?.(data.webchatDomain);
+  }
 
   const assistant = data.assistant || {};
   setters.setAssistant?.({

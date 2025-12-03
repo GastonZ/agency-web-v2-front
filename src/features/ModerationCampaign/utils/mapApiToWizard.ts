@@ -7,8 +7,9 @@ import type {
 export type WizardHydrated = {
   campaignId?: string;
   stepOne: StepOneCtx;
-  channels: Array<"instagram" | "facebook" | "whatsapp" | "email" | "x">;
+  channels: Array<"instagram" | "facebook" | "whatsapp" | "webchat">;
   assistant: AssistantSettingsPayload;
+  webchatDomain?: string;
 };
 
 function normalizeGender(apiGender?: string): string | undefined {
@@ -75,5 +76,6 @@ export function mapApiToWizard(c: ModerationCampaignItem): WizardHydrated {
     stepOne,
     channels: (Array.isArray(c.channels) ? c.channels : []) as WizardHydrated["channels"],
     assistant,
+    webchatDomain: (c as any).webchatCredentials?.domain ?? "",
   };
 }

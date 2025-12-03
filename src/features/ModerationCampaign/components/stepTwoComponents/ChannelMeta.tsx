@@ -1,13 +1,12 @@
 import * as React from "react";
-import { Instagram, Facebook, MessageSquare, Mail, Twitter } from "lucide-react";
+import { Instagram, Facebook, MessageSquare, Mail, Twitter, Globe2 } from "lucide-react";
 import { CHANNELS } from "../../../../context/ModerationContext";
 
 type ChannelIconProps = { className?: string };
 const IconInstagram: React.FC<ChannelIconProps> = (p) => <Instagram {...p} />;
 const IconFacebook: React.FC<ChannelIconProps> = (p) => <Facebook {...p} />;
 const IconWhatsApp: React.FC<ChannelIconProps> = (p) => <MessageSquare {...p} />;
-const IconEmail: React.FC<ChannelIconProps> = (p) => <Mail {...p} />;
-const IconX: React.FC<ChannelIconProps> = (p) => <Twitter {...p} />;
+const IconWebChat: React.FC<ChannelIconProps> = (p) => <Globe2 {...p} />;
 
 export const CHANNEL_META: Record<
   (typeof CHANNELS)[number],
@@ -28,14 +27,9 @@ export const CHANNEL_META: Record<
     subtitle: "",
     Icon: IconWhatsApp,
   },
-  email: {
-    title: "Email",
+  webchat: {
+    title: "Webchat",
     subtitle: "",
-    Icon: IconEmail,
-  },
-  x: {
-    title: "X / Twitter",
-    subtitle: "",
-    Icon: IconX,
+    Icon: IconWebChat,
   },
 };

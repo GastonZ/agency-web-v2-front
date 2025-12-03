@@ -41,6 +41,7 @@ const AssistantBasicsCard: React.FC = () => {
           placeholder={t("conversation_example")}
           value={data.assistant.conversationLogic}
           onChange={(e) => setAssistant({ conversationLogic: e.target.value })}
+          maxLength={2000}
         />
       </div>
     </GlassCard>

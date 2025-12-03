@@ -91,7 +91,7 @@
     "invalid_format_contact": "Formato inválido. Usa +NN NNNNNNNNN.",
     "error_process_file": "No se pudo procesar el archivo",
     "empty_file": "Archivo vacío",
-    "knowledge_base": "De que forma va a responder tu chatbot",
+    "knowledge_base": "Preguntas y Respuestas (Q&A) - Base de Conocimiento",
     "proccess_file": "Procesando archivo",
     "knowledge_what": "Se usará para auto-generar preguntas y respuestas.",
     "question": "Pregunta",
@@ -244,5 +244,9 @@
     "stats_count_by_score_range": "Cantidad por rango de puntaje",
     "stats_leads_trend": "Evolución de leads",
     "stats_new_leads_per_day": "Nuevos leads por día",
-    "open": "Abrir"
+    "open": "Abrir",
+    "qa_chars_used": "caracteres usados",
+    "webchat_domain_label": "Dominio del sitio web donde usarás el webchat",
+    "webchat_domain_placeholder": "Ej., misitio.com",
+    "webchat_domain_help": "Ingresá el dominio del sitio web donde planeas implementar el webchat. Esto ayuda a asegurar una configuración y funcionalidad adecuadas."
 }

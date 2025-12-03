@@ -46,6 +46,7 @@ const BasicsSection: React.FC = () => {
           <TextArea
             id="campaignSummary"
             placeholder={t("brief_objectives_summary")}
+            maxLength={700}
             value={data.summary}
             onChange={(e) => {
               const v = e.target.value;
@@ -71,6 +72,7 @@ const BasicsSection: React.FC = () => {
             <Label htmlFor="leadDefinition">{t("lead_definition")}</Label>
             <TextArea
               id="leadDefinition"
+              maxLength={900}
               rows={3}
               placeholder={t("what_is_valid_lead")}
               value={data.leadDefinition}
@@ -98,6 +100,7 @@ const BasicsSection: React.FC = () => {
             <TextArea
               id="mainGoal"
               rows={3}
+              maxLength={400}
               placeholder={t("reduce_spam_example")}
               value={data.goal}
               onChange={(e) => {
