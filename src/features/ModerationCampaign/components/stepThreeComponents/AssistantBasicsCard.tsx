@@ -30,6 +30,9 @@ const AssistantBasicsCard: React.FC = () => {
             value={data.assistant.greeting}
             onChange={(e) => setAssistant({ greeting: e.target.value })}
           />
+          <span className="text-sm text-gray-600">
+            Max 250 {t("characters")}.
+          </span>
         </div>
       </div>
       <div className="mt-4">
@@ -43,6 +46,9 @@ const AssistantBasicsCard: React.FC = () => {
           onChange={(e) => setAssistant({ conversationLogic: e.target.value })}
           maxLength={2000}
         />
+        <span className="text-sm text-gray-600">
+          Max 2000 {t("characters")}.
+        </span>
       </div>
     </GlassCard>
   );

@@ -59,6 +59,8 @@
     "error_load_regions": "Could not load provinces/regions.",
     "target_audience": "Location",
     "segment_geo_demo": "Segment geography and demography",
+    "geo_can_choose_multiple": "You can choose one or more countries",
+    "caracters": "characters",
     "country": "Country",
     "select_country": "Select country",
     "province_region": "Province/Region",

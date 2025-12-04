@@ -57,6 +57,8 @@
     "error_load_regions": "No se pudieron cargar las provincias/regiones.",
     "target_audience": "Localización",
     "segment_geo_demo": "Segmenta geografía y demografía",
+    "geo_can_choose_multiple": "Puedes elegir uno o más países",
+    "characters": "caracteres",
     "country": "País",
     "select_country": "Seleccionar país",
     "province_region": "Provincia/Región",

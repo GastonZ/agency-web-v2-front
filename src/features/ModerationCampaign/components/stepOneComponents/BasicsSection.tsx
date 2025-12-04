@@ -65,6 +65,9 @@ const BasicsSection: React.FC = () => {
               })
             }
           />
+          <span className="text-sm text-gray-600">
+            Max 700 {t("characters")}.
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -94,6 +97,9 @@ const BasicsSection: React.FC = () => {
                 })
               }
             />
+            <span className="text-sm text-gray-600">
+              Max 900 {t("characters")}.
+            </span>
           </div>
 
           <div>
@@ -122,6 +128,9 @@ const BasicsSection: React.FC = () => {
                 })
               }
             />
+            <span className="text-sm text-gray-600">
+              Max 400 {t("characters")}.
+            </span>
           </div>
         </div>
       </div>

@@ -102,6 +102,9 @@ const AudienceSection: React.FC = () => {
         title={t("target_audience")}
         subtitle={t("segment_geo_demo")}
       />
+      <p className="text-sm text-gray-600 mb-2">
+        {t("geo_can_choose_multiple")}
+      </p>
 
       {/* Selector de país / provincia / ciudad */}
       <LocationSelection

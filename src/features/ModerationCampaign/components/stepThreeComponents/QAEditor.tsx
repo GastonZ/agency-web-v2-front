@@ -126,7 +126,7 @@ const QAEditor: React.FC = () => {
         </div>
       </div>
 
-      <p className="text-xs text-neutral-500">
+      <p className="text-md text-neutral-500">
         {currentTotalChars}/{MAX_KNOWHOW_CHARS}{" "}
         {t("qa_chars_used") || "caracteres usados en preguntas y respuestas."}
       </p>
