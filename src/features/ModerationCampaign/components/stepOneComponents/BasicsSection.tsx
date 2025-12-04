@@ -71,6 +71,7 @@ const BasicsSection: React.FC = () => {
           <div>
             <Label htmlFor="leadDefinition">{t("lead_definition")}</Label>
             <TextArea
+              className="min-h-[160px]"
               id="leadDefinition"
               maxLength={900}
               rows={3}
@@ -98,6 +99,7 @@ const BasicsSection: React.FC = () => {
           <div>
             <Label htmlFor="mainGoal">{t("main_objective")}</Label>
             <TextArea
+              className="min-h-[160px]"
               id="mainGoal"
               rows={3}
               maxLength={400}

@@ -148,7 +148,7 @@ const AudienceSection: React.FC = () => {
         <TextArea
           id="audienceCulture"
           rows={3}
-          placeholder="Ej. Gamers, tech, local culture…"
+          placeholder={t("target_audience_example")}
           value={data.audience.cultural || ""}
           onChange={(e) => {
             const v = e.target.value;

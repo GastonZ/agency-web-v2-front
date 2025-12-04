@@ -5,17 +5,18 @@ import { useTranslation } from "react-i18next";
 const normalize = (s: string) =>
     (s || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
 
-function fuzzyPick(userText: string, options: { id?: string; name: string }[]) {
+// Hacemos fuzzyPick genérico, así podemos pasar objetos completos
+function fuzzyPick<T extends { name: string }>(userText: string, options: T[]): T | null {
     const q = normalize(userText);
     if (!q) return null;
 
-    let hit = options.find(o => normalize(o.name) === q);
+    let hit = options.find((o) => normalize(o.name) === q);
     if (hit) return hit;
 
-    hit = options.find(o => normalize(o.name).startsWith(q));
+    hit = options.find((o) => normalize(o.name).startsWith(q));
     if (hit) return hit;
 
-    hit = options.find(o => normalize(o.name).includes(q));
+    hit = options.find((o) => normalize(o.name).includes(q));
     return hit || null;
 }
 
@@ -31,35 +32,61 @@ export function useModerationGeoTools() {
         language?: string;
     }) {
         const lang = args.language || langDefault;
-        let countryId: string | undefined;
-        let stateId: string | undefined;
+
+        let countryCode: string | undefined;
+        let countryDbId: string | undefined;
+        let stateCodeOrId: string | undefined;
 
         try {
             if (args.country) {
                 const countries = await fetchCountries(lang);
-                const c = fuzzyPick(args.country, countries.map(x => ({ id: x.id, name: x.name })));
-                if (c?.id) countryId = c.id;
+                const c = fuzzyPick(args.country, countries);
+                if (c) {
+                    countryCode = (c as any).code || (c as any).id;
+                    countryDbId = (c as any).id || (c as any).code;
+                }
             }
 
-            if (args.state && countryId) {
-                const states = await fetchStatesByCountry(countryId, lang);
-                const s = fuzzyPick(args.state, states.map(x => ({ id: x.id, name: x.name })));
-                if (s?.id) stateId = s.id;
+            if (args.state && countryDbId) {
+                const states = await fetchStatesByCountry(countryDbId, lang);
+                const s = fuzzyPick(args.state, states);
+                if (s) {
+                    stateCodeOrId = (s as any).code || (s as any).id;
+                }
             }
 
-            if (!countryId && !stateId && !args.city) {
+            if (!countryCode && !stateCodeOrId && !args.city) {
                 return { success: false, message: "No pude interpretar país/provincia/ciudad." };
             }
 
             const patch: any = {};
-            if (countryId) patch.countryId = countryId;
-            if (stateId) patch.stateId = stateId;
-            if (typeof args.city === "string") patch.city = args.city.trim();
+
+            if (countryCode) {
+                patch.countryCode = countryCode;
+                patch.countryId = countryCode;
+            }
+
+            if (stateCodeOrId) {
+                patch.stateId = stateCodeOrId;
+                patch.regionCode = stateCodeOrId;
+            }
+
+            if (typeof args.city === "string") {
+                patch.city = args.city.trim();
+            }
 
             setGeo(patch);
-            return { success: true, patch, message: "Ubicación actualizada." };
+
+            return {
+                success: true,
+                patch,
+                message: "Ubicación actualizada.",
+            };
         } catch (e: any) {
-            return { success: false, message: e?.message || "Error al actualizar ubicación." };
+            return {
+                success: false,
+                message: e?.message || "Error al actualizar ubicación.",
+            };
         }
     }
 

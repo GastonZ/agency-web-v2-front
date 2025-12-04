@@ -4,7 +4,7 @@ import { useModeration } from "../../../../context/ModerationContext";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 
-const MAX_KNOWHOW_CHARS = 10000;
+const MAX_KNOWHOW_CHARS = 400000;
 
 const QAEditor: React.FC = () => {
   const { data, addQA, updateQA, removeQA } = useModeration();
@@ -13,7 +13,6 @@ const QAEditor: React.FC = () => {
 
   const { t } = useTranslation("translations");
 
-  // total actual + lo que está escribiendo en los inputs nuevos
   const currentTotalChars = React.useMemo(() => {
     const base = (data.knowHow || []).reduce(
       (acc: number, item: any) =>
@@ -114,7 +113,7 @@ const QAEditor: React.FC = () => {
           <TextInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="¿Cuál es el horario?"
+            placeholder={t("qa_q_placeholder")}
           />
         </div>
         <div>
@@ -122,12 +121,11 @@ const QAEditor: React.FC = () => {
           <TextInput
             value={a}
             onChange={(e) => setA(e.target.value)}
-            placeholder="Lun a Vie 9-18"
+            placeholder={t("qa_a_placeholder")}
           />
         </div>
       </div>
 
-      {/* contador simple opcional */}
       <p className="text-xs text-neutral-500">
         {currentTotalChars}/{MAX_KNOWHOW_CHARS}{" "}
         {t("qa_chars_used") || "caracteres usados en preguntas y respuestas."}
