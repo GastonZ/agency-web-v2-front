@@ -50,6 +50,7 @@ export const DAY_LABELS_ES: Record<DayOfWeek, string> = {
 // Core Data Shapes
 // ==========================
 export interface GeoSeg {
+  countryIds?: string[];
   country?: string;
   region?: string;
   countryId?: string;
@@ -150,7 +151,17 @@ export const DEFAULT_CAMPAIGN: ModerationCampaign = {
   summary: "",
   leadDefinition: "",
   audience: {
-    geo: { country: "", region: "", city: "", postalCode: "" },
+    geo: {
+      countryIds: [],
+      country: "",
+      region: "",
+      countryId: "",
+      stateId: "",
+      countryCode: "",
+      regionCode: "",
+      city: "",
+      postalCode: "",
+    },
     demographic: { ageGroups: [], gender: "other", socioeconomic: [] },
     cultural: "",
   },
@@ -393,11 +404,46 @@ export const ModerationProvider: React.FC<{
   }, []);
 
   const setGeo = useCallback<ModerationContextValue["setGeo"]>((p) => {
-    setData((prev) => ({
-      ...prev,
-      audience: { ...prev.audience, geo: { ...prev.audience.geo, ...p } },
-    }));
+    setData((prev) => {
+      const prevGeo = (prev.audience?.geo || {}) as GeoSeg;
+
+      const hasCountryIdsPatch = Object.prototype.hasOwnProperty.call(p, "countryIds");
+      const hasCountryIdPatch = Object.prototype.hasOwnProperty.call(p, "countryId");
+      const hasCountryCodePatch = Object.prototype.hasOwnProperty.call(p, "countryCode");
+
+      let nextGeo: GeoSeg = { ...prevGeo, ...p };
+
+      if (hasCountryIdsPatch && Array.isArray(p.countryIds)) {
+        nextGeo.countryIds = p.countryIds;
+      } else {
+        let codeToAdd: string | undefined;
+
+        if (hasCountryCodePatch && p.countryCode) {
+          codeToAdd = p.countryCode;
+        } else if (hasCountryIdPatch && p.countryId) {
+          codeToAdd = p.countryId;
+        }
+
+        if (codeToAdd) {
+          const current = Array.isArray(prevGeo.countryIds) ? prevGeo.countryIds : [];
+          if (!current.includes(codeToAdd)) {
+            nextGeo.countryIds = [...current, codeToAdd];
+          } else {
+            nextGeo.countryIds = current;
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        audience: {
+          ...prev.audience,
+          geo: nextGeo,
+        },
+      };
+    });
   }, []);
+
 
   const setDemographic = useCallback<ModerationContextValue["setDemographic"]>((p) => {
     setData((prev) => ({

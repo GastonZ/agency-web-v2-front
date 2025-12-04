@@ -63,8 +63,6 @@ const StepOne: React.FC = () => {
         ],
         culturalInterests: data.audience.cultural || "",
       },
-      communicationTone: tone,
-      communicationToneOther: tone === "other" ? (customTone || "") : "",
       channels: channels || [],
     };
 

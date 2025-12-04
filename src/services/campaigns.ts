@@ -6,6 +6,29 @@ import type { Calendar } from "../context/ModerationContext";
 
 function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boolean }) {
   const userId = getUserId();
+
+  const geo = ctxData.audience.geo || ({} as any);
+
+  const rawCountryIds = (geo as any).countryIds;
+  const countryIds: string[] =
+    Array.isArray(rawCountryIds) && rawCountryIds.length
+      ? rawCountryIds
+      : geo.countryCode
+        ? [geo.countryCode]
+        : [];
+
+  const primaryCountryId = countryIds[0] || null;
+
+  const allowRegionAndCity = countryIds.length === 1;
+
+  const geoEntry = prune({
+    countryId: primaryCountryId,
+    countryIds,
+    stateId: allowRegionAndCity ? geo.regionCode : undefined,
+    city: allowRegionAndCity ? geo.city : undefined,
+    postalCode: geo.postalCode,
+  });
+
   return prune({
     ...(opts?.includeUserId ? { userId } : {}),
     name: ctxData.name,
@@ -13,14 +36,7 @@ function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boole
     description: ctxData.summary,
     leadDefinition: ctxData.leadDefinition,
     audience: {
-      geo: [
-        {
-          countryId: ctxData.audience.geo.countryCode,
-          stateId: ctxData.audience.geo.regionCode,
-          city: ctxData.audience.geo.city,
-          postalCode: ctxData.audience.geo.postalCode,
-        },
-      ],
+      geo: [geoEntry],
       demographics: {
         age: mapAgeGroups(ctxData.audience.demographic.ageGroups),
         gender: mapGender(ctxData.audience.demographic.gender),
@@ -28,8 +44,6 @@ function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boole
       },
       culturalInterests: ctxData.audience.cultural,
     },
-    communicationTone: ctxData.customTone ? 'other' : ctxData.tone,
-    communicationToneOther: ctxData.customTone,
   });
 }
 
@@ -90,6 +104,9 @@ export function mapAssistantSettingsFromContext(data: {
   escalationPhone?: string;
 
   calendars?: Calendar[]
+
+  tone?: string;
+  customTone?: string;
 }): AssistantSettingsPayload {
   // You mentioned voiceConfig is a JSON string. Use voiceUrl as an example source.
   const voiceConfig =

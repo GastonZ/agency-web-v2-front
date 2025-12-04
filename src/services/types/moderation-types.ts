@@ -63,6 +63,7 @@ export type StepOneCtx = {
   leadDefinition?: string;
   audience: {
     geo: {
+      countryIds?: string[];
       country?: string;
       countryCode?: string;
       region?: string;

@@ -25,6 +25,15 @@ export function mapApiToWizard(c: ModerationCampaignItem): WizardHydrated {
   const geoArr = Array.isArray(c?.audience?.geo) ? c.audience.geo : [];
   const geo0 = geoArr?.[0];
 
+  const countryIds =
+    Array.isArray((geo0 as any)?.countryIds) && (geo0 as any).countryIds.length
+      ? (geo0 as any).countryIds as string[]
+      : geo0?.countryId
+        ? [geo0.countryId]
+        : [];
+
+  const primaryCountry = countryIds[0] ?? "";
+
   const stepOne: StepOneCtx = {
     name: c.name,
     goal: c.objective ?? "",
@@ -33,7 +42,8 @@ export function mapApiToWizard(c: ModerationCampaignItem): WizardHydrated {
 
     audience: {
       geo: {
-        country: geo0?.countryId ?? "",
+        countryIds,
+        country: primaryCountry,
         countryCode: geo0?.countryId ?? "",
         region: geo0?.stateId ?? "",
         regionCode: geo0?.stateId ?? "",

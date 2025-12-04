@@ -220,15 +220,21 @@ const Moderation: React.FC = () => {
     function missingFromStep0(data: any) {
         const missing: string[] = [];
 
-        // básicos
         if (!((data.name || "").trim().length > 1)) missing.push("name");
         if (!((data.leadDefinition || "").trim().length > 0)) missing.push("leadDefinition");
         if (!((data.goal || "").trim().length > 0)) missing.push("goal");
 
-        // geo: mínimo país (countryId)
-        const countryId =
-            data?.audience?.geo?.countryId ?? data?.audience?.geo?.country ?? data?.countryId;
-        if (!countryId) missing.push("geo.countryId");
+        const countryIds = data?.audience?.geo?.countryIds;
+        const hasCountryFromList = Array.isArray(countryIds) && countryIds.length > 0;
+
+        const fallbackCountry =
+            data?.audience?.geo?.country ??
+            data?.audience?.geo?.countryId ??
+            data?.countryId;
+
+        const hasCountry = hasCountryFromList || !!fallbackCountry;
+
+        if (!hasCountry) missing.push("geo.countryId");
 
         return missing;
     }
@@ -413,7 +419,7 @@ const Moderation: React.FC = () => {
             sendStepSilentNote(next);
         }
     };
-
+    
     const saveStepOne = useCallback(async () => {
         if (!validateStep(0)) {
             toast.warning(t("complete_before_saving"));
@@ -465,7 +471,9 @@ const Moderation: React.FC = () => {
                 allowedTopics: data.allowedTopics || [],
                 escalationItems: data.escalationItems || [],
                 escalationPhone: data.escalationPhone,
-                calendars: data.calendarsEnabled ? data.calendars : []
+                calendars: data.calendarsEnabled ? data.calendars : [],
+                tone: data.tone,
+                customTone: (data as any).customTone,
             });
             setSaving(true);
             try {

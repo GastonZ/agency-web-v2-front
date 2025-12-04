@@ -15,7 +15,6 @@ export const StepOneBottom: React.FC = () => {
   return (
     <div className="w-full space-y-4 md:space-y-6">
       <BasicsSection />
-      <ToneSection />
     </div>
   );
 };
@@ -25,7 +24,6 @@ const StepOne: React.FC = () => {
     <div className="w-full space-y-4 md:space-y-6">
       <BasicsSection />
       <AudienceSection />
-      <ToneSection />
     </div>
   );
 };
