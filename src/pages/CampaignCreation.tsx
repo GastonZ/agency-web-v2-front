@@ -92,7 +92,6 @@ export default function CampaignCreation({
                     aria-label="Create a campaign"
                     className="relative w-full h-full"
                 >
-                    <AgencyChatbot mode="floating"/>
                     <header className="mb-6 flex items-center justify-between">
                         <div>
                             <h1 className="text-xl font-semibold tracking-tight">Nueva campaña</h1>
@@ -223,26 +222,6 @@ export default function CampaignCreation({
                         })}
                     </div>
 
-                    <div className="mt-6 flex items-center justify-end gap-2">
-                        <PunkButton
-                            variant="ghost"
-                            className="h-9 rounded-lg text-neutral-600 hover:text-emerald-500 dark:text-neutral-300"
-                            onClick={() => setExpanded(null)}
-                        >
-                            Collapse details
-                        </PunkButton>
-                        <PunkButton
-                            className={cn(
-                                "h-9 rounded-lg",
-                                "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white",
-                                "hover:from-emerald-500/90 hover:to-emerald-600/90",
-                                "shadow-[0_8px_30px_rgba(16,185,129,0.35)]"
-                            )}
-                            onClick={() => onConfirm?.(value)}
-                        >
-                            Continue with {value === "marketing" ? "Marketing" : value === "moderation" ? "Moderation" : "Social Listening"}
-                        </PunkButton>
-                    </div>
                 </section>
             </TooltipProvider>
         </OnlineLayout>
