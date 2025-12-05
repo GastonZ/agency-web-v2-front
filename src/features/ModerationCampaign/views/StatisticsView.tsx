@@ -361,7 +361,7 @@ export default function StatisticsView() {
         }
     };
 
-    const sdkScript = `<script src="../datacivis.js?campaignId=${id}&serverUrl=${import.meta.env.VITE_API_URL}/webchat&audio=true&v=2"></script>`;
+    const sdkScript = `<script src="${import.meta.env.VITE_FRONT_URL || ""}datacivis.js?campaignId=${id}&serverUrl=${import.meta.env.VITE_API_URL}/webchat&audio=true&v=2"></script>`;
 
 
     if (loading) return (
