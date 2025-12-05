@@ -361,8 +361,12 @@ export default function StatisticsView() {
         }
     };
 
-    const sdkScript = `<script src="${import.meta.env.VITE_FRONT_URL || ""}datacivis.js?campaignId=${id}&serverUrl=${import.meta.env.VITE_API_URL}/webchat&audio=true&v=2"></script>`;
+    const frontBase = (import.meta.env.VITE_FRONT_URL || "").replace(/\/+$/, "/");
 
+    const sdkScript = [
+        '<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>',
+        `<script src="${frontBase}datacivis.js?campaignId=${id}&serverUrl=${import.meta.env.VITE_API_URL}/webchat&audio=true&v=2"></script>`
+    ].join("\n");
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-neutral-950">
@@ -727,12 +731,12 @@ export default function StatisticsView() {
                         </p>
 
                         <div className="mt-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg ring-1 ring-neutral-400/20">
-                            <code className="text-[13px] break-all">{sdkScript}</code>
+                            <code className="text-[13px] whitespace-pre break-all">{sdkScript}</code>
                         </div>
 
                         <button
                             className="mt-2 px-3 py-1.5 rounded-lg text-sm bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300"
-                            onClick={() => {navigator.clipboard.writeText(sdkScript), toast.success(t("script_copied_to_clipboard"))}}
+                            onClick={() => { navigator.clipboard.writeText(sdkScript), toast.success(t("script_copied_to_clipboard")) }}
                         >
                             Copiar script
                         </button>
