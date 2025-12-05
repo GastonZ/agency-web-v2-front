@@ -563,18 +563,6 @@ export default function StatisticsView() {
                 )}
 
                 <section className="mt-4 rounded-xl p-4 md:p-5 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-dashed ring-emerald-400/40">
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                        <div>
-                            <h4 className="text-[14px] font-semibold leading-tight">
-                                {t("stats_ai_analysis")}
-                            </h4>
-                        </div>
-                        {analysisLoading && (
-                            <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/40">
-                                {t("loading") || "Cargando..."}
-                            </span>
-                        )}
-                    </div>
 
                     <div className="flex flex-wrap gap-2">
                         <button
