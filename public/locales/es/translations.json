@@ -258,5 +258,7 @@
     "stats_no_leads_yet": "Aún no hay leads para mostrar estadísticas.",
     "stats_ai_analysis": "Análisis de leads con IA",
     "analyze_new_conversations": "Analizar conversaciones",
-    "target_audience_example" : "El asistente está dirigido a personas interesadas en comprar un auto, clientes que necesitan turnos de service o soporte postventa, y usuarios que buscan información rápida sobre modelos, precios, ubicación y servicios de la concesionaria."
+    "target_audience_example" : "El asistente está dirigido a personas interesadas en comprar un auto, clientes que necesitan turnos de service o soporte postventa, y usuarios que buscan información rápida sobre modelos, precios, ubicación y servicios de la concesionaria.",
+    "view_statistics": "Ver estadísticas",
+    "edit": "Editar"
 }

@@ -4,7 +4,10 @@ import { useNavigate } from "react-router-dom";
 import OnlineLayout from "../layout/OnlineLayout";
 import ActionsButton from "../components/features/ActionsButton";
 
-import { searchMyModerationCampaigns } from "../services/campaigns";
+import {
+  searchMyModerationCampaigns,
+  updateModerationCampaignStatus,
+} from "../services/campaigns";
 import type { ModerationCampaignItem } from "../services/types/moderation-types";
 
 import { searchMyMarketingCampaigns } from "../services/marketingCampaigns";
@@ -18,10 +21,16 @@ function sortNewestFirst<A extends { updatedAt?: string; createdAt?: string }>(a
 
 function statusTone(s?: string) {
   const v = (s || "").toLowerCase();
-  if (v === "active") return "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 ring-emerald-400/30";
-  if (v === "paused") return "text-amber-700 dark:text-amber-300 bg-amber-500/10 ring-amber-400/30";
+  if (v === "active")
+    return "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 ring-emerald-400/30";
+  if (v === "paused")
+    return "text-amber-700 dark:text-amber-300 bg-amber-500/10 ring-amber-400/30";
+  if (v === "inactive" || v === "archived")
+    return "text-neutral-500 dark:text-neutral-400 bg-neutral-500/10 ring-neutral-400/30";
   return "text-neutral-700 dark:text-neutral-300 bg-neutral-500/10 ring-neutral-400/30";
 }
+
+type StatusFilter = "" | "draft" | "active" | "inactive";
 
 export default function CampaignsTable() {
   const navigate = useNavigate();
@@ -33,46 +42,89 @@ export default function CampaignsTable() {
   const [errorMod, setErrorMod] = React.useState<string | null>(null);
   const [errorMkt, setErrorMkt] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setLoading(true);
-        setErrorMod(null);
-        setErrorMkt(null);
+  const [searchText, setSearchText] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("active");
 
-        const [modRes, mktRes] = await Promise.allSettled([
-          searchMyModerationCampaigns(),
-          searchMyMarketingCampaigns(),
-        ]);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
-        if (!alive) return;
+  const campaignToDelete = React.useMemo(
+    () => modRows.find((c) => c.id === confirmDeleteId) || null,
+    [confirmDeleteId, modRows]
+  );
 
-        // Moderation
-        if (modRes.status === "fulfilled") {
-          const list = (modRes.value?.items || modRes.value || []).slice().sort(sortNewestFirst);
-          setModRows(list);
-        } else {
-          setErrorMod(modRes.reason?.message || "No se pudieron cargar campañas de moderación.");
-        }
+  const deleteModCampaign = async (id: string) => {
+    try {
+      setDeleting(true);
+      setDeleteError(null);
 
-        // Marketing
-        if (mktRes.status === "fulfilled") {
-          const list = (mktRes.value?.items || mktRes.value || []).slice().sort(sortNewestFirst);
-          setMktRows(list);
-        } else {
-          setErrorMkt(mktRes.reason?.message || "No se pudieron cargar campañas de marketing.");
-        }
-      } finally {
-        if (alive) setLoading(false);
+      await updateModerationCampaignStatus(id, "inactive");
+
+      setModRows((prev) => prev.filter((c) => c.id !== id));
+      setConfirmDeleteId(null);
+    } catch (e: any) {
+      console.error(e);
+      setDeleteError(e?.message || "No se pudo borrar la campaña. Intentá de nuevo.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // aplica filtros al backend
+  const applyFilters = React.useCallback(async () => {
+    setLoading(true);
+    setErrorMod(null);
+    setErrorMkt(null);
+
+    try {
+      const filters: any = {};
+      if (searchText.trim()) filters.search = searchText.trim();
+      if (statusFilter) filters.status = statusFilter;
+
+      const [modRes, mktRes] = await Promise.allSettled([
+        searchMyModerationCampaigns(filters),
+        searchMyMarketingCampaigns(),
+      ]);
+
+      if (modRes.status === "fulfilled") {
+        const list =
+          (modRes.value?.items || (modRes.value as any) || []).slice().sort(sortNewestFirst);
+        setModRows(list);
+      } else {
+        setErrorMod(modRes.reason?.message || "No se pudieron cargar campañas de moderación.");
       }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
 
-  if (loading) {
+      if (mktRes.status === "fulfilled") {
+        const list =
+          (mktRes.value?.items || (mktRes.value as any) || []).slice().sort(sortNewestFirst);
+        setMktRows(list);
+      } else {
+        setErrorMkt(mktRes.reason?.message || "No se pudieron cargar campañas de marketing.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [searchText, statusFilter]);
+
+  React.useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  const resetFilters = () => {
+    setSearchText("");
+    setStatusFilter("");
+    applyFilters();
+  };
+
+  const handleShowArchived = () => {
+    setStatusFilter("inactive");
+    setTimeout(() => {
+      applyFilters();
+    }, 0);
+  };
+
+  if (loading && !modRows.length && !mktRows.length) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-neutral-950">
         <div className="text-center space-y-3">
@@ -87,112 +139,245 @@ export default function CampaignsTable() {
     <OnlineLayout>
       <div className="space-y-8">
         {/* Errores (si los hay) */}
-        {(errorMod || errorMkt) && (
-          <div className="rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300">
+        {(errorMod || errorMkt || deleteError) && (
+          <div className="rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300 space-y-1">
             {errorMod && <div>Moderación: {errorMod}</div>}
             {errorMkt && <div>Marketing: {errorMkt}</div>}
+            {deleteError && <div>{deleteError}</div>}
           </div>
         )}
 
         {/* Tabla Moderación */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight">Mis campañas de moderación</h2>
-          <div className="ring-1 ring-gray-300 dark:ring-gray-600">
-            <table className="min-w-full text-[15px] leading-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl">
-              <thead className="bg-white/70 dark:bg-neutral-900/70">
-                <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
-                  <th className="p-3 font-semibold">Nombre</th>
-                  <th className="p-3 font-semibold">Estado</th>
-                  <th className="p-3 font-semibold">Actualizada</th>
-                  <th className="p-3 font-semibold">Canales</th>
-                  <th className="p-3 w-12"></th>
-                </tr>
-              </thead>
-              <tbody className="[&_tr:nth-child(even)]:bg-black/0 [&_tr:nth-child(odd)]:bg-black/0">
-                {modRows.length === 0 && (
-                  <tr>
-                    <td className="p-3 text-sm opacity-70" colSpan={5}>No tenés campañas aún.</td>
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Mis campañas de moderación
+            </h2>
+{/*             <div className="flex items-center gap-2">
+              <button
+                className="px-3 py-1.5 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
+                onClick={handleShowArchived}
+              >
+                Ver campañas archivadas
+              </button>
+            </div> */}
+          </div>
+
+          <div className="rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-visible">
+            {/* Filtros */}
+            <div className="px-4 pt-4 pb-3 border-b border-neutral-200/40 dark:border-neutral-800/60 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex-1 flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, texto, etc."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="w-full md:max-w-xs rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  className="rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="draft">Borrador</option>
+                  <option value="active">Activa</option>
+                  <option value="inactive">Inactiva</option>
+                  <option value="archived">Archivada</option>
+                </select>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={resetFilters}
+                  className="px-3 py-1.5 rounded-lg text-xs md:text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
+                >
+                  Limpiar
+                </button>
+                <button
+                  onClick={applyFilters}
+                  className="px-3 py-1.5 rounded-lg text-xs md:text-sm bg-emerald-600 text-white hover:bg-emerald-500 transition-colors disabled:opacity-60"
+                  disabled={loading}
+                >
+                  Aplicar filtros
+                </button>
+              </div>
+            </div>
+
+            {/* Tabla */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-[15px] leading-6">
+                <thead className="bg-white/80 dark:bg-neutral-900/80">
+                  <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
+                    <th className="px-4 py-3 font-semibold">Nombre</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Actualizada</th>
+                    <th className="px-4 py-3 font-semibold">Canales</th>
+                    <th className="px-4 py-3 w-12"></th>
                   </tr>
-                )}
-                {modRows.map((c) => {
-                  const date = c.updatedAt || c.createdAt || "";
-                  return (
-                    <tr
-                      key={c.id}
-                      className="border-b border-neutral-200/30 dark:border-neutral-800/40 hover:bg-emerald-500/5 transition-colors"
-                    >
-                      <td className="p-3 font-medium">{c.name || "—"}</td>
-                      <td className="p-3">
-                        <span className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(c.status)}`}>
-                          {c.status || "—"}
-                        </span>
-                      </td>
-                      <td className="p-3">{date ? new Date(date).toLocaleString() : "—"}</td>
-                      <td className="p-3">{(c.channels || []).join(", ") || "—"}</td>
-                      <td className="p-3">
-                        <ActionsButton
-                          onViewStats={() => navigate(`/my_moderation_campaign/${c.id}/statistics`)}
-                          onEdit={() => navigate(`/campaign_moderation_creation?fromId=${c.id}`)}
-                        />
+                </thead>
+                <tbody className="[&_tr:nth-child(even)]:bg-black/0 [&_tr:nth-child(odd)]:bg-black/0">
+                  {modRows.length === 0 && !loading && (
+                    <tr>
+                      <td className="px-4 py-4 text-sm opacity-70" colSpan={5}>
+                        No se encontraron campañas con estos filtros.
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  )}
+                  {modRows.map((c) => {
+                    const date = c.updatedAt || c.createdAt || "";
+                    return (
+                      <tr
+                        key={c.id}
+                        className="border-t border-neutral-200/20 dark:border-neutral-800/40 hover:bg-emerald-500/5 transition-colors"
+                      >
+                        <td className="px-4 py-3 font-medium">{c.name || "—"}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(
+                              c.status
+                            )}`}
+                          >
+                            {c.status || "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {date ? new Date(date).toLocaleString() : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {(c.channels || []).join(", ") || "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <ActionsButton
+                            onViewStats={() =>
+                              navigate(`/my_moderation_campaign/${c.id}/statistics`)
+                            }
+                            onEdit={() =>
+                              navigate(`/campaign_moderation_creation?fromId=${c.id}`)
+                            }
+                            onDelete={() => setConfirmDeleteId(c.id)}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
         {/* Tabla Marketing */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight">Mis campañas de marketing</h2>
-          <div className="ring-1 ring-gray-300 dark:ring-gray-600">
-            <table className="min-w-full text-[15px] leading-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl">
-              <thead className="bg-white/70 dark:bg-neutral-900/70">
-                <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
-                  <th className="p-3 font-semibold">Nombre</th>
-                  <th className="p-3 font-semibold">Estado</th>
-                  <th className="p-3 font-semibold">Actualizada</th>
-                  <th className="p-3 font-semibold">Canales</th>
-                  <th className="p-3 w-12"></th>
-                </tr>
-              </thead>
-              <tbody className="[&_tr:nth-child(even)]:bg-black/0 [&_tr:nth-child(odd)]:bg-black/0">
-                {mktRows.length === 0 && (
-                  <tr>
-                    <td className="p-3 text-sm opacity-70" colSpan={5}>No tenés campañas aún.</td>
+        <section className="space-y-3 pt-8">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Mis campañas de marketing
+          </h2>
+
+          <div className="rounded-2xl pt-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-visible">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-[15px] leading-6">
+                <thead className="bg-white/80 dark:bg-neutral-900/80">
+                  <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
+                    <th className="px-4 py-3 font-semibold">Nombre</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Actualizada</th>
+                    <th className="px-4 py-3 font-semibold">Canales</th>
+                    <th className="px-4 py-3 w-12"></th>
                   </tr>
-                )}
-                {mktRows.map((c) => {
-                  const date = c.updatedAt || c.createdAt || "";
-                  const chans = c.selectedChannels || c.channels || [];
-                  return (
-                    <tr
-                      key={c.id}
-                      className="border-b border-neutral-200/30 dark:border-neutral-800/40 hover:bg-emerald-500/5 transition-colors"
-                    >
-                      <td className="p-3 font-medium">{c.name || "—"}</td>
-                      <td className="p-3">
-                        <span className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(c.status)}`}>
-                          {c.status || "—"}
-                        </span>
-                      </td>
-                      <td className="p-3">{date ? new Date(date).toLocaleString() : "—"}</td>
-                      <td className="p-3">{(chans || []).join(", ") || "—"}</td>
-                      <td className="p-3">
-                        <ActionsButton
-                          onViewStats={() => navigate(`/my_marketing_campaign/${c.id}/statistics`)}
-                          onEdit={() => navigate(`/campaign_marketing_creation?fromId=${c.id}`)}
-                        />
+                </thead>
+                <tbody className="[&_tr:nth-child(even)]:bg-black/0 [&_tr:nth-child(odd)]:bg-black/0">
+                  {mktRows.length === 0 && !loading && (
+                    <tr>
+                      <td className="px-4 py-4 text-sm opacity-70" colSpan={5}>
+                        No tenés campañas aún.
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  )}
+                  {mktRows.map((c) => {
+                    const date = c.updatedAt || c.createdAt || "";
+                    const chans = c.selectedChannels || c.channels || [];
+                    return (
+                      <tr
+                        key={c.id}
+                        className="border-t border-neutral-200/20 dark:border-neutral-800/40 hover:bg-emerald-500/5 transition-colors"
+                      >
+                        <td className="px-4 py-3 font-medium">{c.name || "—"}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(
+                              c.status
+                            )}`}
+                          >
+                            {c.status || "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {date ? new Date(date).toLocaleString() : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {(chans || []).join(", ") || "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <ActionsButton
+                            onViewStats={() =>
+                              navigate(`/my_marketing_campaign/${c.id}/statistics`)
+                            }
+                            onEdit={() =>
+                              navigate(`/campaign_marketing_creation?fromId=${c.id}`)
+                            }
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>
+
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl w-full max-w-md p-6 ring-1 ring-emerald-400/40">
+            <h3 className="text-[15px] font-semibold leading-tight mb-2">
+              Borrar campaña de moderación
+            </h3>
+            <p className="text-sm opacity-80">
+              ¿Estás seguro de que querés borrar esta campaña?
+              <br />
+              <span className="font-medium">
+                {campaignToDelete?.name || "Campaña sin nombre"}
+              </span>
+              .
+              <br />
+              Se marcará como <span className="font-mono">inactive</span> y dejará de aparecer en
+              tu lista.
+            </p>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="text-sm px-3 py-1.5 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70"
+                disabled={deleting}
+                onClick={() => {
+                  if (!deleting) {
+                    setConfirmDeleteId(null);
+                    setDeleteError(null);
+                  }
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="text-sm px-3 py-1.5 rounded-lg bg-red-600 text-white disabled:opacity-60"
+                disabled={deleting}
+                onClick={() => confirmDeleteId && deleteModCampaign(confirmDeleteId)}
+              >
+                {deleting ? "Borrando..." : "Borrar campaña"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </OnlineLayout>
   );
 }

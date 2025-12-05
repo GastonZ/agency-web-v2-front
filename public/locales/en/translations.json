@@ -260,5 +260,7 @@
     "stats_no_leads_yet": "No leads yet to display statistics.",
     "stats_ai_analysis": "AI lead analysis",
     "analyze_new_conversations": "Analyze conversations",
-    "target_audience_example": "The assistant is aimed at people interested in buying a car, customers needing service appointments or post-sale support, and users seeking quick information about models, prices, location, and dealership services."
+    "target_audience_example": "The assistant is aimed at people interested in buying a car, customers needing service appointments or post-sale support, and users seeking quick information about models, prices, location, and dealership services.",
+    "view_statistics": "View statistics",
+    "edit": "Edit"
 }
