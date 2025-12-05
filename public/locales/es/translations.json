@@ -102,6 +102,7 @@
     "answer": "Respuesta",
     "add_qa": "Agregar preg. y resp.",
     "delete": "Eliminar",
+    "deactivate": "Desactivar",
     "reply_only_related": "Responder únicamente consultas relacionadas a…",
     "allowed_topics": "Restricciones, temas de lo que no debería emitir opinion",
     "aallowed_topics": "Temas permitidos",

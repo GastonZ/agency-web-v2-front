@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MoreHorizontal, BarChart3, Pencil, Trash } from "lucide-react";
+import { MoreHorizontal, BarChart3, Pencil, Trash, PowerOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 
@@ -65,8 +65,8 @@ export default function ActionsButton({ onViewStats, onEdit, className = "", onD
               className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-emerald-500/10 cursor-pointer"
               onClick={() => { setOpen(false); onDelete(); }}
             >
-              <Trash className="h-4 w-4 opacity-80" />
-              {t("delete")}
+              <PowerOff className="h-4 w-4 opacity-80" />
+              {t("deactivate")}
             </button>
           )}
         </div>

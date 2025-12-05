@@ -100,6 +100,7 @@
     "answer": "Answer",
     "add_qa": "Add Q&A",
     "delete": "Delete",
+    "deactivate": "Deactivate",
     "reply_only_related": "Reply only to queries related to…",
     "allowed_topics": "Restrictions, topics it shouldn't comment on",
     "topics_example": "Ex. Sales, support, returns",
