@@ -43,7 +43,6 @@ type Props = {
   campaignId: string;
   className?: string;
 
-  // 🔁 nuevos props para revincular
   onReconnectWhatsapp?: () => void;
   instagramReconnectButton?: React.ReactNode;
   facebookReconnectButton?: React.ReactNode;

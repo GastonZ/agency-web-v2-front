@@ -7,6 +7,7 @@ import {
     getModerationAnalysisSummary,
     getModerationAnalysisMetrics,
     getModerationHotLeads,
+    updateWebchatConfig,
 } from "../../../services/campaigns";
 import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../../utils/helper";
 import OnlineLayout from "../../../layout/OnlineLayout";
@@ -28,6 +29,7 @@ import { LeadQualityBars } from "../../../components/features/statisticsComponen
 import { LeadsOverTimeArea } from "../../../components/features/statisticsComponents/leads/metrics/LeadsOverTimeArea";
 import { ConversionFunnel } from "../../../components/features/statisticsComponents/leads/metrics/ConversionFunnel";
 import FacebookConnectPanel from "../../../components/features/FacebookConnectPanel";
+import { toast } from "react-toastify";
 
 export default function StatisticsView() {
     const { id } = useParams<{ id: string }>();
@@ -219,7 +221,6 @@ export default function StatisticsView() {
                                 ? l.finalScore
                                 : 0,
                         channel: (l.channel || "unknown") as Lead["channel"],
-                        // cuando tengamos link directo al hilo se lo agregamos acá
                         channelLink: undefined,
                     }));
 
@@ -325,6 +326,44 @@ export default function StatisticsView() {
     const showPendingPanel = needsWhatsSetup || needsInstagramSetup || needsFacebookSetup;
     const twoCols = showPendingPanel && hasAnyConnected;
 
+    // --- WEBCHAT CONFIG ---
+    const [webchatDomain, setWebchatDomain] = React.useState("");
+    const [editingWebchatDomain, setEditingWebchatDomain] = React.useState(false);
+    const [savingWebchat, setSavingWebchat] = React.useState(false);
+    const [showWebchatModal, setShowWebchatModal] = React.useState(false);
+
+    React.useEffect(() => {
+        if (campaign?.webchatCredentials?.domain) {
+            setWebchatDomain(campaign.webchatCredentials.domain);
+        }
+    }, [campaign]);
+
+    const handleSaveWebchatDomain = async () => {
+        if (!id) return;
+        try {
+            setSavingWebchat(true);
+            await updateWebchatConfig(id, { domain: webchatDomain.trim() });
+
+            setCampaign((prev: any) => ({
+                ...prev,
+                webchatCredentials: {
+                    ...(prev?.webchatCredentials || {}),
+                    domain: webchatDomain.trim(),
+                }
+            }));
+
+            setEditingWebchatDomain(false);
+        } catch (e: any) {
+            console.error("Error saving webchat domain", e);
+            alert("No se pudo guardar el dominio.");
+        } finally {
+            setSavingWebchat(false);
+        }
+    };
+
+    const sdkScript = `<script src="${import.meta.env.VITE_FRONT_URL || ""}datacivis.js?campaignId=${id}&serverUrl=${import.meta.env.VITE_API_URL}/webchat&audio=true&v=2"></script>`;
+
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-neutral-950">
             <div className="text-center space-y-3">
@@ -351,7 +390,6 @@ export default function StatisticsView() {
     return (
         <OnlineLayout>
             <div className="space-y-6">
-                {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">{campaign.name}</h2>
@@ -366,9 +404,7 @@ export default function StatisticsView() {
                     </span>
                 </div>
 
-                {/* Banner post-lanzamiento */}
                 <div className={`grid grid-cols-1 ${twoCols ? "md:grid-cols-2 gap-4" : ""}`}>
-                    {/* PANEL DE CUENTAS PENDIENTES DE VINCULAR */}
                     {showPendingPanel && (
                         <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
                             <div className="flex items-start gap-3">
@@ -395,7 +431,6 @@ export default function StatisticsView() {
                                         ))}
                                     </div>
 
-                                    {/* WHATSAPP: solo si hay canal y NO está vinculado */}
                                     {needsWhatsSetup && (
                                         <div className="mt-4 flex gap-2">
                                             <button
@@ -407,7 +442,6 @@ export default function StatisticsView() {
                                         </div>
                                     )}
 
-                                    {/* INSTAGRAM: solo si falta vincular */}
                                     {needsInstagramSetup && (
                                         <div className="mt-3">
                                             <InstagramConnectButton
@@ -418,7 +452,6 @@ export default function StatisticsView() {
                                         </div>
                                     )}
 
-                                    {/* FACEBOOK: solo si falta vincular */}
                                     {needsFacebookSetup && (
                                         <div className="mt-3">
                                             <FacebookConnectPanel state={campaign.id} />
@@ -562,20 +595,6 @@ export default function StatisticsView() {
                     </div>
                 )}
 
-                <section className="mt-4 rounded-xl p-4 md:p-5 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-dashed ring-emerald-400/40">
-
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={handleExecuteAnalysisReal}
-                            disabled={analysisLoading}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {t("analyze_new_conversations")}
-                        </button>
-                    </div>
-                </section>
                 <section className="mt-4">
                     <KpiCards
                         items={[
@@ -639,7 +658,87 @@ export default function StatisticsView() {
 
             </div>
 
-            {/* Configurar WhatsApp (solo si el canal está habilitado y el usuario lo abrió) */}
+            {campaign?.webchatCredentials && (
+                <section className="rounded-xl mt-6 p-4 md:p-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-emerald-400/20">
+
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-[15px] font-semibold leading-tight">
+                            Configuración de Webchat
+                        </h3>
+                        <button
+                            onClick={() => setShowWebchatModal(true)}
+                            className="text-sm px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
+                        >
+                            Ver instrucciones
+                        </button>
+                    </div>
+
+                    <p className="text-sm opacity-80 mt-1">
+                        Tu campaña tiene habilitado el Webchat para insertar un chatbot en tu sitio web.
+                    </p>
+
+                    {/* Domain */}
+                    <div className="mt-4">
+                        <label className="text-sm opacity-70">Dominio configurado</label>
+
+                        {!editingWebchatDomain ? (
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="px-3 py-1.5 rounded-lg ring-1 ring-neutral-400/30 bg-neutral-100 dark:bg-neutral-800">
+                                    {webchatDomain || "—"}
+                                </span>
+                                <button
+                                    onClick={() => setEditingWebchatDomain(true)}
+                                    className="text-xs px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300"
+                                >
+                                    Editar
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 mt-2">
+                                <input
+                                    className="px-3 py-1.5 rounded-lg ring-1 ring-neutral-400/40 bg-white/80 dark:bg-neutral-950/60 text-sm"
+                                    value={webchatDomain}
+                                    onChange={(e) => setWebchatDomain(e.target.value)}
+                                    placeholder="tudominio.com"
+                                />
+                                <button
+                                    disabled={savingWebchat}
+                                    onClick={handleSaveWebchatDomain}
+                                    className="text-xs px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
+                                >
+                                    {savingWebchat ? "Guardando…" : "Guardar"}
+                                </button>
+                                <button
+                                    disabled={savingWebchat}
+                                    onClick={() => setEditingWebchatDomain(false)}
+                                    className="text-xs px-3 py-1 rounded bg-neutral-300 dark:bg-neutral-700"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* SDK */}
+                    <div className="mt-6">
+                        <h4 className="text-sm font-semibold">Código para insertar el Webchat</h4>
+                        <p className="text-xs opacity-60 mt-1">
+                            Pegá este script en tu sitio web (antes del cierre de &lt;/body&gt;)
+                        </p>
+
+                        <div className="mt-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg ring-1 ring-neutral-400/20">
+                            <code className="text-[13px] break-all">{sdkScript}</code>
+                        </div>
+
+                        <button
+                            className="mt-2 px-3 py-1.5 rounded-lg text-sm bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300"
+                            onClick={() => {navigator.clipboard.writeText(sdkScript), toast.success(t("script_copied_to_clipboard"))}}
+                        >
+                            Copiar script
+                        </button>
+                    </div>
+                </section>
+            )}
 
             <AgencyChatbot
                 mode="floating"
@@ -774,6 +873,46 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showWebchatModal && (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl w-full max-w-2xl p-6 ring-1 ring-emerald-400/40">
+
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Cómo integrar el Webchat</h3>
+                            <button
+                                className="text-xs px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-800"
+                                onClick={() => setShowWebchatModal(false)}
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+
+                        <div className="text-sm leading-relaxed space-y-3">
+                            <p>
+                                El Webchat te permite mostrar un asistente automatizado directamente en tu sitio web.
+                                Para integrarlo, seguí estos pasos:
+                            </p>
+
+                            <ol className="list-decimal ml-5 space-y-2">
+                                <li>Verificá que el dominio <strong>{webchatDomain}</strong> coincida con tu sitio real.</li>
+                                <li>Copiá el script de integración (lo ves en la sección anterior).</li>
+                                <li>Pegalo justo antes del cierre de <code>&lt;/body&gt;</code> en tu web.</li>
+                                <li>Actualizá tu sitio y verificá que el widget aparezca abajo a la derecha.</li>
+                            </ol>
+
+                        </div>
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
+                                onClick={() => setShowWebchatModal(false)}
+                            >
+                                Entendido
+                            </button>
                         </div>
                     </div>
                 </div>

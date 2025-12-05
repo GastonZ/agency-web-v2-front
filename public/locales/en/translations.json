@@ -263,5 +263,6 @@
     "analyze_new_conversations": "Analyze conversations",
     "target_audience_example": "The assistant is aimed at people interested in buying a car, customers needing service appointments or post-sale support, and users seeking quick information about models, prices, location, and dealership services.",
     "view_statistics": "View statistics",
-    "edit": "Edit"
+    "edit": "Edit",
+    "script_copied_to_clipboard": "Script copied to clipboard"
 }
