@@ -11,7 +11,13 @@ export function initSocket({ url = import.meta.env.VITE_API_URL, token }: InitOp
   if (socket?.connected) return socket;
 
   socket = io(url, {
-    transports: ["websocket"],
+    // 👇 IMPORTANTE: dejar el valor por defecto de transports
+    // (["polling","websocket"]) o, si querés ser explícito:
+    // transports: ["polling", "websocket"],
+
+    // Si querés, podés agregar path explícito, aunque no es obligatorio:
+    // path: "/socket.io",
+
     autoConnect: true,
     reconnection: true,
     reconnectionAttempts: 10,
