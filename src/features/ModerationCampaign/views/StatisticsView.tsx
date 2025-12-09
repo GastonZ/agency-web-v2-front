@@ -455,7 +455,7 @@ export default function StatisticsView() {
                                             />
                                         </div>
                                     )}
-
+                                    <div className="ghost_div"></div>
                                     {needsFacebookSetup && (
                                         <div className="mt-3">
                                             <FacebookConnectPanel state={campaign.id} />
