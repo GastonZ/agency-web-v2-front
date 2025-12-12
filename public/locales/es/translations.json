@@ -262,5 +262,6 @@
     "target_audience_example" : "El asistente está dirigido a personas interesadas en comprar un auto, clientes que necesitan turnos de service o soporte postventa, y usuarios que buscan información rápida sobre modelos, precios, ubicación y servicios de la concesionaria.",
     "view_statistics": "Ver estadísticas",
     "edit": "Editar",
-    "script_copied_to_clipboard": "Script copiado al portapapeles"
+    "script_copied_to_clipboard": "Script copiado al portapapeles",
+    "instagram_connected_successfully": "Instagram conectado exitosamente"
 }

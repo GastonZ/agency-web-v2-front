@@ -2,11 +2,12 @@ import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { setModerationInstagramCode } from "../services/campaigns";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 export default function InstagramCallback() {
   const [sp] = useSearchParams();
   const navigate = useNavigate();
-
+  const { t } = useTranslation('translations');
   const code = sp.get("code");
   const campaignId = sp.get("state");
 
@@ -23,7 +24,7 @@ export default function InstagramCallback() {
 
         console.log('setting ig data to campaign',res);
         
-        toast.success("Instagram conectado a la campaña.");
+        toast.success(t("instagram_connected_successfully"));
         navigate(`/my_moderation_campaign/${campaignId}/statistics`, { replace: true });
       } catch (e) {
         if (aborted) return;
