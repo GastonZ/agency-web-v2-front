@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
             <div className="w-full px-2 md:px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
                     {/* Chatbot */}
-                    <AgencyChatbot
+{/*                     <AgencyChatbot
                         autoStart
                         mode="floating"
                         placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
                             page: "dashboard",
                         })}
                         bootExtraInstructions={uiLang === "en" ? DASHBOARD_PLAYBOOK : DASHBOARD_PLAYBOOK_ES}
-                    />
+                    /> */}
                     <div className="lg:col-span-12 flex">
                         <HeroConversationalAgency />
                     </div>

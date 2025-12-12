@@ -744,7 +744,7 @@ export default function StatisticsView() {
                 </section>
             )}
 
-            <AgencyChatbot
+{/*             <AgencyChatbot
                 mode="floating"
                 persistNamespace={`moderation_stats_${campaign.id || "unknown"}`}
                 userId={userId}
@@ -824,7 +824,7 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
                         ? `Done, the campaign is active and ready to use. Next, I’ll ask you to scan the WhatsApp QR code you want to link, and provide the social media credentials for the accounts you’d like the assistant to start moderating.`
                         : `Listo, la campaña está activa y lista para usarse. A continuación, te voy a pedir que escanees el código QR de WhatsApp que quieras vincular y que proporciones las credenciales de las cuentas de redes sociales que el asistente deberá comenzar a moderar.`
                 }
-            />
+            /> */}
             {showWhatsappSuccess && (
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                     <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl w-full max-w-md p-6 ring-1 ring-emerald-400/40">

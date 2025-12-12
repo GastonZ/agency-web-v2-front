@@ -12,7 +12,6 @@ import { PunkButton } from "../components/ui/PunkButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/Tooltip";
 import { cn } from "../utils/helper";
 import OnlineLayout from "../layout/OnlineLayout";
-import AgencyChatbot from "../components/features/AgencyChatbot";
 
 type CampaignType = "marketing" | "moderation" | "listening";
 

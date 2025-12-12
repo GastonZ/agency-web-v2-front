@@ -20,7 +20,7 @@ export const StepThreeTop: React.FC = () => {
 export const StepThreeBottom: React.FC = () => {
   return (
     <div className="w-full space-y-4 md:space-y-6">
-      <VoiceConfigCard />
+      {/* <VoiceConfigCard /> */}
       <div className="space-y-4 md:space-y-6">
         <KnowHowFileImport />
         <QAEditor />

@@ -131,7 +131,7 @@ const Login: React.FC = () => {
           >
             {t("login_button")}
           </Button>
-          <GoogleSignInButton />
+          {/* <GoogleSignInButton /> */}
 
           {showRetry && (
             <Button

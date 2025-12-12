@@ -234,7 +234,7 @@ const Moderation: React.FC = () => {
 
         const hasCountry = hasCountryFromList || !!fallbackCountry;
 
-        if (!hasCountry) missing.push("geo.countryId");
+       /*  if (!hasCountry) missing.push("geo.countryId"); */ /* TODO FIX IF NOT COUNTRY */
 
         return missing;
     }
@@ -666,7 +666,7 @@ const Moderation: React.FC = () => {
                         <EditModeBanner />
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                             <div className="lg:col-span-5">
-                                <AgencyChatbot
+{/*                                 <AgencyChatbot
                                     mode="floating"
                                     persistNamespace="moderation"
                                     userId={userId}
@@ -742,7 +742,6 @@ const Moderation: React.FC = () => {
                                         });
                                         register("updateModerationGeoByName", (args: any) => {
                                             const out = updateModerationGeoByName(args);
-                                            // scrollea a lo que se “tocó” (si está lleno en data)
                                             const candidates: Array<{ field: any, path: string[] }> = [
                                                 { field: "audience.geo.country", path: ["audience", "geo", "countryId"] },
                                                 { field: "audience.geo.province", path: ["audience", "geo", "provinceId"] },
@@ -776,7 +775,6 @@ const Moderation: React.FC = () => {
                                         register("checkModerationStepStatus", checkModerationStepStatus);
                                         register("scrollToModerationField", scrollToModerationField);
                                         register("scrollToFieldIfFilled", scrollToFieldIfFilled);
-                                        /* Go to next or prev step */
                                         register("goToNextModerationStep", async () => {
                                             const ok = await saveCurrentStep();
                                             if (!ok) {
@@ -922,7 +920,6 @@ const Moderation: React.FC = () => {
 
                                         register("setModerationAssistantConfig", (args: any) => {
                                             const res = setModerationAssistantConfig(args);
-                                            // según las props tocadas, scrollear a cada una
                                             const map: Array<[key: string, field: any, path: string[]]> = [
                                                 ["name", "assistant.name", ["assistant", "name"]],
                                                 ["greeting", "assistant.greeting", ["assistant", "greeting"]],
@@ -957,21 +954,17 @@ const Moderation: React.FC = () => {
                                         register("updateModerationQAMatch", (args: any) => { const r = updateModerationQAMatch(args); scrollKnowHow(); return r; });
                                         register("removeModerationQAMatch", (args: any) => { const r = removeModerationQAMatch(args); scrollKnowHow(); return r; });
 
-                                        // Temas permitidos
                                         const scrollAllowed = () => { try { scrollToModerationField({ field: "allowedTopics" as any }); } catch { } };
                                         register("addModerationAllowedTopics", (args: any) => { const r = addModerationAllowedTopics(args); scrollAllowed(); return r; });
                                         register("removeModerationAllowedTopics", (args: any) => { const r = removeModerationAllowedTopics(args); scrollAllowed(); return r; });
                                         register("listModerationAllowedTopics", (args: any) => { const r = listModerationAllowedTopics(args); scrollAllowed(); return r; });
 
-
-                                        // Escalamiento humano
                                         const scrollEscalation = () => { try { scrollToModerationField({ field: "escalation" as any }); } catch { } };
                                         register("addModerationEscalationCases", (args: any) => { const r = addModerationEscalationCases(args); scrollEscalation(); return r; });
                                         register("removeModerationEscalationCases", (args: any) => { const r = removeModerationEscalationCases(args); scrollEscalation(); return r; });
                                         register("listModerationEscalationCases", (args: any) => { const r = listModerationEscalationCases(args); scrollEscalation(); return r; });
 
 
-                                        // Contacto
                                         register("setModerationContactNumber", (args: any) => {
                                             const r = setModerationContactNumber(args);
                                             try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
@@ -982,7 +975,7 @@ const Moderation: React.FC = () => {
                                             try { scrollToModerationField({ field: "escalation.phone" as any }); } catch { }
                                             return r;
                                         });
-                                        // Calendar
+
                                         const scrollCalendars = () => { try { scrollToModerationField({ field: "calendars" as any }); } catch { } };
                                         register("explainAndEnableCalendars", (args: any) => { const r = explainAndEnableCalendars(args); scrollCalendars(); return r; });
                                         register("createModerationCalendar", (args: any) => { const r = createModerationCalendar(args); scrollCalendars(); return r; });
@@ -1009,7 +1002,7 @@ const Moderation: React.FC = () => {
                                             ? "From now on talk in english, we are at Step 1 (Basics) of the moderation campaign wizard. Greet the user briefly, always answer in english, and then ask whether they prefer to start with the basic data or have you guide them step by step."
                                             : "Desde ahora en adelante habla en español, estamos en el Paso 1 (Datos básicos) del flujo de creación de la campaña de moderación. Saludá brevemente, respondé en el mismo idioma que use el usuario y preguntá si prefiere empezar por los datos básicos o que lo guíes paso a paso."
                                     }
-                                />
+                                /> */}
                             </div>
 
                             {current === 0 && (
