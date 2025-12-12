@@ -135,11 +135,6 @@ const Moderation: React.FC = () => {
                 const primaryLen = snapPrimary?.history?.length ?? 0;
                 const fallbackLen = snapFallback?.history?.length ?? 0;
 
-                console.groupCollapsed("[Moderation][boot] resumen previo");
-                console.log("primary:", primaryNs, "len:", primaryLen);
-                console.log("fallback:", fallbackNs, "len:", fallbackLen);
-                console.groupEnd();
-
                 let chosenText = "";
                 let chosenSource: "primary" | "fallback" | "none" = "none";
                 let pickedHistory: any[] = [];
@@ -161,19 +156,19 @@ const Moderation: React.FC = () => {
                     });
                 }
 
-                if (chosenSource !== "none" && chosenText.trim().length) {
+/*                 if (chosenSource !== "none" && chosenText.trim().length) {
                     console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-                    /*                     const summary = await getResumeOfConversation(chosenText, 10000, uiLang, ctrl.signal);
+                                        const summary = await getResumeOfConversation(chosenText, 10000, uiLang, ctrl.signal);
                                         if (!aborted) {
                                             setBootSummary(summary || undefined);
                                             console.groupCollapsed("[Moderation][boot] resumen recibido");
                                             console.log("summary.len:", (summary || "").length);
                                             console.log("summary.preview:", (summary || "").slice(0, 240));
                                             console.groupEnd();
-                                        } */
+                                        }
                 } else {
                     console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
-                }
+                } */
             } catch (e) {
                 console.warn("[Moderation][boot] fallo al resumir:", e);
             } finally {
@@ -210,6 +205,7 @@ const Moderation: React.FC = () => {
     }, [location.search]);
 
     React.useEffect(() => {
+        setToolsReady(true)/* temporal hasta traer de vuelta el chatbot */
         if (bootReady && toolsReady) {
             const timeout = setTimeout(() => setShowUI(true), 4000);
             return () => clearTimeout(timeout);
@@ -300,8 +296,7 @@ const Moderation: React.FC = () => {
 
     const canPrev = current > 0;
     const canNext = useMemo(() => validateStep(current), [current, data]);
-
-
+    
     const sendStepSilentNote = useCallback(
         (nextIndex: number) => {
             const safeIndex = clampStep(nextIndex);
@@ -643,11 +638,6 @@ const Moderation: React.FC = () => {
         } catch (e: any) {
             return { success: false, error: e?.message ?? "No se pudo reiniciar el flujo." };
         }
-    }
-    const viewReady = bootReady;
-
-    if (!viewReady) {
-        return <ModerationSkeleton />;
     }
 
     return (
