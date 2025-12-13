@@ -12,6 +12,7 @@ import { PunkButton } from "../components/ui/PunkButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/Tooltip";
 import { cn } from "../utils/helper";
 import OnlineLayout from "../layout/OnlineLayout";
+import { useTranslation } from "react-i18next";
 
 type CampaignType = "marketing" | "moderation" | "listening";
 
@@ -26,7 +27,7 @@ type CardSpec = {
 };
 
 const CARDS: CardSpec[] = [
-    {
+/*     {
         id: "marketing",
         title: "Marketing Campaign",
         icon: Megaphone,
@@ -39,7 +40,7 @@ const CARDS: CardSpec[] = [
         ],
         badge: "Leads",
         goto: '/campaign_marketing_creation'
-    },
+    }, */
     {
         id: "moderation",
         title: "Moderation Campaign",
@@ -54,7 +55,7 @@ const CARDS: CardSpec[] = [
         badge: "Atención",
         goto: '/campaign_moderation_creation'
     },
-    {
+/*     {
         id: "listening",
         title: "Social Listening",
         icon: Waves,
@@ -67,7 +68,7 @@ const CARDS: CardSpec[] = [
         ],
         badge: "Insights",
         goto: '/'
-    },
+    }, */
 ];
 
 export default function CampaignCreation({
@@ -84,6 +85,8 @@ export default function CampaignCreation({
         setValue(id);
     }
 
+    const { t } = useTranslation('translations');
+
     return (
         <OnlineLayout>
             <TooltipProvider delayDuration={100}>
@@ -93,10 +96,7 @@ export default function CampaignCreation({
                 >
                     <header className="mb-6 flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-semibold tracking-tight">Nueva campaña</h1>
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                Elegí el tipo de campaña. Todo es <span className="text-emerald-500">asistido por nuestra IA</span>.
-                            </p>
+                            <h1 className="text-xl font-semibold tracking-tight">{t("new_campaign")}</h1>
                         </div>
                     </header>
 

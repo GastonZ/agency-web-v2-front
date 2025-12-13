@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import OnlineLayout from "../layout/OnlineLayout";
 import ActionsButton from "../components/features/ActionsButton";
+import { useTranslation } from "react-i18next";
 
 import {
   searchMyModerationCampaigns,
@@ -34,6 +35,8 @@ type StatusFilter = "" | "draft" | "active" | "inactive";
 
 export default function CampaignsTable() {
   const navigate = useNavigate();
+
+  const { t } = useTranslation('translations');
 
   const [modRows, setModRows] = React.useState<ModerationCampaignItem[]>([]);
   const [mktRows, setMktRows] = React.useState<MarketingCampaignItem[]>([]);
@@ -129,7 +132,7 @@ export default function CampaignsTable() {
       <div className="flex items-center justify-center min-h-screen bg-neutral-950">
         <div className="text-center space-y-3">
           <div className="w-6 h-6 mx-auto border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-600 dark:text-gray-300 text-sm">Cargando campañas</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">{t("loading_campaigns")}</p>
         </div>
       </div>
     );
@@ -151,7 +154,7 @@ export default function CampaignsTable() {
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">
-              Mis campañas de moderación
+              {t("my_moderation_campaigns")}
             </h2>
 {/*             <div className="flex items-center gap-2">
               <button
@@ -269,7 +272,7 @@ export default function CampaignsTable() {
         {/* Tabla Marketing */}
         <section className="space-y-3 pt-8">
           <h2 className="text-2xl font-semibold tracking-tight">
-            Mis campañas de marketing
+            {t("my_marketing_campaigns")}
           </h2>
 
           <div className="rounded-2xl pt-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-visible">
