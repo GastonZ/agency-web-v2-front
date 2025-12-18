@@ -204,25 +204,48 @@ export default function StatisticsView() {
                     : [];
 
                 if (apiLeads.length) {
-                    const mapped: Lead[] = apiLeads.map((l: any) => ({
-                        id:
-                            l.conversationId ||
-                            l.id ||
-                            `${l.contactNumber || "lead"}-${l.analyzedAt || ""
-                            }`,
-                        name:
+                    const mapped: Lead[] = apiLeads.map((l: any) => {
+                        const cp = l.contactProfile || {};
+
+                        const normalizedProfilePic =
+                            cp.profile_pic || cp.profilePic || cp?.raw?.profile_pic || null;
+
+                        const normalizedName =
+                            cp.name ||
                             (l.extractedData && l.extractedData.name) ||
                             l.contactName ||
-                            l.contactNumber ||
-                            "Lead sin nombre",
-                        summary: l.summary,
-                        score:
-                            typeof l.finalScore === "number"
-                                ? l.finalScore
-                                : 0,
-                        channel: (l.channel || "unknown") as Lead["channel"],
-                        channelLink: undefined,
-                    }));
+                            "Lead sin nombre";
+
+                        const normalizedUsername =
+                            cp.username || null;
+
+                        const normalizedContactNumber =
+                            l.contactNumber || l.contactName || null;
+
+                        return {
+                            id:
+                                l.conversationId ||
+                                l.id ||
+                                `${l.contactNumber || "lead"}-${l.analyzedAt || ""}`,
+
+                            // 👇 OJO: ahora "name" lo usamos como label general (fallback),
+                            // pero en UI vamos a renderizar según canal con username/phone/name.
+                            name: normalizedName,
+
+                            summary: l.summary,
+                            score: typeof l.finalScore === "number" ? l.finalScore : 0,
+                            channel: (l.channel || "unknown") as Lead["channel"],
+                            channelLink: undefined,
+
+                            // 👇 nuevos/normalizados para render por canal
+                            username: normalizedUsername,
+                            profilePic: normalizedProfilePic,
+
+                            // si tu tipo Lead no tiene esto aún, lo podés guardar igual y castear,
+                            // o (mejor) agregarlo al type en moderation-types.
+                            contactNumber: normalizedContactNumber,
+                        } as any;
+                    });
 
                     setLeads(mapped);
                 } else {
@@ -744,7 +767,7 @@ export default function StatisticsView() {
                 </section>
             )}
 
-{/*             <AgencyChatbot
+            {/*             <AgencyChatbot
                 mode="floating"
                 persistNamespace={`moderation_stats_${campaign.id || "unknown"}`}
                 userId={userId}

@@ -10,6 +10,10 @@ function scoreClasses(score: number) {
     return "bg-rose-500/10 text-rose-400 ring-rose-400/30";
 }
 
+function prettifyWhatsNumber(raw?: string | null) {
+    if (!raw) return null;
+    return String(raw).replace(/@.+$/, ""); // quita "@lid"
+}
 
 function ChannelIcon({ channel }: { channel?: Lead["channel"] }) {
     switch (channel) {
@@ -26,14 +30,73 @@ function ChannelIcon({ channel }: { channel?: Lead["channel"] }) {
     }
 }
 
-
 interface LeadsTableProps {
     leads: Lead[];
     onOpenLead: (lead: Lead) => void;
 }
 
+function ContactCell({ lead }: { lead: any }) {
+    const channel = lead.channel;
+
+    // INSTAGRAM
+    if (channel === "instagram") {
+        const primary = lead.username ? `@${lead.username}` : (lead.name || "Instagram");
+        const secondary = lead.username && lead.name ? lead.name : null;
+
+        return (
+            <div className="flex items-center gap-3 min-w-[220px]">
+                {lead.profilePic ? (
+                    <img
+                        src={lead.profilePic}
+                        alt={primary}
+                        className="h-9 w-9 rounded-full object-cover ring-1 ring-emerald-400/20"
+                        referrerPolicy="no-referrer"
+                    />
+                ) : (
+                    <div className="h-9 w-9 rounded-full bg-neutral-300/60 dark:bg-neutral-700/60 ring-1 ring-emerald-400/20" />
+                )}
+
+                <div className="leading-tight">
+                    <div className="font-medium">{primary}</div>
+                    {secondary ? (
+                        <div className="text-xs opacity-70">{secondary}</div>
+                    ) : null}
+                </div>
+            </div>
+        );
+    }
+
+    // WHATSAPP
+    if (channel === "whatsapp") {
+        const number = prettifyWhatsNumber(lead.contactNumber);
+        const primary = lead.name || "WhatsApp";
+        return (
+            <div className="leading-tight min-w-[220px]">
+                <div className="font-medium">{primary}</div>
+                {number ? <div className="text-xs opacity-70 font-mono">{number}</div> : null}
+            </div>
+        );
+    }
+
+    // FACEBOOK (por ahora solo nombre)
+    if (channel === "facebook") {
+        const primary = lead.name || "Facebook";
+        return (
+            <div className="leading-tight min-w-[220px]">
+                <div className="font-medium">{primary}</div>
+            </div>
+        );
+    }
+
+    // fallback
+    return <div className="font-medium">{lead.name}</div>;
+}
+
 export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
     const { t } = useTranslation("translations");
+
+    console.log('my leads', leads);
+
     return (
         <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-emerald-400/10">
@@ -59,7 +122,9 @@ export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
                                 onClick={() => onOpenLead(l)}
                                 title="Ver detalles"
                             >
-                                <td className="px-4 py-2 whitespace-nowrap font-medium">{l.name}</td>
+                                <td className="px-4 py-2 whitespace-nowrap">
+                                    <ContactCell lead={l} />
+                                </td>
                                 <td className="px-4 py-2 max-w-[420px]">
                                     <p className="line-clamp-2 opacity-80">
                                         {l.summary}
