@@ -10,80 +10,99 @@ function scoreClasses(score: number) {
     return "bg-rose-500/10 text-rose-400 ring-rose-400/30";
 }
 
-function prettifyWhatsNumber(raw?: string | null) {
-    if (!raw) return null;
-    return String(raw).replace(/@.+$/, ""); // quita "@lid"
-}
-
-function ChannelIcon({ channel }: { channel?: Lead["channel"] }) {
+function ChannelIcon({
+    channel,
+    className = "h-4 w-4",
+}: {
+    channel?: Lead["channel"];
+    className?: string;
+}) {
     switch (channel) {
         case "whatsapp":
-            return <MessageSquare className="h-4 w-4" />;
+            return <MessageSquare className={className} />;
         case "instagram":
-            return <Instagram className="h-4 w-4" />;
+            return <Instagram className={className} />;
         case "facebook":
-            return <Facebook className="h-4 w-4" />;
+            return <Facebook className={className} />;
         case "email":
-            return <ExternalLink className="h-4 w-4" />;
+            return <ExternalLink className={className} />;
         default:
-            return <ExternalLink className="h-4 w-4" />;
+            return <ExternalLink className={className} />;
     }
 }
 
-interface LeadsTableProps {
-    leads: Lead[];
-    onOpenLead: (lead: Lead) => void;
+function ChannelBadge({ channel }: { channel: Lead["channel"] | string }) {
+    return (
+        <div className="h-9 w-9 rounded-full bg-neutral-200/70 dark:bg-neutral-800/70 ring-1 ring-neutral-300/60 dark:ring-neutral-700/60 flex items-center justify-center">
+            <ChannelIcon channel={channel as any} className="h-4 w-4" />
+        </div>
+    );
 }
 
-function ContactCell({ lead }: { lead: any }) {
-    const channel = lead.channel;
+function prettifyWhatsNumber(raw?: string | null) {
+    if (!raw) return null;
+    return String(raw)
+        .replace(/@.+$/, "") // quita "@s.whatsapp.net" / "@lid"
+        .replace(/[^\d+]/g, ""); // deja dígitos (+ opcional)
+}
 
-    // INSTAGRAM
+function ContactCell({ lead }: { lead: Lead }) {
+    const channel = String((lead as any).channel || "").toLowerCase();
+    const profilePic = (lead as any).profilePic as string | null | undefined;
+    const username = (lead as any).username as string | null | undefined;
+    const contactNumber = (lead as any).contactNumber as string | null | undefined;
+
     if (channel === "instagram") {
-        const primary = lead.username ? `@${lead.username}` : (lead.name || "Instagram");
-        const secondary = lead.username && lead.name ? lead.name : null;
+        const primary = username ? `@${username}` : lead.name || "Instagram";
+        const secondary = username && lead.name ? lead.name : null;
 
         return (
             <div className="flex items-center gap-3 min-w-[220px]">
-                {lead.profilePic ? (
+                {profilePic ? (
                     <img
-                        src={lead.profilePic}
+                        src={profilePic}
                         alt={primary}
                         className="h-9 w-9 rounded-full object-cover ring-1 ring-emerald-400/20"
                         referrerPolicy="no-referrer"
                     />
                 ) : (
-                    <div className="h-9 w-9 rounded-full bg-neutral-300/60 dark:bg-neutral-700/60 ring-1 ring-emerald-400/20" />
+                    <ChannelBadge channel="instagram" />
                 )}
 
                 <div className="leading-tight">
                     <div className="font-medium">{primary}</div>
-                    {secondary ? (
-                        <div className="text-xs opacity-70">{secondary}</div>
-                    ) : null}
+                    {secondary ? <div className="text-xs opacity-70">{secondary}</div> : null}
                 </div>
             </div>
         );
     }
 
-    // WHATSAPP
+    // WHATSAPP: NO foto => icono WhatsApp + nombre + número (si existe)
     if (channel === "whatsapp") {
-        const number = prettifyWhatsNumber(lead.contactNumber);
-        const primary = lead.name || "WhatsApp";
+        const number = prettifyWhatsNumber(contactNumber);
+        const primary = "Whatsapp user";
+
         return (
-            <div className="leading-tight min-w-[220px]">
-                <div className="font-medium">{primary}</div>
-                {number ? <div className="text-xs opacity-70 font-mono">{number}</div> : null}
+            <div className="flex items-center gap-3 min-w-[220px]">
+                <ChannelBadge channel="whatsapp" />
+                <div className="leading-tight">
+                    <div className="font-medium">{primary}</div>
+                    {number ? <div className="text-xs opacity-70 font-mono">{number}</div> : null}
+                </div>
             </div>
         );
     }
 
-    // FACEBOOK (por ahora solo nombre)
+    // FACEBOOK: NO foto => icono Facebook + nombre
     if (channel === "facebook") {
         const primary = lead.name || "Facebook";
+
         return (
-            <div className="leading-tight min-w-[220px]">
-                <div className="font-medium">{primary}</div>
+            <div className="flex items-center gap-3 min-w-[220px]">
+                <ChannelBadge channel="facebook" />
+                <div className="leading-tight">
+                    <div className="font-medium">{primary}</div>
+                </div>
             </div>
         );
     }
@@ -92,17 +111,21 @@ function ContactCell({ lead }: { lead: any }) {
     return <div className="font-medium">{lead.name}</div>;
 }
 
+interface LeadsTableProps {
+    leads: Lead[];
+    onOpenLead: (lead: Lead) => void;
+}
+
 export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
     const { t } = useTranslation("translations");
 
-    console.log('my leads', leads);
+    console.log("my leads", leads);
 
     return (
         <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-emerald-400/10">
                 <h3 className="text-sm font-semibold">Leads</h3>
             </div>
-
 
             <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
@@ -125,11 +148,11 @@ export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
                                 <td className="px-4 py-2 whitespace-nowrap">
                                     <ContactCell lead={l} />
                                 </td>
+
                                 <td className="px-4 py-2 max-w-[420px]">
-                                    <p className="line-clamp-2 opacity-80">
-                                        {l.summary}
-                                    </p>
+                                    <p className="line-clamp-2 opacity-80">{l.summary}</p>
                                 </td>
+
                                 <td className="px-4 py-2">
                                     <span
                                         className={
@@ -140,10 +163,8 @@ export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
                                         {l.score}/10
                                     </span>
                                 </td>
-                                <td
-                                    className="px-4 py-2"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
+
+                                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                                     {l.channelLink ? (
                                         <a
                                             href={l.channelLink}

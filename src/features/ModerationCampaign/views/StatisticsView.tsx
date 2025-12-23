@@ -195,13 +195,18 @@ export default function StatisticsView() {
                     getModerationAnalysisSummary(id),
                 ]);
 
+                console.log(metricsRes);
+                console.log(summaryRes);
+
+
+
                 if (cancelled) return;
 
                 if (metricsRes) setAnalysisMetrics(metricsRes);
                 if (summaryRes) setAnalysisSummary(summaryRes);
 
-                const apiLeads = Array.isArray((hotLeadsRes as any)?.leads)
-                    ? (hotLeadsRes as any).leads
+                const apiLeads = Array.isArray((summaryRes as any)?.analysisResults)
+                    ? (summaryRes as any).analysisResults
                     : [];
 
                 if (apiLeads.length) {
@@ -217,11 +222,7 @@ export default function StatisticsView() {
                             l.contactName ||
                             "Lead sin nombre";
 
-                        const normalizedUsername =
-                            cp.username || null;
-
-                        const normalizedContactNumber =
-                            l.contactNumber || l.contactName || null;
+                        const normalizedUsername = cp.username || null;
 
                         return {
                             id:
@@ -229,22 +230,15 @@ export default function StatisticsView() {
                                 l.id ||
                                 `${l.contactNumber || "lead"}-${l.analyzedAt || ""}`,
 
-                            // 👇 OJO: ahora "name" lo usamos como label general (fallback),
-                            // pero en UI vamos a renderizar según canal con username/phone/name.
                             name: normalizedName,
-
                             summary: l.summary,
                             score: typeof l.finalScore === "number" ? l.finalScore : 0,
                             channel: (l.channel || "unknown") as Lead["channel"],
                             channelLink: undefined,
 
-                            // 👇 nuevos/normalizados para render por canal
                             username: normalizedUsername,
                             profilePic: normalizedProfilePic,
-
-                            // si tu tipo Lead no tiene esto aún, lo podés guardar igual y castear,
-                            // o (mejor) agregarlo al type en moderation-types.
-                            contactNumber: normalizedContactNumber,
+                            contactNumber: l.contactNumber || null,
                         } as any;
                     });
 
@@ -628,7 +622,6 @@ export default function StatisticsView() {
                     <KpiCards
                         items={[
                             { title: t("stats_total_leads"), value: kpis.total, icon: <Users className="h-5 w-5" /> },
-                            { title: t("stats_response_rate"), value: `${kpis.responseRate}%`, icon: <Zap className="h-5 w-5" /> },
                             { title: t("stats_average_score"), value: kpis.avgScore, icon: <Star className="h-5 w-5" /> },
                             { title: t("stats_most_active_channel"), value: kpis.topChannel, icon: <MessageSquare className="h-5 w-5" /> },
                         ]}
