@@ -1,35 +1,64 @@
-import * as React from "react";
-import { Instagram, Facebook, MessageSquare, Mail, Twitter, Globe2 } from "lucide-react";
-import { CHANNELS } from "../../../../context/ModerationContext";
-
-type ChannelIconProps = { className?: string };
-const IconInstagram: React.FC<ChannelIconProps> = (p) => <Instagram {...p} />;
-const IconFacebook: React.FC<ChannelIconProps> = (p) => <Facebook {...p} />;
-const IconWhatsApp: React.FC<ChannelIconProps> = (p) => <MessageSquare {...p} />;
-const IconWebChat: React.FC<ChannelIconProps> = (p) => <Globe2 {...p} />;
+// ChannelMeta.ts
+import { Instagram, Facebook, MessageCircle, Globe } from "lucide-react";
+import type { Channel } from "../../../../context/ModerationContext";
 
 export const CHANNEL_META: Record<
-  (typeof CHANNELS)[number],
-  { title: string; subtitle: string; Icon: React.FC<ChannelIconProps> }
+  Channel,
+  {
+    title: string;
+    subtitle: string;
+    description: string;
+    bullets: string[];
+    tags: string[];
+    Icon: any;
+  }
 > = {
   instagram: {
     title: "Instagram",
-    subtitle: "",
-    Icon: IconInstagram,
+    subtitle: "Mensajes directos (DM)",
+    description:
+      "Conversaciones desde mensajes directos de Instagram.",
+    bullets: [
+      "Atención rápida y consultas comerciales",
+      "Contacto desde publicaciones o anuncios",
+    ],
+    tags: ["Rápido", "Social", "DM"],
+    Icon: Instagram,
   },
   facebook: {
     title: "Facebook",
-    subtitle: "",
-    Icon: IconFacebook,
+    subtitle: "Messenger",
+    description:
+      "Mensajes recibidos desde Facebook Messenger.",
+    bullets: [
+      "Consultas generales y soporte",
+      "Campañas de anuncios y comunidades",
+    ],
+    tags: ["Messenger", "Comunidad", "Ads"],
+    Icon: Facebook,
   },
   whatsapp: {
     title: "WhatsApp",
-    subtitle: "",
-    Icon: IconWhatsApp,
+    subtitle: "Atención directa 1:1",
+    description:
+      "Atención directa por WhatsApp.",
+    bullets: [
+      "Seguimiento de leads y coordinación",
+      "Atención personalizada",
+    ],
+    tags: ["1:1", "Leads", "Personal"],
+    Icon: MessageCircle,
   },
   webchat: {
     title: "Webchat",
-    subtitle: "",
-    Icon: IconWebChat,
+    subtitle: "Widget en tu sitio",
+    description:
+      "Chat integrado en tu sitio web.",
+    bullets: [
+      "Atiende visitantes sin salir del sitio",
+      "Ideal para consultas mientras navegan",
+    ],
+    tags: ["Website", "Widget", "On-site"],
+    Icon: Globe,
   },
 };

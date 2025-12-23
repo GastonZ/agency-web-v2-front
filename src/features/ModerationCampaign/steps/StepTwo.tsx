@@ -26,16 +26,18 @@ const StepTwo: React.FC = () => {
           subtitle={t("select_channels")}
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {CHANNELS.map((ch) => (
-            <ChannelCard
-              key={ch}
-              channel={ch}
-              available={CHANNEL_STATUS[ch] === "available"}
-              active={Boolean(data.channels?.includes(ch))}
-              onToggle={() => toggleChannel(ch)}
-            />
-          ))}
+        <div className="rounded-3xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white/30 dark:bg-neutral-950/20 p-3 md:p-4 backdrop-blur">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {CHANNELS.map((ch) => (
+              <ChannelCard
+                key={ch}
+                channel={ch}
+                available={CHANNEL_STATUS[ch] === "available"}
+                active={Boolean(data.channels?.includes(ch))}
+                onToggle={() => toggleChannel(ch)}
+              />
+            ))}
+          </div>
         </div>
 
         <SelectedSummary items={data.channels} />

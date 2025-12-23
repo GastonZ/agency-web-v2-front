@@ -76,7 +76,7 @@ const BasicsSection: React.FC = () => {
             <TextArea
               className="min-h-[160px]"
               id="leadDefinition"
-              maxLength={900}
+              maxLength={500}
               rows={3}
               placeholder={t("what_is_valid_lead")}
               value={data.leadDefinition}
@@ -98,7 +98,7 @@ const BasicsSection: React.FC = () => {
               }
             />
             <span className="text-sm text-gray-600">
-              Max 900 {t("characters")}.
+              Max 500 {t("characters")}.
             </span>
           </div>
 

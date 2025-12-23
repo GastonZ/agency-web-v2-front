@@ -10,7 +10,7 @@ const AssistantBasicsCard: React.FC = () => {
   return (
     <GlassCard>
       <SectionTitle title={t("assistant")} subtitle={t("assistant_data")} />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
         <div>
           <Label>{t("assistant_name")}</Label>
           <TextInput
@@ -23,7 +23,7 @@ const AssistantBasicsCard: React.FC = () => {
         </div>
         <div>
           <Label>{t("initial_greeting")}</Label>
-          <TextInput
+          <TextArea
             id="assistantGreeting"
             data-field="assistant.greeting"
             placeholder={t("assistant_greeting")}

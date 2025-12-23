@@ -9,6 +9,11 @@ import CalendarCard from "../components/stepThreeComponents/CalendarCard";
 import ToneSection from "../components/stepOneComponents/ToneSection";
 
 export const StepThreeTop: React.FC = () => {
+
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }, []);
+
   return (
     <div className="w-full space-y-4 md:space-y-6">
       <AssistantBasicsCard />
@@ -26,7 +31,7 @@ export const StepThreeBottom: React.FC = () => {
         <QAEditor />
       </div>
       <EscalationCard />
-      <CalendarCard />
+      {/* <CalendarCard /> */}
     </div>
   );
 };

@@ -146,7 +146,7 @@ const AudienceSection: React.FC = () => {
       )}
 
       {/* Segmentación cultural */}
-      <div className="mt-6">
+{/*       <div className="mt-6">
         <Label htmlFor="audienceCulture">{t("cultural_segmentation")}</Label>
         <TextArea
           id="audienceCulture"
@@ -175,7 +175,7 @@ const AudienceSection: React.FC = () => {
             })
           }
         />
-      </div>
+      </div> */}
     </GlassCard>
   );
 };

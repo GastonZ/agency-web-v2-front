@@ -326,3 +326,23 @@ export async function updateWebchatConfig(
   );
   return data;
 }
+
+type InstagramReviewSendPayload = {
+  agentId: string;
+  recipientId: string;
+  message: string;
+};
+
+export async function sendInstagramReviewMessage(message: string) {
+  const agentId = "6949637c691e13b2fbf0fed0";
+  const recipientId = "26195445306710296";
+
+  const payload: InstagramReviewSendPayload = {
+    agentId,
+    recipientId,
+    message,
+  };
+
+  const { data } = await api.post("instagram/messages/send", payload);
+  return data;
+}
