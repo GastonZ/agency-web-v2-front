@@ -46,6 +46,36 @@ function prettifyWhatsNumber(raw?: string | null) {
         .replace(/[^\d+]/g, ""); // deja dígitos (+ opcional)
 }
 
+function getConversationLink(lead: Lead) {
+    const channel = String((lead as any).channel || "").toLowerCase();
+    const username = (lead as any).username as string | null | undefined;
+    const contactNumber = (lead as any).contactNumber as string | null | undefined;
+
+    // Si ya viene un link desde backend, lo respetamos
+    if (lead.channelLink) return lead.channelLink;
+
+    if (channel === "instagram") {
+        if (!username) return null;
+        return `https://www.instagram.com/${username}/`;
+    }
+
+    if (channel === "whatsapp") {
+        const num = prettifyWhatsNumber(contactNumber);
+        if (!num) return null;
+        // wa.me requiere número en formato internacional sin símbolos
+        return `https://wa.me/${num.replace(/^\+/, "")}`;
+    }
+
+    if (channel === "facebook") {
+        // Por ahora no tenemos link; a futuro si te llega username, lo usamos
+        if (!username) return null;
+        return `https://www.facebook.com/${username}`;
+    }
+
+    return null;
+}
+
+
 function ContactCell({ lead }: { lead: Lead }) {
     const channel = String((lead as any).channel || "").toLowerCase();
     const profilePic = (lead as any).profilePic as string | null | undefined;
@@ -138,50 +168,54 @@ export function LeadsTable({ leads, onOpenLead }: LeadsTableProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {leads.map((l) => (
-                            <tr
-                                key={l.id}
-                                className="group border-b border-emerald-400/10 hover:bg-emerald-500/5 cursor-pointer"
-                                onClick={() => onOpenLead(l)}
-                                title="Ver detalles"
-                            >
-                                <td className="px-4 py-2 whitespace-nowrap">
-                                    <ContactCell lead={l} />
-                                </td>
+                        {leads.map((l) => {
+                            const convLink = getConversationLink(l);
 
-                                <td className="px-4 py-2 max-w-[420px]">
-                                    <p className="line-clamp-2 opacity-80">{l.summary}</p>
-                                </td>
+                            return (
+                                <tr
+                                    key={l.id}
+                                    className="group border-b border-emerald-400/10 hover:bg-emerald-500/5 cursor-pointer"
+                                    onClick={() => onOpenLead(l)}
+                                    title="Ver detalles"
+                                >
+                                    <td className="px-4 py-2 whitespace-nowrap">
+                                        <ContactCell lead={l} />
+                                    </td>
 
-                                <td className="px-4 py-2">
-                                    <span
-                                        className={
-                                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] ring-1 " +
-                                            scoreClasses(l.score)
-                                        }
-                                    >
-                                        {l.score}/10
-                                    </span>
-                                </td>
+                                    <td className="px-4 py-2 max-w-[420px]">
+                                        <p className="line-clamp-2 opacity-80">{l.summary}</p>
+                                    </td>
 
-                                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                                    {l.channelLink ? (
-                                        <a
-                                            href={l.channelLink}
-                                            target="_blank"
-                                            rel="noreferrer noopener"
-                                            className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
-                                            title="Abrir conversación"
+                                    <td className="px-4 py-2">
+                                        <span
+                                            className={
+                                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] ring-1 " +
+                                                scoreClasses(l.score)
+                                            }
                                         >
-                                            <ChannelIcon channel={l.channel} />
-                                            <span className="hidden sm:inline">{t("open")}</span>
-                                        </a>
-                                    ) : (
-                                        <span className="text-xs opacity-60">—</span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
+                                            {l.score}/10
+                                        </span>
+                                    </td>
+
+                                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                                        {convLink ? (
+                                            <a
+                                                href={convLink}
+                                                target="_blank"
+                                                rel="noreferrer noopener"
+                                                className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
+                                                title="Abrir conversación"
+                                            >
+                                                <ChannelIcon channel={l.channel} />
+                                                <span className="hidden sm:inline">{t("open")}</span>
+                                            </a>
+                                        ) : (
+                                            <span className="text-xs opacity-60">—</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
