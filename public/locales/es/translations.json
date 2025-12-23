@@ -267,5 +267,33 @@
     "facebook_connected_successfully": "Facebook conectado exitosamente",
     "my_moderation_campaigns": "Mis campañas de moderación",
     "my_marketing_campaigns": "Mis campañas de marketing",
-    "new_campaign": "Nueva campaña"
+    "new_campaign": "Nueva campaña",
+    "stepReview": {
+        "header": {
+            "title": "Resumen de campaña",
+            "channelsBadge": "{{count}} canales"
+        },
+        "main": {
+            "title": "Datos principales",
+            "subtitle": "Campos clave de configuración",
+            "fields": {
+                "campaignName": "Nombre de la Campaña",
+                "productOrService": "Producto o Servicio",
+                "goal": "Objetivo",
+                "lead": "Lead"
+            }
+        },
+        "channels": {
+            "title": "Canales",
+            "subtitle": "Dónde el asistente interactuará",
+            "empty": "No hay canales seleccionados."
+        },
+        "location": {
+            "title": "Lugar donde correrá",
+            "subtitle": "Segmentación geográfica configurada",
+            "fields": {
+                "location": "Ubicación"
+            }
+        }
+    }
 }

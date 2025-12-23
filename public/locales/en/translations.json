@@ -269,5 +269,33 @@
     "facebook_connected_successfully": "Facebook connected successfully",
     "my_moderation_campaigns": "My moderation campaigns",
     "my_marketing_campaigns": "My marketing campaigns",
-    "new_campaign": "New campaign"
+    "new_campaign": "New campaign",
+    "stepReview": {
+        "header": {
+            "title": "Campaign summary",
+            "channelsBadge": "{{count}} channels"
+        },
+        "main": {
+            "title": "Key details",
+            "subtitle": "Main configuration fields",
+            "fields": {
+                "campaignName": "Campaign name",
+                "productOrService": "Product or service",
+                "goal": "Goal",
+                "lead": "Lead"
+            }
+        },
+        "channels": {
+            "title": "Channels",
+            "subtitle": "Where the assistant will interact",
+            "empty": "No channels selected."
+        },
+        "location": {
+            "title": "Where it will run",
+            "subtitle": "Configured geographic targeting",
+            "fields": {
+                "location": "Location"
+            }
+        }
+    }
 }
