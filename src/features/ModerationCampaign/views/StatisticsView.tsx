@@ -64,46 +64,6 @@ export default function StatisticsView() {
         [id]
     );
 
-    const handleExecuteAnalysisPreview = React.useCallback(
-        () =>
-            callAnalysisEndpoint("POST /analysis/execute (dryRun)", () =>
-                executeModerationAnalysis(id!, { dryRun: true })
-            ),
-        [callAnalysisEndpoint, id]
-    );
-
-    const handleExecuteAnalysisReal = React.useCallback(
-        () =>
-            callAnalysisEndpoint("POST /analysis/execute", () =>
-                executeModerationAnalysis(id!, { dryRun: false })
-            ),
-        [callAnalysisEndpoint, id]
-    );
-
-    const handleFetchAnalysisSummary = React.useCallback(
-        () =>
-            callAnalysisEndpoint("GET /analysis/summary", () =>
-                getModerationAnalysisSummary(id!)
-            ),
-        [callAnalysisEndpoint, id]
-    );
-
-    const handleFetchAnalysisMetrics = React.useCallback(
-        () =>
-            callAnalysisEndpoint("GET /analysis/metrics", () =>
-                getModerationAnalysisMetrics(id!)
-            ),
-        [callAnalysisEndpoint, id]
-    );
-
-    const handleFetchHotLeads = React.useCallback(
-        () =>
-            callAnalysisEndpoint("GET /analysis/hot-leads", () =>
-                getModerationHotLeads(id!)
-            ),
-        [callAnalysisEndpoint, id]
-    );
-
     const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
     const [openModal, setOpenModal] = React.useState(false);
 
@@ -164,25 +124,6 @@ export default function StatisticsView() {
 
     const timeSeries = React.useMemo(() => [] as any[], [leads]);
 
-    const funnelData = React.useMemo(() => {
-        const m = analysisMetrics?.metrics;
-        if (!m) return [];
-
-        const hot = m.hotLeads ?? 0;
-        const warm = m.warmLeads ?? 0;
-        const cold = m.coldAnalyses ?? 0;
-        const totalAnalyses = m.totalAnalyses ?? hot + warm + cold;
-        const totalLeads = hot + warm + cold;
-
-        if (!totalAnalyses && !totalLeads) return [];
-
-        return [
-            { name: "Conversaciones analizadas", value: totalAnalyses || totalLeads },
-            { name: "Leads detectados", value: totalLeads },
-            { name: "Leads calientes", value: hot },
-        ];
-    }, [analysisMetrics]);
-
     React.useEffect(() => {
         if (!id) return;
         let cancelled = false;
@@ -235,7 +176,9 @@ export default function StatisticsView() {
                             score: typeof l.finalScore === "number" ? l.finalScore : 0,
                             channel: (l.channel || "unknown") as Lead["channel"],
                             channelLink: undefined,
-
+                            // backend: ahora viene como "status" (compat: antes podía venir como "leadStatus")
+                            status: l.status || l.leadStatus || "new",
+                            customStatusLabel: l.customStatusLabel || undefined,
                             username: normalizedUsername,
                             profilePic: normalizedProfilePic,
                             contactNumber: l.contactNumber || null,
@@ -628,7 +571,11 @@ export default function StatisticsView() {
                     />
                 </section>
                 <section className="mt-2">
-                    <LeadsTable leads={leads} onOpenLead={handleOpenLead} />
+                    <LeadsTable
+                        leads={leads}
+                        onOpenLead={handleOpenLead}
+                        campaignId={campaign?.id || id!}
+                    />
                 </section>
 
 

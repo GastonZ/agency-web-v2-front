@@ -295,5 +295,21 @@
                 "location": "Ubicación"
             }
         }
-    }
+    },
+    "stats_status": "Estado",
+    "lead_status": {
+        "new": "Nuevo",
+        "on_following": "En seguimiento",
+        "contacted": "Contactado",
+        "negotiating": "Negociando",
+        "closed_won": "Cerrado (Ganado)",
+        "closed_lost": "Cerrado (Perdido)",
+        "custom": "Personalizado",
+        "custom_label": "Etiqueta personalizada",
+        "custom_placeholder": "ej: sin stock",
+        "custom_hint": "Máx. 2 palabras",
+        "custom_too_long": "Máximo 2 palabras"
+    },
+    "save": "Guardar",
+    "cancel": "Cancelar"
 }

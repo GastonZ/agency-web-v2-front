@@ -1,7 +1,7 @@
 import api from "./api/api";
 import type { AxiosResponse } from "axios";
-import { getUserId, mapAgeGroups, mapGender, mapNSE, prune } from '../utils/helper'
-import type { ExtractedQA, ModerationCampaignCreateResponse, CampaignStatus, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse, ActivateWhatsappBotResponse } from './types/moderation-types'
+import { getUserId, mapAgeGroups, mapGender, mapNSE, prune, countWords } from '../utils/helper'
+import type { ExtractedQA, ModerationCampaignCreateResponse, CampaignStatus, ModerationCampaignUpdateResponse, StepOneCtx, AssistantSettingsPayload, SearchParams, ModerationCampaignSearchResponse, ActivateWhatsappBotResponse, LeadStatus, UpdateModerationCampaignLeadStatusArgs } from './types/moderation-types'
 import type { Calendar } from "../context/ModerationContext";
 
 function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boolean }) {
@@ -345,4 +345,27 @@ export async function sendInstagramReviewMessage(message: string) {
 
   const { data } = await api.post("instagram/messages/send", payload);
   return data;
+}
+
+
+export async function updateModerationCampaignLeadStatus(
+  args: UpdateModerationCampaignLeadStatusArgs
+) {
+  const payload =
+    args.status === "custom"
+      ? { status: "custom", customStatusLabel: args.customStatusLabel || "" }
+      : { status: args.status };
+
+  if (payload.status === "custom") {
+    const label = (payload.customStatusLabel || "").trim();
+    if (!label) throw new Error("customStatusLabel is required");
+    if (countWords(label) > 2) throw new Error("customStatusLabel: max 2 words");
+  }
+  
+  const res: AxiosResponse<unknown> = await api.put(
+    `moderation-campaigns/${args.campaignId}/leads/${args.conversationId}/status`,
+    payload
+  );
+
+  return res.data;
 }

@@ -129,3 +129,20 @@ export type Lead = {
   channel?: "whatsapp" | "instagram" | "facebook" | "email" | "x" | "unknown";
   channelLink?: string;
 };
+
+export type LeadStatus =
+  | "new"
+  | "on_following"
+  | "contacted"
+  | "negotiating"
+  | "closed_won"
+  | "closed_lost"
+  | "custom";
+
+
+export interface UpdateModerationCampaignLeadStatusArgs {
+  campaignId: string;
+  conversationId: string;
+  status: LeadStatus;
+  customStatusLabel?: string;
+}
