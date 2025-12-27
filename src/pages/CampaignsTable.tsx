@@ -144,8 +144,16 @@ export default function CampaignsTable() {
         {/* Errores (si los hay) */}
         {(errorMod || errorMkt || deleteError) && (
           <div className="rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300 space-y-1">
-            {errorMod && <div>Moderación: {errorMod}</div>}
-            {errorMkt && <div>Marketing: {errorMkt}</div>}
+            {errorMod && (
+              <div>
+                {t("campaigns_error_moderation")}: {errorMod}
+              </div>
+            )}
+            {errorMkt && (
+              <div>
+                {t("campaigns_error_marketing")}: {errorMkt}
+              </div>
+            )}
             {deleteError && <div>{deleteError}</div>}
           </div>
         )}
@@ -153,17 +161,15 @@ export default function CampaignsTable() {
         {/* Tabla Moderación */}
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              {t("my_moderation_campaigns")}
-            </h2>
-{/*             <div className="flex items-center gap-2">
-              <button
-                className="px-3 py-1.5 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
-                onClick={handleShowArchived}
-              >
-                Ver campañas archivadas
-              </button>
-            </div> */}
+            <h2 className="text-2xl font-semibold tracking-tight">{t("my_moderation_campaigns")}</h2>
+            {/*             <div className="flex items-center gap-2">
+                <button
+                  className="px-3 py-1.5 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
+                  onClick={handleShowArchived}
+                >
+                  Ver campañas archivadas
+                </button>
+              </div> */}
           </div>
 
           <div className="rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-visible">
@@ -172,7 +178,7 @@ export default function CampaignsTable() {
               <div className="flex-1 flex gap-2 items-center">
                 <input
                   type="text"
-                  placeholder="Buscar por nombre, texto, etc."
+                  placeholder={t("campaigns_search_placeholder")}
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   className="w-full md:max-w-xs rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
@@ -182,11 +188,11 @@ export default function CampaignsTable() {
                   onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                   className="rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
                 >
-                  <option value="">Todos los estados</option>
-                  <option value="draft">Borrador</option>
-                  <option value="active">Activa</option>
-                  <option value="inactive">Inactiva</option>
-                  <option value="archived">Archivada</option>
+                  <option value="">{t("campaigns_status_all")}</option>
+                  <option value="draft">{t("campaigns_status_draft")}</option>
+                  <option value="active">{t("campaigns_status_active")}</option>
+                  <option value="inactive">{t("campaigns_status_inactive")}</option>
+                  <option value="archived">{t("campaigns_status_archived")}</option>
                 </select>
               </div>
               <div className="flex gap-2 justify-end">
@@ -194,14 +200,14 @@ export default function CampaignsTable() {
                   onClick={resetFilters}
                   className="px-3 py-1.5 rounded-lg text-xs md:text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
                 >
-                  Limpiar
+                  {t("campaigns_clear")}
                 </button>
                 <button
                   onClick={applyFilters}
                   className="px-3 py-1.5 rounded-lg text-xs md:text-sm bg-emerald-600 text-white hover:bg-emerald-500 transition-colors disabled:opacity-60"
                   disabled={loading}
                 >
-                  Aplicar filtros
+                  {t("campaigns_apply_filters")}
                 </button>
               </div>
             </div>
@@ -211,10 +217,10 @@ export default function CampaignsTable() {
               <table className="min-w-full text-[15px] leading-6">
                 <thead className="bg-white/80 dark:bg-neutral-900/80">
                   <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
-                    <th className="px-4 py-3 font-semibold">Nombre</th>
-                    <th className="px-4 py-3 font-semibold">Estado</th>
-                    <th className="px-4 py-3 font-semibold">Actualizada</th>
-                    <th className="px-4 py-3 font-semibold">Canales</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_name")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_status")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_updated")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_channels")}</th>
                     <th className="px-4 py-3 w-12"></th>
                   </tr>
                 </thead>
@@ -222,7 +228,7 @@ export default function CampaignsTable() {
                   {modRows.length === 0 && !loading && (
                     <tr>
                       <td className="px-4 py-4 text-sm opacity-70" colSpan={5}>
-                        No se encontraron campañas con estos filtros.
+                        {t("campaigns_empty_with_filters")}
                       </td>
                     </tr>
                   )}
@@ -235,28 +241,16 @@ export default function CampaignsTable() {
                       >
                         <td className="px-4 py-3 font-medium">{c.name || "—"}</td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(
-                              c.status
-                            )}`}
-                          >
+                          <span className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(c.status)}`}>
                             {c.status || "—"}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          {date ? new Date(date).toLocaleString() : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {(c.channels || []).join(", ") || "—"}
-                        </td>
+                        <td className="px-4 py-3">{date ? new Date(date).toLocaleString() : "—"}</td>
+                        <td className="px-4 py-3">{(c.channels || []).join(", ") || "—"}</td>
                         <td className="px-4 py-3">
                           <ActionsButton
-                            onViewStats={() =>
-                              navigate(`/my_moderation_campaign/${c.id}/statistics`)
-                            }
-                            onEdit={() =>
-                              navigate(`/campaign_moderation_creation?fromId=${c.id}`)
-                            }
+                            onViewStats={() => navigate(`/my_moderation_campaign/${c.id}/statistics`)}
+                            onEdit={() => navigate(`/campaign_moderation_creation?fromId=${c.id}`)}
                             showDelete={c.status !== "inactive"}
                             onDelete={() => setConfirmDeleteId(c.id)}
                           />
@@ -272,19 +266,17 @@ export default function CampaignsTable() {
 
         {/* Tabla Marketing */}
         <section className="space-y-3 pt-8">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {t("my_marketing_campaigns")}
-          </h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("my_marketing_campaigns")}</h2>
 
           <div className="rounded-2xl pt-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-visible">
             <div className="overflow-x-auto">
               <table className="min-w-full text-[15px] leading-6">
                 <thead className="bg-white/80 dark:bg-neutral-900/80">
                   <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
-                    <th className="px-4 py-3 font-semibold">Nombre</th>
-                    <th className="px-4 py-3 font-semibold">Estado</th>
-                    <th className="px-4 py-3 font-semibold">Actualizada</th>
-                    <th className="px-4 py-3 font-semibold">Canales</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_name")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_status")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_updated")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("campaigns_table_channels")}</th>
                     <th className="px-4 py-3 w-12"></th>
                   </tr>
                 </thead>
@@ -292,7 +284,7 @@ export default function CampaignsTable() {
                   {mktRows.length === 0 && !loading && (
                     <tr>
                       <td className="px-4 py-4 text-sm opacity-70" colSpan={5}>
-                        No tenés campañas aún.
+                        {t("campaigns_empty_marketing")}
                       </td>
                     </tr>
                   )}
@@ -306,28 +298,16 @@ export default function CampaignsTable() {
                       >
                         <td className="px-4 py-3 font-medium">{c.name || "—"}</td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(
-                              c.status
-                            )}`}
-                          >
+                          <span className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(c.status)}`}>
                             {c.status || "—"}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          {date ? new Date(date).toLocaleString() : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {(chans || []).join(", ") || "—"}
-                        </td>
+                        <td className="px-4 py-3">{date ? new Date(date).toLocaleString() : "—"}</td>
+                        <td className="px-4 py-3">{(chans || []).join(", ") || "—"}</td>
                         <td className="px-4 py-3">
                           <ActionsButton
-                            onViewStats={() =>
-                              navigate(`/my_marketing_campaign/${c.id}/statistics`)
-                            }
-                            onEdit={() =>
-                              navigate(`/campaign_marketing_creation?fromId=${c.id}`)
-                            }
+                            onViewStats={() => navigate(`/my_marketing_campaign/${c.id}/statistics`)}
+                            onEdit={() => navigate(`/campaign_marketing_creation?fromId=${c.id}`)}
                           />
                         </td>
                       </tr>
@@ -344,18 +324,16 @@ export default function CampaignsTable() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl w-full max-w-md p-6 ring-1 ring-emerald-400/40">
             <h3 className="text-[15px] font-semibold leading-tight mb-2">
-              Borrar campaña de moderación
+              {t("campaigns_delete_modal_title")}
             </h3>
             <p className="text-sm opacity-80">
-              ¿Estás seguro de que querés borrar esta campaña?
+              {t("campaigns_delete_modal_confirm")}
               <br />
-              <span className="font-medium">
-                {campaignToDelete?.name || "Campaña sin nombre"}
-              </span>
-              .
+              <span className="font-medium">{campaignToDelete?.name || t("campaigns_unnamed_campaign")}</span>.
               <br />
-              Se marcará como <span className="font-mono">inactive</span> y dejará de aparecer en
-              tu lista.
+              {t("campaigns_delete_modal_will_be_marked_as")}{" "}
+              <span className="font-mono">inactive</span>{" "}
+              {t("campaigns_delete_modal_will_disappear")}
             </p>
 
             <div className="mt-4 flex justify-end gap-2">
@@ -369,14 +347,14 @@ export default function CampaignsTable() {
                   }
                 }}
               >
-                Cancelar
+                {t("campaigns_cancel")}
               </button>
               <button
                 className="text-sm px-3 py-1.5 rounded-lg bg-red-600 text-white disabled:opacity-60"
                 disabled={deleting}
                 onClick={() => confirmDeleteId && deleteModCampaign(confirmDeleteId)}
               >
-                {deleting ? "Borrando..." : "Borrar campaña"}
+                {deleting ? t("campaigns_deleting") : t("campaigns_delete_campaign")}
               </button>
             </div>
           </div>
