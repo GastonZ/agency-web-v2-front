@@ -308,7 +308,7 @@
         "closed_lost": "Closed (Lost)",
         "custom": "Custom",
         "custom_label": "Custom label",
-        "custom_placeholder": "e.g. out of stock",
+        "custom_placeholder": "e.g. talk soon",
         "custom_hint": "Max 2 words",
         "custom_too_long": "Maximum 2 words"
     },
