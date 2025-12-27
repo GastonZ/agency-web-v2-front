@@ -8,13 +8,12 @@ import {
     ChevronDown,
     Check,
     Loader2,
+    Eye,
+    X,
 } from "lucide-react";
-import type { Lead } from "../../../../services/types/moderation-types";
-import {
-    updateModerationCampaignLeadStatus,
-} from "../../../../services/campaigns";
+import type { Lead, LeadStatus } from "../../../../services/types/moderation-types";
+import { updateModerationCampaignLeadStatus } from "../../../../services/campaigns";
 import { useTranslation } from "react-i18next";
-import type { LeadStatus } from "../../../../services/types/moderation-types";
 
 const STATUS_OPTIONS: LeadStatus[] = [
     "new",
@@ -72,8 +71,8 @@ function ChannelBadge({ channel }: { channel: Lead["channel"] | string }) {
 function prettifyWhatsNumber(raw?: string | null) {
     if (!raw) return null;
     return String(raw)
-        .replace(/@.+$/, "") // quita "@s.whatsapp.net" / "@lid"
-        .replace(/[^\d+]/g, ""); // deja dígitos (+ opcional)
+        .replace(/@.+$/, "")
+        .replace(/[^\d+]/g, "");
 }
 
 function getConversationLink(lead: Lead) {
@@ -81,7 +80,6 @@ function getConversationLink(lead: Lead) {
     const username = (lead as any).username as string | null | undefined;
     const contactNumber = (lead as any).contactNumber as string | null | undefined;
 
-    // Si ya viene un link desde backend, lo respetamos
     if ((lead as any).channelLink) return (lead as any).channelLink as string;
 
     if (channel === "instagram") {
@@ -92,12 +90,10 @@ function getConversationLink(lead: Lead) {
     if (channel === "whatsapp") {
         const num = prettifyWhatsNumber(contactNumber);
         if (!num) return null;
-        // wa.me requiere número en formato internacional sin símbolos
         return `https://wa.me/${num.replace(/^\+/, "")}`;
     }
 
     if (channel === "facebook") {
-        // Por ahora no tenemos link; a futuro si te llega username, lo usamos
         if (!username) return null;
         return `https://www.facebook.com/${username}`;
     }
@@ -136,7 +132,6 @@ function ContactCell({ lead }: { lead: Lead }) {
         );
     }
 
-    // WHATSAPP: NO foto => icono WhatsApp + nombre + número (si existe)
     if (channel === "whatsapp") {
         const number = prettifyWhatsNumber(contactNumber);
         const primary = "Whatsapp user";
@@ -152,7 +147,6 @@ function ContactCell({ lead }: { lead: Lead }) {
         );
     }
 
-    // FACEBOOK: NO foto => icono Facebook + nombre
     if (channel === "facebook") {
         const primary = (lead as any).name || "Facebook";
 
@@ -166,7 +160,6 @@ function ContactCell({ lead }: { lead: Lead }) {
         );
     }
 
-    // fallback
     return <div className="font-medium">{(lead as any).name}</div>;
 }
 
@@ -176,7 +169,6 @@ function getLeadConversationId(lead: Lead) {
 
 function getLeadStatus(lead: Lead): { status?: LeadStatus; customStatusLabel?: string } {
     return {
-        // compat: algunos backends viejos enviaban "leadStatus"
         status: ((lead as any).status || (lead as any).leadStatus) as LeadStatus | undefined,
         customStatusLabel: (lead as any).customStatusLabel as string | undefined,
     };
@@ -234,7 +226,6 @@ function StatusCell({
     const [customModalOpen, setCustomModalOpen] = React.useState(false);
     const [customValue, setCustomValue] = React.useState("");
 
-    const ref = React.useRef<HTMLDivElement | null>(null);
     const pillRef = React.useRef<HTMLButtonElement | null>(null);
 
     const convId = getLeadConversationId(lead);
@@ -290,9 +281,18 @@ function StatusCell({
         }
     }
 
+    // prevent clicks from reaching row underneath
+    const swallowPointer = (e: React.SyntheticEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     return (
-        <div ref={ref} className="inline-block">
+        <div className="inline-block" data-stop-row>
             <div
+                onMouseDown={(e) => {
+                    e.stopPropagation();
+                }}
                 onClick={(e) => {
                     e.stopPropagation();
 
@@ -319,12 +319,16 @@ function StatusCell({
                 ? createPortal(
                       <div
                           className="fixed inset-0 z-[9999]"
-                          onMouseDown={() => closeAll()}
+                          onMouseDown={(e) => {
+                              swallowPointer(e);
+                              closeAll();
+                          }}
+                          onClick={(e) => {
+                              swallowPointer(e);
+                              closeAll();
+                          }}
                       >
-                          <div
-                              className="fixed left-0 top-0 h-full w-full bg-transparent"
-                              aria-hidden
-                          />
+                          <div className="fixed left-0 top-0 h-full w-full bg-transparent" aria-hidden />
 
                           {(() => {
                               const MENU_W = 240;
@@ -337,7 +341,6 @@ function StatusCell({
                               if (left < PAD) left = PAD;
 
                               let top = anchor.bottom + 8;
-                              // si queda muy abajo, lo abrimos hacia arriba
                               const approxH = 320;
                               if (top + approxH > vh - PAD) top = Math.max(PAD, anchor.top - 8 - approxH);
 
@@ -345,7 +348,10 @@ function StatusCell({
                                   <div
                                       className="fixed"
                                       style={{ top, left, width: MENU_W }}
-                                      onMouseDown={(e) => e.stopPropagation()}
+                                      onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
                                   >
                                       <div className="rounded-xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 shadow-xl overflow-hidden">
                                           <div className="px-3 py-2 text-[11px] uppercase tracking-wide opacity-70 border-b border-neutral-200/60 dark:border-neutral-800/60">
@@ -369,7 +375,9 @@ function StatusCell({
                                                           onClick={() => doUpdate({ status: s })}
                                                           title={t(`lead_status.${s}`)}
                                                       >
-                                                          <span className="truncate">{t(`lead_status.${s}`)}</span>
+                                                          <span className="truncate">
+                                                              {t(`lead_status.${s}`)}
+                                                          </span>
                                                           {loading === s ? (
                                                               <Loader2 className="h-4 w-4 animate-spin opacity-70" />
                                                           ) : active ? (
@@ -419,11 +427,19 @@ function StatusCell({
                 ? createPortal(
                       <div
                           className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 backdrop-blur-sm"
-                          onMouseDown={() => setCustomModalOpen(false)}
+                          onMouseDown={(e) => {
+                              swallowPointer(e);
+                              setCustomModalOpen(false);
+                          }}
+                          onClick={(e) => {
+                              swallowPointer(e);
+                              setCustomModalOpen(false);
+                          }}
                       >
                           <div
                               className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-950 ring-1 ring-emerald-400/30 shadow-xl p-5"
                               onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => e.stopPropagation()}
                           >
                               <div className="flex items-start justify-between gap-3">
                                   <div>
@@ -505,21 +521,152 @@ function StatusCell({
     );
 }
 
+/** Modal interno para leer el summary completo */
+function LeadSummaryModal({
+    lead,
+    open,
+    onClose,
+}: {
+    lead: Lead | null;
+    open: boolean;
+    onClose: () => void;
+}) {
+    const { t } = useTranslation("translations");
+
+    React.useEffect(() => {
+        if (!open) return;
+
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const onKeyDown = (ev: KeyboardEvent) => {
+            if (ev.key === "Escape") onClose();
+        };
+        document.addEventListener("keydown", onKeyDown);
+
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            document.removeEventListener("keydown", onKeyDown);
+        };
+    }, [open, onClose]);
+
+    if (!open || !lead) return null;
+
+    const summary = String((lead as any).summary || "").trim();
+    const convLink = getConversationLink(lead);
+    const { status, customStatusLabel } = getLeadStatus(lead);
+
+    const statusLabel =
+        status === "custom"
+            ? customStatusLabel || t("lead_status.custom")
+            : status
+              ? t(`lead_status.${status}`)
+              : "—";
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+            }}
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+            }}
+            aria-modal="true"
+            role="dialog"
+        >
+            <div
+                className="w-full max-w-3xl rounded-2xl bg-white dark:bg-neutral-950 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-3">
+                            <div className="min-w-0">
+                                <div className="text-sm font-semibold">{t("stats_summary")}</div>
+                                <div className="mt-1">
+                                    <ContactCell lead={lead} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <span
+                                className={
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] ring-1 " +
+                                    scoreClasses(Number((lead as any).score || 0))
+                                }
+                            >
+                                {Number((lead as any).score || 0)}/10
+                            </span>
+
+                            <span className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px]">
+                                <span className="opacity-70">{t("stats_status")}:</span>
+                                <span className="font-medium">{statusLabel}</span>
+                            </span>
+
+                            {convLink ? (
+                                <a
+                                    href={convLink}
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px] hover:bg-emerald-500/10"
+                                    title="Abrir conversación"
+                                >
+                                    <ChannelIcon channel={(lead as any).channel} />
+                                    <span>{t("open")}</span>
+                                </a>
+                            ) : null}
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-200 dark:hover:bg-neutral-800 ring-1 ring-neutral-300/60 dark:ring-neutral-700/60"
+                        onClick={onClose}
+                        title={t("close")}
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="px-5 py-4">
+                    <div className="max-h-[60vh] overflow-auto rounded-xl bg-neutral-50 dark:bg-neutral-900/40 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-4">
+                        {summary ? (
+                            <p className="whitespace-pre-wrap text-sm leading-7 text-neutral-800 dark:text-neutral-100/90">
+                                {summary}
+                            </p>
+                        ) : (
+                            <p className="text-sm opacity-70">—</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="px-5 py-4 border-t border-neutral-200/70 dark:border-neutral-800/70 flex justify-end">
+                    <button
+                        type="button"
+                        className="text-sm px-4 py-2 rounded-xl bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+                        onClick={onClose}
+                    >
+                        {t("close")}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
 interface LeadsTableProps {
     leads: Lead[];
-    onOpenLead: (lead: Lead) => void;
-
-    /**
-     * Si no lo pasas, intentamos usar lead.campaignId.
-     */
+    /** Callback opcional (por si querés trackear o hacer algo al abrir el modal) */
+    onOpenLead?: (lead: Lead) => void;
     campaignId?: string;
-
-    /**
-     * Si ya tenés tu http client (axios/interceptors), pasá este handler.
-     * Si no, por defecto usamos campaigns.ts:
-     * updateModerationCampaignLeadStatus =>
-     * PUT moderation-campaigns/:campaignId/leads/:conversationId/status
-     */
     onUpdateLeadStatus?: (args: {
         campaignId: string;
         conversationId: string;
@@ -528,23 +675,15 @@ interface LeadsTableProps {
     }) => Promise<unknown>;
 }
 
-export function LeadsTable({
-    leads,
-    onOpenLead,
-    campaignId,
-    onUpdateLeadStatus,
-}: LeadsTableProps) {
+export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus }: LeadsTableProps) {
     const { t } = useTranslation("translations");
 
     const [overrides, setOverrides] = React.useState<
-        Record<
-            string,
-            {
-                status: LeadStatus;
-                customStatusLabel?: string;
-            }
-        >
+        Record<string, { status: LeadStatus; customStatusLabel?: string }>
     >({});
+
+    const [summaryOpen, setSummaryOpen] = React.useState(false);
+    const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
 
     const mergedLeads = React.useMemo(() => {
         return leads.map((l) => {
@@ -558,6 +697,20 @@ export function LeadsTable({
             } as Lead;
         });
     }, [leads, overrides]);
+
+    const openSummary = React.useCallback(
+        (lead: Lead) => {
+            setSelectedLead(lead);
+            setSummaryOpen(true);
+            onOpenLead?.(lead);
+        },
+        [onOpenLead],
+    );
+
+    const closeSummary = React.useCallback(() => {
+        setSummaryOpen(false);
+        setSelectedLead(null);
+    }, []);
 
     return (
         <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl overflow-hidden">
@@ -576,6 +729,7 @@ export function LeadsTable({
                             <th className="px-4 py-2">{t("stats_conversation")}</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {mergedLeads.map((l) => {
                             const convLink = getConversationLink(l);
@@ -585,15 +739,36 @@ export function LeadsTable({
                                 <tr
                                     key={(l as any).id}
                                     className="group border-b border-emerald-400/10 hover:bg-emerald-500/5 cursor-pointer"
-                                    onClick={() => onOpenLead(l)}
-                                    title="Ver detalles"
+                                    onClick={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target?.closest?.("[data-stop-row]")) return;
+                                        openSummary(l);
+                                    }}
+                                    title="Ver resumen completo"
                                 >
                                     <td className="px-4 py-2 whitespace-nowrap">
                                         <ContactCell lead={l} />
                                     </td>
 
                                     <td className="px-4 py-2 max-w-[420px]">
-                                        <p className="line-clamp-2 opacity-80">{(l as any).summary}</p>
+                                        <div className="relative pr-10">
+                                            <p className="line-clamp-2 opacity-80">{(l as any).summary}</p>
+
+                                            {/* Botón ojo: abre modal sin afectar otras acciones */}
+                                            <button
+                                                type="button"
+                                                data-stop-row
+                                                className="absolute right-0 top-0 inline-flex items-center justify-center h-8 w-8 rounded-lg ring-1 ring-emerald-400/20 hover:bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openSummary(l);
+                                                }}
+                                                title="Ver resumen completo"
+                                            >
+                                                <Eye className="h-4 w-4 opacity-80" />
+                                            </button>
+                                        </div>
                                     </td>
 
                                     <td className="px-4 py-2">
@@ -619,7 +794,7 @@ export function LeadsTable({
                                         />
                                     </td>
 
-                                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                                    <td className="px-4 py-2" data-stop-row>
                                         {convLink ? (
                                             <a
                                                 href={convLink}
@@ -627,6 +802,8 @@ export function LeadsTable({
                                                 rel="noreferrer noopener"
                                                 className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
                                                 title="Abrir conversación"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 <ChannelIcon channel={(l as any).channel} />
                                                 <span className="hidden sm:inline">{t("open")}</span>
@@ -641,6 +818,8 @@ export function LeadsTable({
                     </tbody>
                 </table>
             </div>
+
+            <LeadSummaryModal lead={selectedLead} open={summaryOpen} onClose={closeSummary} />
         </div>
     );
 }
