@@ -8,9 +8,10 @@ type Props = {
   onEdit: () => void;
   onDelete?: () => void;
   className?: string;
+  showDelete?: boolean;
 };
 
-export default function ActionsButton({ onViewStats, onEdit, className = "", onDelete }: Props) {
+export default function ActionsButton({ onViewStats, onEdit, className = "", onDelete, showDelete }: Props) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
   const { t } = useTranslation('translations');
@@ -46,24 +47,35 @@ export default function ActionsButton({ onViewStats, onEdit, className = "", onD
           <button
             role="menuitem"
             className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-emerald-500/10 cursor-pointer"
-            onClick={() => { setOpen(false); onViewStats(); }}
+            onClick={() => {
+              setOpen(false);
+              onViewStats();
+            }}
           >
             <BarChart3 className="h-4 w-4 opacity-80" />
             {t("view_statistics")}
           </button>
+
           <button
             role="menuitem"
             className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-emerald-500/10 cursor-pointer"
-            onClick={() => { setOpen(false); onEdit(); }}
+            onClick={() => {
+              setOpen(false);
+              onEdit();
+            }}
           >
             <Pencil className="h-4 w-4 opacity-80" />
             {t("edit")}
           </button>
-          {onDelete && (
+
+          {showDelete && onDelete && (
             <button
               role="menuitem"
               className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-emerald-500/10 cursor-pointer"
-              onClick={() => { setOpen(false); onDelete(); }}
+              onClick={() => {
+          setOpen(false);
+          onDelete();
+              }}
             >
               <PowerOff className="h-4 w-4 opacity-80" />
               {t("deactivate")}

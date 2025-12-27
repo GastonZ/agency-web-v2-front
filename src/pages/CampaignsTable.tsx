@@ -257,6 +257,7 @@ export default function CampaignsTable() {
                             onEdit={() =>
                               navigate(`/campaign_moderation_creation?fromId=${c.id}`)
                             }
+                            showDelete={c.status !== "inactive"}
                             onDelete={() => setConfirmDeleteId(c.id)}
                           />
                         </td>
