@@ -729,6 +729,7 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus }
                             <th className="px-4 py-2">{t("stats_summary")}</th>
                             <th className="px-4 py-2">{t("stats_score")}</th>
                             <th className="px-4 py-2">{t("stats_status")}</th>
+                            <th className="px-4 py-2">{t("stats_area")}</th>
                             <th className="px-4 py-2">{t("stats_conversation")}</th>
                         </tr>
                     </thead>
@@ -795,6 +796,12 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus }
                                                 setOverrides((prev) => ({ ...prev, [convId]: next }));
                                             }}
                                         />
+                                    </td>
+                                    
+                                    <td className="px-4 py-2 whitespace-nowrap">
+                                        <span className="inline-block max-w-[150px] truncate">
+                                            {t((l as any).area || "—")}
+                                        </span>
                                     </td>
 
                                     <td className="px-4 py-2" data-stop-row>

@@ -299,6 +299,7 @@
         }
     },
     "stats_status": "Status",
+    "stats_area": "Area",
     "lead_status": {
         "new": "New",
         "on_following": "On following",
@@ -436,5 +437,18 @@
             "preview_title": "AI preview",
             "preview_sub": "Example messages that help classify leads by area."
         }
-    }
+    },
+    "emptyFields": "Please fill in all fields.",
+    "sub_login_back": "Are you an administrator? Sign in with your email",
+    "sub_login_title": "Subaccount access",
+    "sub_login_subtitle": "Enter your subaccount username and password.",
+    "sub_login_username_label": "Username",
+    "sub_login_username_placeholder": "sales_1",
+    "sub_login_help": "If you're an administrator, use the regular login. If you don't have credentials, ask the account owner for access.",
+    "error": {
+        "invalidCredentials": "Incorrect credentials",
+        "serverError": "Server error. Please try again later.",
+        "connectionError": "Could not connect to the server. Please try again."
+    },
+    "all": "All"
 }

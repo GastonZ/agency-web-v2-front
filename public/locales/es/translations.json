@@ -297,6 +297,7 @@
         }
     },
     "stats_status": "Estado",
+    "stats_area": "Área",
     "lead_status": {
         "new": "Nuevo",
         "on_following": "En seguimiento",
@@ -434,5 +435,18 @@
             "preview_title": "Vista previa de IA",
             "preview_sub": "Mensajes de ejemplo que ayudan a clasificar leads por área."
         }
-    }
+    },
+    "emptyFields": "Por favor completá todos los campos.",
+    "sub_login_back": "¿Sos administrador? Iniciá sesión con tu correo",
+    "sub_login_title": "Acceso a subcuenta",
+    "sub_login_subtitle": "Ingresá tu usuario y contraseña de subcuenta.",
+    "sub_login_username_label": "Usuario",
+    "sub_login_username_placeholder": "ventas_1",
+    "sub_login_help": "Si sos administrador, usá el inicio de sesión regular. Si no tenés credenciales, pedile acceso al dueño de la cuenta.",
+    "error": {
+        "invalidCredentials": "Credenciales incorrectas",
+        "serverError": "Error del servidor. Intente más tarde.",
+        "connectionError": "No se pudo conectar con el servidor. Intenta de nuevo."
+    },
+    "all": "Todos"
 }
