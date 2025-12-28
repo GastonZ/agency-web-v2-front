@@ -678,6 +678,9 @@ interface LeadsTableProps {
 export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus }: LeadsTableProps) {
     const { t } = useTranslation("translations");
 
+    console.log('my leads', leads);
+    
+
     const [overrides, setOverrides] = React.useState<
         Record<string, { status: LeadStatus; customStatusLabel?: string }>
     >({});

@@ -178,6 +178,7 @@ export default function StatisticsView() {
                             channelLink: undefined,
                             // backend: ahora viene como "status" (compat: antes podía venir como "leadStatus")
                             status: l.status || l.leadStatus || "new",
+                            area: l.area || "all",
                             customStatusLabel: l.customStatusLabel || undefined,
                             username: normalizedUsername,
                             profilePic: normalizedProfilePic,

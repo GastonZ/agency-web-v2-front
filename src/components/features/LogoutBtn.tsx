@@ -1,5 +1,6 @@
 import React from "react";
 import { LogOut } from "lucide-react";
+import { clearSession } from "../../utils/helper";
 
 interface LogoutBtnProps {
     onLogout?: () => void;
@@ -11,9 +12,7 @@ const LogoutBtn: React.FC<LogoutBtnProps> = ({
     redirectTo = "/auth",
 }) => {
     const handleLogout = () => {
-        localStorage.removeItem("aiaToken");
-
-        localStorage.removeItem("user");
+        clearSession();
         sessionStorage.clear();
 
         if (onLogout) {

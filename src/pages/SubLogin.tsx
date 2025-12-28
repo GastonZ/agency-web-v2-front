@@ -1,21 +1,21 @@
 import React, { useRef, useState } from "react";
-import { loginUser } from "../services/client";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+
 import { Input } from "../components/ui/Input";
 import { PasswordInput } from "../components/ui/PasswordInput";
 import { Button } from "../components/ui/Button";
 import { FormError } from "../components/ui/FormError";
-import { useTranslation } from 'react-i18next'
-import { saveSession } from "../utils/helper";
-import GoogleSignInButton from "../components/features/GoogleLogin";
 
-const Login: React.FC = () => {
+import { subLogin } from "../services/client";
+import { saveSession } from "../utils/helper";
+
+const SubLogin: React.FC = () => {
   const navigate = useNavigate();
   const passwordRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation("translations");
 
-  const { t } = useTranslation('translations');
-
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    if (!username || !password) {
       setErrorMsg(t("emptyFields"));
       return;
     }
@@ -34,32 +34,33 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await loginUser({ email, password });
+      const res = await subLogin({ username, password });
+
       saveSession({
         token: res.token,
-        kind: "user",
+        kind: "sub",
         userId: res.userId,
         email: res.email,
+        subAccountId: res.subAccountId,
+        areaName: res.areaName,
       });
+
       navigate("/");
     } catch (err: any) {
       const msg = err?.message;
 
-      console.log(msg);
-
-
-      if (msg === t("error.invalidCredentials")) {
-        setErrorMsg(t(msg));
+      if (msg === "error_credentials") {
+        setErrorMsg(t("error.invalidCredentials"));
         setPassword("");
         passwordRef.current?.focus();
-      } else if (msg === t("error.serverError")) {
-        setErrorMsg(t(msg));
+      } else if (msg === "error_server") {
+        setErrorMsg(t("error.serverError"));
         setShowRetry(true);
-      } else if (msg === t("error.connectionError")) {
-        setErrorMsg(t(msg));
+      } else if (msg === "error_network") {
+        setErrorMsg(t("error.connectionError"));
         setShowRetry(true);
       } else {
-        setErrorMsg(t(msg));
+        setErrorMsg(t(msg) || msg);
       }
     } finally {
       setLoading(false);
@@ -83,36 +84,37 @@ const Login: React.FC = () => {
           "transition-all",
         ].join(" ")}
       >
-        {/* Header */}
         <div className="px-5 pt-5 pb-3">
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
               {t("welcome")}
             </h1>
           </div>
+
           <div className="mt-6 text-center">
             <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
-              {t("login_title")}
+              {t("sub_login_title", { defaultValue: "Acceso de Subcuenta" })}
             </h2>
             <p className="mt-1.5 text-sm text-neutral-600 dark:text-neutral-400">
-              {t("login_subtitle")}
+              {t("sub_login_subtitle", {
+                defaultValue: "Ingresá con tu username y contraseña de subcuenta.",
+              })}
             </p>
           </div>
         </div>
 
         <div className="border-t border-white/20 dark:border-white/10" />
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="px-5 py-5 space-y-3">
           <Input
-            type="email"
-            label={t("login_email_label")}
+            type="text"
+            label={t("sub_login_username_label", { defaultValue: "Username" })}
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t("login_email_placeholder")}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder={t("sub_login_username_placeholder", { defaultValue: "ventas_1" })}
             disabled={loading}
-            autoComplete="email"
+            autoComplete="username"
             className="focus:ring-emerald-400/60"
           />
 
@@ -137,7 +139,6 @@ const Login: React.FC = () => {
           >
             {t("login_button")}
           </Button>
-          {/* <GoogleSignInButton /> */}
 
           {showRetry && (
             <Button
@@ -155,21 +156,15 @@ const Login: React.FC = () => {
         <div className="border-t border-white/20 dark:border-white/10" />
         <div className="px-5 py-4">
           <p className="text-center text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-            {t("login_terms")}{" "}
-            <a className="underline underline-offset-2 hover:text-emerald-500" href="#">
-              {t("login_terms_link")}
-            </a>{" "}
-            &{" "}
-            <a className="underline underline-offset-2 hover:text-emerald-500" href="#">
-              {t("login_privacy_link")}
-            </a>
+            {t("sub_login_help", {
+              defaultValue:
+                "Si sos administrador, usá el login normal. Si no tenés credenciales, pedí acceso al dueño de la cuenta.",
+            })}
           </p>
         </div>
       </div>
     </div>
-
-
   );
 };
 
-export default Login;
+export default SubLogin;

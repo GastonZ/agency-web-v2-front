@@ -34,6 +34,19 @@ export interface SignUpResponse {
   updatedAt: string;
 }
 
+export interface SubLoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface SubLoginResponse {
+  token: string;
+  userId: string;
+  email: string;
+  subAccountId: string;
+  areaName: string;
+}
+
 export async function loginUser(credentials: LoginCredentials): Promise<LoginResponse> {
   try {
     const { data } = await api.post<LoginResponse>("auth/login", credentials);
@@ -130,5 +143,40 @@ export async function validateToken(tokenArg?: string): Promise<boolean> {
       throw new Error(message || `Error ${status} al validar token`);
     }
     throw new Error("No se pudo conectar con el servidor. Intenta de nuevo.");
+  }
+}
+
+export async function subLogin(credentials: SubLoginCredentials): Promise<SubLoginResponse> {
+  try {
+    const { data } = await api.post<SubLoginResponse>("auth/sub-login", credentials);
+
+    if (!data?.token || !data?.userId || !data?.subAccountId || !data?.areaName) {
+      throw new Error("error_invalid");
+    }
+
+    return data;
+  } catch (error: any) {
+    if (error) {
+      const status: number = error.status;
+      const message: string = error.data?.message;
+
+      if (
+        (status === 400 || status === 401) &&
+        (message === "Invalid login credentials" ||
+          message === "Invalid password" ||
+          message === "Invalid username or password" ||
+          message === "Invalid credentials")
+      ) {
+        throw new Error("error_credentials");
+      }
+
+      if (status >= 500) {
+        throw new Error("error_server");
+      }
+
+      throw new Error(message || `Error ${status} en la autenticación`);
+    }
+
+    throw new Error("error_network");
   }
 }

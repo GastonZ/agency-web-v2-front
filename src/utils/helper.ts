@@ -1,8 +1,56 @@
 export const TOKEN_KEY = "aiaToken";
 
+export const AUTH_KIND_KEY = "aiaAuthKind"; // 'user' | 'sub'
+export const USER_ID_KEY = "aiaUserId";
+export const EMAIL_KEY = "aiaEmail";
+export const SUBACCOUNT_ID_KEY = "aiaSubAccountId";
+export const AREA_NAME_KEY = "aiaAreaName";
+
 export const getToken = () => localStorage.getItem(TOKEN_KEY) ?? "";
 export const saveToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+export type AuthKind = "user" | "sub";
+
+export type SessionMeta = {
+  token: string;
+  kind: AuthKind;
+  userId?: string;
+  email?: string;
+  subAccountId?: string;
+  areaName?: string;
+};
+
+export function saveSession(meta: SessionMeta) {
+  saveToken(meta.token);
+  localStorage.setItem(AUTH_KIND_KEY, meta.kind);
+  if (meta.userId) localStorage.setItem(USER_ID_KEY, meta.userId);
+  if (meta.email) localStorage.setItem(EMAIL_KEY, meta.email);
+  if (meta.subAccountId) localStorage.setItem(SUBACCOUNT_ID_KEY, meta.subAccountId);
+  if (meta.areaName) localStorage.setItem(AREA_NAME_KEY, meta.areaName);
+}
+
+export function clearSession() {
+  clearToken();
+  localStorage.removeItem(AUTH_KIND_KEY);
+  localStorage.removeItem(USER_ID_KEY);
+  localStorage.removeItem(EMAIL_KEY);
+  localStorage.removeItem(SUBACCOUNT_ID_KEY);
+  localStorage.removeItem(AREA_NAME_KEY);
+}
+
+export function getAuthKind(): AuthKind | null {
+  const k = localStorage.getItem(AUTH_KIND_KEY);
+  return k === "sub" || k === "user" ? k : null;
+}
+
+export function getSubAccountId(): string {
+  return localStorage.getItem(SUBACCOUNT_ID_KEY) ?? "";
+}
+
+export function getAreaName(): string {
+  return localStorage.getItem(AREA_NAME_KEY) ?? "";
+}
 
 type Theme = 'light' | 'dark' | 'system';
 

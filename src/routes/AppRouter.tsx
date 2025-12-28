@@ -19,9 +19,10 @@ import { ListeningProvider } from '../context/ListeningContext';
 import SocialListening from '../features/SocialListeningCampaign/Main/SocialListening';
 import DatacivisLanding from '../WebLanding';
 import { I18nProvider } from '../WebLanding/lib/i18n';
-
+import Settings from '../pages/Settings';
 import InstagramCallback from '../pages/InstagramCallback';
 import FacebookCallback from '../pages/FacebookCallback';
+import SubAuth from '../pages/SubAuth';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -33,6 +34,15 @@ const AppRouter: React.FC = () => (
                 element={
                     <PublicOnlyRoute>
                         <Auth />
+                    </PublicOnlyRoute>
+                }
+            />
+
+            <Route
+                path="/auth/sub"
+                element={
+                    <PublicOnlyRoute>
+                        <SubAuth />
                     </PublicOnlyRoute>
                 }
             />
@@ -78,6 +88,7 @@ const AppRouter: React.FC = () => (
                 <Route path="my_marketing_campaign/:id/statistics" element={<MarketingStatisticsView />} />
                 <Route path="my_moderation_campaign/:id/statistics" element={<StatisticsView />} />
 
+                <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path='/landing-datacivis' element={<I18nProvider>
                 <DatacivisLanding />
