@@ -483,7 +483,6 @@ export default function StatisticsView() {
                         />
                     )}
                 </div>
-                <InstagramMetaReviewSendSection campaign={campaign}/> 
                 {hasWhatsApp && openWhatsAppSetup && (
                     <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20 mt-6">
                         <div className="flex items-start gap-3 mb-3">
