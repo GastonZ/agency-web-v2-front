@@ -17,7 +17,6 @@ const DEFAULT_REDIRECT =
 const DEFAULT_SCOPE = [
   "instagram_business_basic",
   "instagram_business_manage_messages",
-  "instagram_business_manage_insights",
 ];
 
 export default function InstagramConnectPanel({
