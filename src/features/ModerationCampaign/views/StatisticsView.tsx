@@ -263,23 +263,13 @@ export default function StatisticsView() {
         (campaign as any)?.facebookCredentials ??
         [];
 
-    const isWhatsAppConnected = React.useMemo(() => {
-        return Boolean(campaign?.whatsappStatus?.qrScanned);
-    }, [campaign]);
 
-    const isInstagramConnected = React.useMemo(() => {
-        return Boolean(campaign?.instagramCredentials?.username);
-    }, [campaign]);
-
-    const isFacebookConnected = React.useMemo(() => {
-        return Boolean(accountsData?.facebookCredentials?.pages?.length);
-    }, [accountsData]);
-
-    const hasAnyConnected = isWhatsAppConnected || isInstagramConnected || isFacebookConnected
 
     const isWhatsConnected = Boolean(campaign?.whatsappStatus?.qrScanned);
     const isIgConnected = Boolean(accountsData?.instagram);
     const isFbConnected = Boolean(accountsData?.facebook);
+
+    const hasAnyConnected = isWhatsConnected || isIgConnected || isFbConnected
 
     const needsWhatsSetup = hasWhatsApp && !isWhatsConnected;
     const needsInstagramSetup = hasInstagram && !isIgConnected;
@@ -626,7 +616,7 @@ export default function StatisticsView() {
 
 
             </div>
-    <InstagramMetaReviewSendSection campaign={campaign} />
+            <InstagramMetaReviewSendSection campaign={campaign} />
             {campaign?.webchatCredentials && (
                 <section className="rounded-xl mt-6 p-4 md:p-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-emerald-400/20">
 

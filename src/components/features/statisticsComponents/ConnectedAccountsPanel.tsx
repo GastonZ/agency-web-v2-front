@@ -332,13 +332,13 @@ export default function ConnectedAccountsPanel({
                 >
                   <div className="flex items-start gap-3">
                     <motion.div
-                      className="inline-flex items-center justify-center rounded-md h-9 w-9 bg-emerald-600/15 ring-1 ring-emerald-400/40"
+                      className="inline-flex items-center justify-center rounded-md h-20 w-20 bg-emerald-600/15 ring-1 ring-emerald-400/40"
                       animate={{ y: [0, -2, 0] }}
                       transition={{ duration: 3, repeat: Infinity }}
                     >
                       {fb.profilePicture ? (
                         <img
-                          className="h-6 w-6 rounded-full object-cover"
+                          className="h-14 w-14 rounded-full object-cover"
                           src={fb.profilePicture}
                           alt="Facebook profile picture"
                         />
