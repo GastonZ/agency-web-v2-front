@@ -20,12 +20,7 @@ const DEFAULT_REDIRECT =
     : "");
 
 const DEFAULT_SCOPE = [
-  "pages_read_engagement",
-  "pages_manage_engagement",
-  "pages_manage_posts",
-  "pages_show_list",
-  "pages_read_user_content",
-  "pages_messaging",
+  "pages_show_list"
 ];
 
 export default function FacebookConnectPanel({

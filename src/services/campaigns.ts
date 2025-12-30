@@ -334,7 +334,7 @@ type InstagramReviewSendPayload = {
 };
 
 export async function sendInstagramReviewMessage(message: string) {
-  const agentId = "694f305072ce21c3430490c8";
+  const agentId = "6953078cf62c1da0e64fcddb";
   const recipientId = "26195445306710296";
 
   const payload: InstagramReviewSendPayload = {

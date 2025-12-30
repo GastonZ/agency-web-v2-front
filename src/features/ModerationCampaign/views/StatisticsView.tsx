@@ -626,7 +626,7 @@ export default function StatisticsView() {
 
 
             </div>
-
+    <InstagramMetaReviewSendSection campaign={campaign} />
             {campaign?.webchatCredentials && (
                 <section className="rounded-xl mt-6 p-4 md:p-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-emerald-400/20">
 

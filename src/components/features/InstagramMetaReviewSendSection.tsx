@@ -22,7 +22,7 @@ export function InstagramMetaReviewSendSection({ campaign }: Props) {
   const [error, setError] = React.useState<string | null>(null);
 
   const recipientId = "26195445306710296";
-  const agentId = "694f305072ce21c3430490c8";
+  const agentId = "6953078cf62c1da0e64fcddb";
 
   if (!isInstagramConnected) return null;
 
