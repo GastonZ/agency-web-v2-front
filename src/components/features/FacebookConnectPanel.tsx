@@ -20,7 +20,8 @@ const DEFAULT_REDIRECT =
     : "");
 
 const DEFAULT_SCOPE = [
-  "pages_show_list"
+  "pages_show_list",
+  'pages_messaging'
 ];
 
 export default function FacebookConnectPanel({
