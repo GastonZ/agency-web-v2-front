@@ -361,11 +361,46 @@ export async function updateModerationCampaignLeadStatus(
     if (!label) throw new Error("customStatusLabel is required");
     if (countWords(label) > 2) throw new Error("customStatusLabel: max 2 words");
   }
-  
+
   const res: AxiosResponse<unknown> = await api.put(
     `moderation-campaigns/${args.campaignId}/leads/${args.conversationId}/status`,
     payload
   );
 
   return res.data;
+}
+
+type MessengerSendPayload = {
+  agentId: string;
+  recipientId: string;
+  message: string;
+};
+
+export async function sendFacebookMessengerMessage(payload: MessengerSendPayload) {
+  const agentId = (payload?.agentId || "").trim();
+  const recipientId = (payload?.recipientId || "").trim();
+  const message = (payload?.message || "").trim();
+
+  if (!agentId) throw new Error("agentId is required");
+  if (!recipientId) throw new Error("recipientId is required");
+  if (!message) throw new Error("message is required");
+
+  const { data } = await api.post("messenger/send-message", {
+    agentId,
+    recipientId,
+    message,
+  });
+
+  return data;
+}
+
+export async function sendFacebookReviewMessage(message: string) {
+  const agentId = "69553b77b1bbeb18d2a5673a";
+  const recipientId = "33303037325976978";
+
+  return sendFacebookMessengerMessage({
+    agentId,
+    recipientId,
+    message,
+  });
 }
