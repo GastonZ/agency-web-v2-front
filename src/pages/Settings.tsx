@@ -223,6 +223,43 @@ export default function Settings() {
         reload();
     }, [reload]);
 
+    const [confirmOpen, setConfirmOpen] = React.useState(false);
+    const [confirmTitle, setConfirmTitle] = React.useState<React.ReactNode>(null);
+    const [confirmSubtitle, setConfirmSubtitle] = React.useState<React.ReactNode>(null);
+    const [confirmBody, setConfirmBody] = React.useState<React.ReactNode>(null);
+    const [confirmOkText, setConfirmOkText] = React.useState<string>("");
+    const [confirmCancelText, setConfirmCancelText] = React.useState<string>("");
+    const resolverRef = React.useRef<((ok: boolean) => void) | null>(null);
+
+    const confirm = React.useCallback(
+        (opts: {
+            title: React.ReactNode;
+            subtitle?: React.ReactNode;
+            body?: React.ReactNode;
+            okText?: string;
+            cancelText?: string;
+        }) => {
+            setConfirmTitle(opts.title);
+            setConfirmSubtitle(opts.subtitle ?? null);
+            setConfirmBody(opts.body ?? null);
+            setConfirmOkText(opts.okText ?? t("common.delete", { defaultValue: "Borrar" }));
+            setConfirmCancelText(opts.cancelText ?? t("common.cancel", { defaultValue: "Cancelar" }));
+            setConfirmOpen(true);
+
+            return new Promise<boolean>((resolve) => {
+                resolverRef.current = resolve;
+            });
+        },
+        [t]
+    );
+
+    const closeConfirm = React.useCallback((ok: boolean) => {
+        setConfirmOpen(false);
+        const r = resolverRef.current;
+        resolverRef.current = null;
+        r?.(ok);
+    }, []);
+
     // -------- Areas modal state
     const [areaModalOpen, setAreaModalOpen] = React.useState(false);
     const [areaEditing, setAreaEditing] = React.useState<UserArea | null>(null);
@@ -279,12 +316,24 @@ export default function Settings() {
     }
 
     async function handleDeleteArea(a: UserArea) {
-        const ok = window.confirm(
-            t("settings.areas.delete_confirm", {
-                defaultValue: `¿Borrar el área “${a.name}”?\n\nSolo podés borrarla si no tiene subcuentas asignadas.`,
-            })
-        );
+        const msg = t("settings.areas.delete_confirm", {
+            defaultValue: `¿Borrar el área “${a.name}”?\n\nSolo podés borrarla si no tiene subcuentas asignadas.`,
+        });
+
+        const ok = await confirm({
+            title: t("settings.areas.delete_title", { defaultValue: "Confirmar borrado" }),
+            subtitle: t("settings.areas.delete_subtitle", { defaultValue: "Esta acción no se puede deshacer." }),
+            body: (
+                <div className="text-sm text-neutral-700 dark:text-neutral-200 whitespace-pre-line">
+                    {msg}
+                </div>
+            ),
+            okText: t("common.delete", { defaultValue: "Borrar" }),
+            cancelText: t("common.cancel", { defaultValue: "Cancelar" }),
+        });
+
         if (!ok) return;
+
         try {
             await deleteArea(a.name);
             toast.success(t("settings.areas.deleted", { defaultValue: "Área borrada." }));
@@ -360,12 +409,24 @@ export default function Settings() {
     }
 
     async function handleDeleteSub(s: SubAccount) {
-        const ok = window.confirm(
-            t("settings.sub.delete_confirm", {
-                defaultValue: `¿Borrar la subcuenta “${s.username}”?`,
-            })
-        );
+        const msg = t("settings.sub.delete_confirm", {
+            defaultValue: `¿Borrar la subcuenta “${s.username}”?`,
+        });
+
+        const ok = await confirm({
+            title: t("settings.sub.delete_title", { defaultValue: "Confirmar borrado" }),
+            subtitle: t("settings.sub.delete_subtitle", { defaultValue: "Esta acción no se puede deshacer." }),
+            body: (
+                <div className="text-sm text-neutral-700 dark:text-neutral-200 whitespace-pre-line">
+                    {msg}
+                </div>
+            ),
+            okText: t("common.delete", { defaultValue: "Borrar" }),
+            cancelText: t("common.cancel", { defaultValue: "Cancelar" }),
+        });
+
         if (!ok) return;
+
         try {
             await deleteSubaccount(s._id);
             toast.success(t("settings.sub.deleted", { defaultValue: "Subcuenta borrada." }));
@@ -959,6 +1020,34 @@ export default function Settings() {
                     )}
 
                     <Modal
+                        open={confirmOpen}
+                        onClose={() => closeConfirm(false)}
+                        title={confirmTitle || t("common.confirm", { defaultValue: "Confirmar" })}
+                        subtitle={confirmSubtitle || undefined}
+                    >
+                        <div className="space-y-5">
+                            {confirmBody ? (
+                                <div className="rounded-xl bg-neutral-900/5 dark:bg-white/5 p-4 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70">
+                                    {confirmBody}
+                                </div>
+                            ) : null}
+
+                            <div className="flex items-center justify-end gap-2">
+                                <PunkButton variant="ghost" onClick={() => closeConfirm(false)}>
+                                    {confirmCancelText}
+                                </PunkButton>
+
+                                <PunkButton
+                                    onClick={() => closeConfirm(true)}
+                                    className="bg-red-600 hover:bg-red-700 text-white ring-1 ring-red-500/30"
+                                >
+                                    {confirmOkText}
+                                </PunkButton>
+                            </div>
+                        </div>
+                    </Modal>
+
+                    <Modal
                         open={areaModalOpen}
                         onClose={() => setAreaModalOpen(false)}
                         title={
@@ -1175,6 +1264,4 @@ export default function Settings() {
             </div>
         </OnlineLayout>
     );
-
-
 }

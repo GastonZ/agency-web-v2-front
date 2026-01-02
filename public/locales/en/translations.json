@@ -340,14 +340,16 @@
     "campaigns_deleting": "Deleting…",
     "campaigns_delete_campaign": "Delete campaign",
     "common": {
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save",
+        "saving": "Saving...",
+        "copy": "Copy",
         "refresh": "Refresh",
         "search": "Search…",
-        "no_results": "No results.",
-        "cancel": "Cancel",
-        "saving": "Saving...",
-        "save": "Save",
-        "create": "Create",
-        "copy": "Copy"
+        "no_results": "No results."
     },
     "settings": {
         "subaccounts": {
@@ -383,7 +385,9 @@
             "save_error": "Couldn't save the area.",
             "delete_confirm": "Delete this area?\n\nYou can only delete it if it has no assigned subaccounts.",
             "deleted": "Area deleted.",
-            "delete_error": "Couldn't delete the area."
+            "delete_error": "Couldn't delete the area.",
+            "delete_title": "Confirm deletion",
+            "delete_subtitle": "This action cannot be undone."
         },
         "sub": {
             "panel_title": "Subaccounts",
@@ -429,7 +433,9 @@
             "reset_cta": "Reset",
             "reset_required": "Enter a password.",
             "reset_ok": "Password reset.",
-            "reset_error": "Couldn't reset the password."
+            "reset_error": "Couldn't reset the password.",
+            "delete_title": "Confirm deletion",
+            "delete_subtitle": "This action cannot be undone."
         },
         "sidebar": {
             "status_title": "Current status",

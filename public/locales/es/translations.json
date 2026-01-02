@@ -338,14 +338,16 @@
     "campaigns_deleting": "Eliminando…",
     "campaigns_delete_campaign": "Eliminar campaña",
     "common": {
+        "confirm": "Confirmar",
+        "delete": "Borrar",
+        "cancel": "Cancelar",
+        "create": "Crear",
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "copy": "Copiar",
         "refresh": "Actualizar",
         "search": "Buscar…",
-        "no_results": "Sin resultados.",
-        "cancel": "Cancelar",
-        "saving": "Guardando...",
-        "save": "Guardar",
-        "create": "Crear",
-        "copy": "Copiar"
+        "no_results": "No hay resultados."
     },
     "settings": {
         "subaccounts": {
@@ -381,7 +383,9 @@
             "save_error": "No se pudo guardar el área.",
             "delete_confirm": "¿Eliminar esta área?\n\nSolo podés eliminarla si no tiene subcuentas asignadas.",
             "deleted": "Área eliminada.",
-            "delete_error": "No se pudo eliminar el área."
+            "delete_error": "No se pudo eliminar el área.",
+            "delete_title": "Confirmar borrado",
+            "delete_subtitle": "Esta acción no se puede deshacer."
         },
         "sub": {
             "panel_title": "Subcuentas",
@@ -427,7 +431,9 @@
             "reset_cta": "Restablecer",
             "reset_required": "Ingresá una contraseña.",
             "reset_ok": "Contraseña restablecida.",
-            "reset_error": "No se pudo restablecer la contraseña."
+            "reset_error": "No se pudo restablecer la contraseña.",
+            "delete_title": "Confirmar borrado",
+            "delete_subtitle": "Esta acción no se puede deshacer."
         },
         "sidebar": {
             "status_title": "Estado actual",
