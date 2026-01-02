@@ -370,6 +370,26 @@ export async function updateModerationCampaignLeadStatus(
   return res.data;
 }
 
+export type UpdateModerationCampaignLeadAreaArgs = {
+  campaignId: string;
+  conversationId: string;
+  area: string;
+};
+
+export async function updateModerationCampaignLeadArea(
+  args: UpdateModerationCampaignLeadAreaArgs,
+) {
+  const payload = { area: args.area };
+
+  const res: AxiosResponse<unknown> = await api.put(
+    `moderation-campaigns/${args.campaignId}/leads/${args.conversationId}/area`,
+    payload,
+  );
+
+  return res.data;
+}
+
+
 type MessengerSendPayload = {
   agentId: string;
   recipientId: string;
