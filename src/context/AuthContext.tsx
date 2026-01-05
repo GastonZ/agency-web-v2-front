@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { clearToken, getToken, saveToken } from "../utils/helper";
+import { clearAppContextStorage, clearSession, getToken, saveToken } from "../utils/helper";
 import { validateToken } from "../services/client";
 
 type AuthContextType = {
@@ -21,9 +21,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const ok = await validateToken(getToken());
         setIsAuth(ok);
-        if (!ok) clearToken();
+        if (!ok) {
+          clearSession();
+          clearAppContextStorage();
+        }
       } catch {
-        clearToken();
+        clearSession();
+        clearAppContextStorage();
         setIsAuth(false);
       } finally {
         setChecking(false);
@@ -35,11 +39,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveToken(token);
     const ok = await validateToken(token);
     setIsAuth(ok);
-    if (!ok) clearToken();
+    if (!ok) {
+      clearSession();
+      clearAppContextStorage();
+    }
   };
 
   const logout = () => {
-    clearToken();
+    clearSession();
+    clearAppContextStorage();
+    try {
+      sessionStorage.clear();
+    } catch {}
     setIsAuth(false);
   };
 
@@ -47,10 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const ok = await validateToken(getToken());
       setIsAuth(ok);
-      if (!ok) clearToken();
+      if (!ok) {
+        clearSession();
+        clearAppContextStorage();
+      }
       return ok;
     } catch {
-      clearToken();
+      clearSession();
+      clearAppContextStorage();
       setIsAuth(false);
       return false;
     }

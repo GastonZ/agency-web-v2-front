@@ -156,19 +156,19 @@ const Moderation: React.FC = () => {
                     });
                 }
 
-/*                 if (chosenSource !== "none" && chosenText.trim().length) {
-                    console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
-                                        const summary = await getResumeOfConversation(chosenText, 10000, uiLang, ctrl.signal);
-                                        if (!aborted) {
-                                            setBootSummary(summary || undefined);
-                                            console.groupCollapsed("[Moderation][boot] resumen recibido");
-                                            console.log("summary.len:", (summary || "").length);
-                                            console.log("summary.preview:", (summary || "").slice(0, 240));
-                                            console.groupEnd();
-                                        }
-                } else {
-                    console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
-                } */
+                /*                 if (chosenSource !== "none" && chosenText.trim().length) {
+                                    console.log(`[Moderation][boot] llamando /api/resume desde: ${chosenSource}, chars:`, chosenText.length);
+                                                        const summary = await getResumeOfConversation(chosenText, 10000, uiLang, ctrl.signal);
+                                                        if (!aborted) {
+                                                            setBootSummary(summary || undefined);
+                                                            console.groupCollapsed("[Moderation][boot] resumen recibido");
+                                                            console.log("summary.len:", (summary || "").length);
+                                                            console.log("summary.preview:", (summary || "").slice(0, 240));
+                                                            console.groupEnd();
+                                                        }
+                                } else {
+                                    console.log("[Moderation][boot] sin historial en primary ni fallback; no se llama a /api/resume");
+                                } */
             } catch (e) {
                 console.warn("[Moderation][boot] fallo al resumir:", e);
             } finally {
@@ -230,7 +230,7 @@ const Moderation: React.FC = () => {
 
         const hasCountry = hasCountryFromList || !!fallbackCountry;
 
-       /*  if (!hasCountry) missing.push("geo.countryId"); */ /* TODO FIX IF NOT COUNTRY */
+        if (!hasCountry) missing.push("geo.countryId");
 
         return missing;
     }
@@ -294,9 +294,68 @@ const Moderation: React.FC = () => {
         return true;
     }, [data]);
 
+    // ----- UX: on "Next" click, if fields are missing we show a toast and scroll to the first missing field.
+    const getMissingForStep = useCallback((index: number): string[] => {
+        if (index === 0) return missingFromStep0(data);
+        if (index === 1) return missingFromStep2(data);
+        if (index === 2) return missingFromStep1(data);
+        return [];
+    }, [data]);
+
+    const scrollToMissingField = useCallback((fieldKey: string) => {
+        // 1) Prefer explicit mapping for anchors
+        const idMap: Record<string, string> = {
+            // Step 1
+            "geo.countryId": "geoCountry",
+            name: "campaignName",
+            leadDefinition: "leadDefinition",
+            goal: "mainGoal",
+
+            // Step 2 (assistant rules)
+            "assistant.name": "assistantName",
+            knowHow: "knowHow",
+            "escalation.phone": "escalationPhone",
+
+            // Step 3 (channels)
+            channels: "channels",
+            "webchat.domain": "webchatDomain",
+        };
+
+        const byDataField = document.querySelector<HTMLElement>(`[data-field="${fieldKey}"]`);
+        const byId = document.getElementById(idMap[fieldKey] ?? fieldKey) as HTMLElement | null;
+        const el = byDataField ?? byId;
+        if (!el) return;
+
+        try {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Focus if possible (inputs/textareas)
+            const canFocus = (el as any).focus && typeof (el as any).focus === "function";
+            if (canFocus) {
+                setTimeout(() => {
+                    try { (el as any).focus({ preventScroll: true }); } catch { }
+                }, 350);
+            }
+        } catch { }
+    }, []);
+
+    const toastAndScrollMissing = useCallback((stepIndex: number) => {
+        const missing = getMissingForStep(stepIndex);
+        if (!missing.length) return;
+
+        toast.warning(
+            t("check_data", {
+                defaultValue: "Please complete the missing fields before continuing.",
+            })
+        );
+
+        // Scroll to the first missing field
+        scrollToMissingField(missing[0]);
+    }, [getMissingForStep, scrollToMissingField, t]);
+
     const canPrev = current > 0;
-    const canNext = useMemo(() => validateStep(current), [current, data]);
-    
+    // We don't lock the button when data is missing; we handle missing data on click (toast + scroll).
+    const canNext = !saving;
+
     const sendStepSilentNote = useCallback(
         (nextIndex: number) => {
             const safeIndex = clampStep(nextIndex);
@@ -414,10 +473,10 @@ const Moderation: React.FC = () => {
             sendStepSilentNote(next);
         }
     };
-    
+
     const saveStepOne = useCallback(async () => {
         if (!validateStep(0)) {
-            toast.warning(t("complete_before_saving"));
+            toastAndScrollMissing(0);
             return false;
         }
 
@@ -445,7 +504,7 @@ const Moderation: React.FC = () => {
 
     const saveCurrentStep = useCallback(async (): Promise<boolean> => {
         if (!validateStep(current)) {
-            toast.warning(t("check_data"));
+            toastAndScrollMissing(current);
             return false;
         }
         if (current === 3) return true;
@@ -486,19 +545,8 @@ const Moderation: React.FC = () => {
         if (current === 2) {
             // Paso 3 - CANALES
             const channels = (data.channels || []) as Array<"instagram" | "facebook" | "whatsapp" | "webchat">;
-
-            if (!channels.length) {
-                toast.warning("Elegí al menos un canal.");
-                return false;
-            }
-
             const hasWebchat = channels.includes("webchat");
             const webchatDomain = (data as any).webchatDomain?.trim?.() ?? "";
-
-            if (hasWebchat && !webchatDomain) {
-                toast.warning("Agregá la URL de tu dominio para usar el Webchat.");
-                return false;
-            }
 
             setSaving(true);
             try {
@@ -518,7 +566,7 @@ const Moderation: React.FC = () => {
         }
 
         return true;
-    }, [current, data, saveStepOne, validateStep]);
+    }, [current, data, saveStepOne, toastAndScrollMissing, validateStep]);
 
     const goPrev = () =>
         setCurrent((c) => {
@@ -656,7 +704,7 @@ const Moderation: React.FC = () => {
                         <EditModeBanner />
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                             <div className="lg:col-span-5">
-{/*                                 <AgencyChatbot
+                                {/*                                 <AgencyChatbot
                                     mode="floating"
                                     persistNamespace="moderation"
                                     userId={userId}

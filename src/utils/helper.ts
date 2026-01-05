@@ -39,6 +39,52 @@ export function clearSession() {
   localStorage.removeItem(AREA_NAME_KEY);
 }
 
+// =============================
+// App draft / context cleanup
+// =============================
+
+// Drafts for the campaign wizards. These are used by the route-level providers.
+export const CAMPAIGN_DRAFT_KEYS = [
+  "campaign:moderation:draft",
+  "campaign:marketing:draft",
+  "campaign:listening:draft",
+
+  // Fallbacks (when providers are mounted without an explicit storageKey)
+  "moderationCampaignCtx",
+  "marketingCampaignCtx",
+  "socialListeningCampaignCtx",
+];
+
+const REALTIME_SNAPSHOT_PREFIX = "agency:realtime:snapshot:";
+
+/**
+ * Clears persisted wizard drafts and other local "context" caches.
+ *
+ * Notes:
+ * - We intentionally do NOT clear theme / language preferences.
+ * - We *do* clear realtime assistant snapshots, as they are effectively conversation context.
+ */
+export function clearAppContextStorage() {
+  try {
+    for (const k of CAMPAIGN_DRAFT_KEYS) localStorage.removeItem(k);
+  } catch {}
+
+  // Moderation wizard stores the last launched campaign id (used as UX hint).
+  try {
+    localStorage.removeItem("mc:last");
+  } catch {}
+
+  // Voice assistant snapshots (per namespace/user)
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(REALTIME_SNAPSHOT_PREFIX)) {
+        localStorage.removeItem(k);
+      }
+    }
+  } catch {}
+}
+
 export function getAuthKind(): AuthKind | null {
   const k = localStorage.getItem(AUTH_KIND_KEY);
   return k === "sub" || k === "user" ? k : null;

@@ -1,6 +1,7 @@
 import React from "react";
 import { LogOut } from "lucide-react";
-import { clearSession } from "../../utils/helper";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 interface LogoutBtnProps {
     onLogout?: () => void;
@@ -11,15 +12,14 @@ const LogoutBtn: React.FC<LogoutBtnProps> = ({
     onLogout,
     redirectTo = "/auth",
 }) => {
+    const { logout } = useAuth();
+    const navigate = useNavigate();
+
     const handleLogout = () => {
-        clearSession();
-        sessionStorage.clear();
-
-        if (onLogout) {
-            onLogout();
-        }
-
-        window.location.href = redirectTo;
+        logout();
+        if (onLogout) onLogout();
+        // Keep SPA navigation (no hard refresh) so the UI can transition smoothly.
+        navigate(redirectTo, { replace: true });
     };
 
     return (
