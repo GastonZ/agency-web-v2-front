@@ -90,6 +90,22 @@ export function getAuthKind(): AuthKind | null {
   return k === "sub" || k === "user" ? k : null;
 }
 
+/**
+ * Returns true when the current session belongs to a "sub account".
+ *
+ * Frontend-only guard: backend already enforces authorization.
+ */
+export function isSubAccountSession(): boolean {
+  try {
+    const kind = getAuthKind();
+    if (kind === "sub") return true;
+    // Fallback: some older flows might not set AUTH_KIND_KEY.
+    return Boolean(getSubAccountId());
+  } catch {
+    return false;
+  }
+}
+
 export function getSubAccountId(): string {
   return localStorage.getItem(SUBACCOUNT_ID_KEY) ?? "";
 }

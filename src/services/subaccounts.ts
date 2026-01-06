@@ -29,13 +29,39 @@ function pickErrorMessage(error: any, fallback: string) {
   return msg || fallback;
 }
 
+const AREAS_CACHE_KEY = "aiaAreasCache";
+
+function readAreasCache(): UserArea[] | null {
+  try {
+    const raw = localStorage.getItem(AREAS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter((a: any) => a && typeof a.name === "string");
+  } catch {
+    return null;
+  }
+}
+
+function writeAreasCache(areas: UserArea[]) {
+  try {
+    localStorage.setItem(AREAS_CACHE_KEY, JSON.stringify(areas || []));
+  } catch {}
+}
+
 // Areas
 
 export async function getMyAreas(): Promise<UserArea[]> {
   try {
     const { data } = await api.get<UserArea[]>("users/me/areas");
-    return Array.isArray(data) ? data : [];
+    const areas = Array.isArray(data) ? data : [];
+    // Cache for UX (also helps subaccounts if the API is temporarily unavailable).
+    writeAreasCache(areas);
+    return areas;
   } catch (error: any) {
+    // Fallback to cache (frontend-only UX improvement)
+    const cached = readAreasCache();
+    if (cached && cached.length) return cached;
     throw new Error(pickErrorMessage(error, "No se pudieron cargar las áreas."));
   }
 }

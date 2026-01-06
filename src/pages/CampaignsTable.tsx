@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import OnlineLayout from "../layout/OnlineLayout";
 import ActionsButton from "../components/features/ActionsButton";
 import { useTranslation } from "react-i18next";
+import { isSubAccountSession } from "../utils/helper";
 
 import {
   searchMyModerationCampaigns,
@@ -37,6 +38,8 @@ export default function CampaignsTable() {
   const navigate = useNavigate();
 
   const { t } = useTranslation('translations');
+
+  const isSub = isSubAccountSession();
 
   const [modRows, setModRows] = React.useState<ModerationCampaignItem[]>([]);
   const [mktRows, setMktRows] = React.useState<MarketingCampaignItem[]>([]);
@@ -250,9 +253,10 @@ export default function CampaignsTable() {
                         <td className="px-4 py-3">
                           <ActionsButton
                             onViewStats={() => navigate(`/my_moderation_campaign/${c.id}/statistics`)}
-                            onEdit={() => navigate(`/campaign_moderation_creation?fromId=${c.id}`)}
-                            showDelete={c.status !== "inactive"}
-                            onDelete={() => setConfirmDeleteId(c.id)}
+                            onEdit={isSub ? undefined : () => navigate(`/campaign_moderation_creation?fromId=${c.id}`)}
+                            showEdit={!isSub}
+                            showDelete={!isSub && c.status !== "inactive"}
+                            onDelete={isSub ? undefined : () => setConfirmDeleteId(c.id)}
                           />
                         </td>
                       </tr>
@@ -307,7 +311,8 @@ export default function CampaignsTable() {
                         <td className="px-4 py-3">
                           <ActionsButton
                             onViewStats={() => navigate(`/my_marketing_campaign/${c.id}/statistics`)}
-                            onEdit={() => navigate(`/campaign_marketing_creation?fromId=${c.id}`)}
+                            onEdit={isSub ? undefined : () => navigate(`/campaign_marketing_creation?fromId=${c.id}`)}
+                            showEdit={!isSub}
                           />
                         </td>
                       </tr>

@@ -1,17 +1,18 @@
 import * as React from "react";
-import { MoreHorizontal, BarChart3, Pencil, Trash, PowerOff } from "lucide-react";
+import { MoreHorizontal, BarChart3, Pencil, PowerOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 
 type Props = {
   onViewStats: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
   className?: string;
   showDelete?: boolean;
+  showEdit?: boolean;
 };
 
-export default function ActionsButton({ onViewStats, onEdit, className = "", onDelete, showDelete }: Props) {
+export default function ActionsButton({ onViewStats, onEdit, className = "", onDelete, showDelete, showEdit = true }: Props) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
   const { t } = useTranslation('translations');
@@ -56,17 +57,19 @@ export default function ActionsButton({ onViewStats, onEdit, className = "", onD
             {t("view_statistics")}
           </button>
 
-          <button
-            role="menuitem"
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-emerald-500/10 cursor-pointer"
-            onClick={() => {
-              setOpen(false);
-              onEdit();
-            }}
-          >
-            <Pencil className="h-4 w-4 opacity-80" />
-            {t("edit")}
-          </button>
+          {showEdit && onEdit && (
+            <button
+              role="menuitem"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-emerald-500/10 cursor-pointer"
+              onClick={() => {
+                setOpen(false);
+                onEdit();
+              }}
+            >
+              <Pencil className="h-4 w-4 opacity-80" />
+              {t("edit")}
+            </button>
+          )}
 
           {showDelete && onDelete && (
             <button

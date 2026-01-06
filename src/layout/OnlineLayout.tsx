@@ -5,6 +5,7 @@ import LogoutBtn from "../components/features/LogoutBtn";
 import ThemeToggle from "../components/features/ThemeToggle";
 import { SidebarNav, defaultNavItems } from "../components/main/SidebarNav";
 import { Menu, X } from "lucide-react";
+import { isSubAccountSession } from "../utils/helper";
 
 interface OnlineLayoutProps {
   children: ReactNode;
@@ -16,11 +17,18 @@ const SIDE_WIDTH = "w-64";
 const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isSub = isSubAccountSession();
+  const navItems = React.useMemo(() => {
+    if (!isSub) return defaultNavItems;
+    // Sub accounts: only Dashboard + My Campaigns
+    return defaultNavItems.filter((it) => it.id === "home" || it.id === "myCampaigns");
+  }, [isSub]);
+
   return (
     <div className="min-h-screen bg-gray-200 text-black dark:bg-neutral-950 dark:text-white flex">
       <div className="hidden lg:block">
         <SidebarNav
-          items={defaultNavItems}
+          items={navItems}
           currentPath={currentPath}
           widthClassName={SIDE_WIDTH}
           defaultCollapsed={false}
@@ -31,7 +39,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
         <div className="fixed inset-0 z-40 flex lg:hidden">
           <div className="relative w-full h-full">
             <SidebarNav
-              items={defaultNavItems}
+              items={navItems}
               currentPath={currentPath}
               widthClassName="w-full"
               defaultCollapsed={false}
