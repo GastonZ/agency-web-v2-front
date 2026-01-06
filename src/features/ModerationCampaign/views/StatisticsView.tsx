@@ -19,7 +19,7 @@ import InstagramConnectButton from "../../../components/features/InstagramConnec
 import AgencyChatbot from "../../../components/features/AgencyChatbot";
 import { useTranslation } from "react-i18next";
 import ConnectedAccountsPanel from "../../../components/features/statisticsComponents/ConnectedAccountsPanel";
-import { LeadsTable } from "../../../components/features/statisticsComponents/leads/LeadsTable";
+import { LeadsTablePanel } from "../../../components/features/statisticsComponents/leads/LeadsTablePanel";
 import { LeadDetailsModal } from "../../../components/features/statisticsComponents/leads/LeadDetailsModal";
 import type { Lead } from "../../../services/types/moderation-types";
 import { deriveChannelCounts, deriveScoreBins } from "../../../components/features/statisticsComponents/leads/mockMetrics";
@@ -561,10 +561,9 @@ export default function StatisticsView() {
                     />
                 </section>
                 <section className="mt-2">
-                    <LeadsTable
-                        leads={leads}
-                        onOpenLead={handleOpenLead}
+                    <LeadsTablePanel
                         campaignId={campaign?.id || id!}
+                        onOpenLead={handleOpenLead}
                     />
                 </section>
 

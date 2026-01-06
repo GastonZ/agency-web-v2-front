@@ -295,11 +295,84 @@ export async function executeModerationAnalysis(
   return data;
 }
 
-export async function getModerationAnalysisSummary(campaignId: string) {
+export type ModerationAnalysisSummarySortBy =
+  | "finalScore"
+  | "analyzedAt"
+  | "createdAt"
+  | "updatedAt"
+  | "classification"
+  | "priority"
+  | "status";
+
+export type ModerationAnalysisSummarySortOrder = "asc" | "desc";
+
+export type ModerationAnalysisSummaryFilters = {
+  channels?: Array<"instagram" | "whatsapp" | "facebook">;
+  finalScoreMin?: number;
+  finalScoreMax?: number;
+  area?: string;
+  priorities?: Array<"high" | "medium" | "low" | "urgent">;
+  classifications?: Array<"hot" | "warm" | "cold">;
+  statuses?: LeadStatus[];
+  sortBy?: ModerationAnalysisSummarySortBy;
+  sortOrder?: ModerationAnalysisSummarySortOrder;
+  page?: number;
+  limit?: number;
+};
+
+function arrToCsv(v?: string[] | null) {
+  if (!v || !Array.isArray(v) || v.length === 0) return undefined;
+  const cleaned = v.map((s) => String(s).trim()).filter(Boolean);
+  return cleaned.length ? cleaned.join(",") : undefined;
+}
+
+export async function getModerationAnalysisSummary(
+  campaignId: string,
+  filters?: ModerationAnalysisSummaryFilters,
+) {
+  const params = prune({
+    channels: arrToCsv(filters?.channels as any),
+    priorities: arrToCsv(filters?.priorities as any),
+    classifications: arrToCsv(filters?.classifications as any),
+    statuses: arrToCsv(filters?.statuses as any),
+    area: (filters?.area || "").trim() || undefined,
+    finalScoreMin:
+      typeof filters?.finalScoreMin === "number" ? filters.finalScoreMin : undefined,
+    finalScoreMax:
+      typeof filters?.finalScoreMax === "number" ? filters.finalScoreMax : undefined,
+    sortBy: filters?.sortBy,
+    sortOrder: filters?.sortOrder,
+    page: filters?.page,
+    limit: filters?.limit,
+  });
+
   const { data } = await api.get(
-    `moderation-campaigns/${campaignId}/analysis/summary`
+    `moderation-campaigns/${campaignId}/analysis/summary`,
+    {
+      params,
+    },
   );
   return data;
+}
+
+export type AppendModerationCampaignLeadNextActionArgs = {
+  campaignId: string;
+  conversationId: string;
+  text: string;
+};
+
+export async function appendModerationCampaignLeadNextAction(
+  args: AppendModerationCampaignLeadNextActionArgs,
+) {
+  const payload = { text: (args.text || "").trim() };
+  if (!payload.text) throw new Error("text is required");
+
+  const res: AxiosResponse<unknown> = await api.put(
+    `moderation-campaigns/${args.campaignId}/leads/${args.conversationId}/next-action`,
+    payload,
+  );
+
+  return res.data;
 }
 
 export async function getModerationAnalysisMetrics(campaignId: string) {

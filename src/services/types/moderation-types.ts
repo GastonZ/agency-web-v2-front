@@ -128,6 +128,23 @@ export type Lead = {
   score: number;
   channel?: "whatsapp" | "instagram" | "facebook" | "email" | "x" | "unknown";
   channelLink?: string;
+  /** Raw conversationId from backend (preferred for updates) */
+  conversationId?: string;
+  /** Campaign id (sometimes returned by backend) */
+  campaignId?: string;
+  status?: LeadStatus;
+  customStatusLabel?: string;
+  area?: string;
+  username?: string | null;
+  profilePic?: string | null;
+  contactNumber?: string | null;
+  /** Manual timeline of follow-ups. Not the AI interest.nextAction */
+  nextAction?: Array<{
+    _id?: string;
+    text: string;
+    createdAt: string;
+    createdBy?: string;
+  }>;
 };
 
 export type LeadStatus =

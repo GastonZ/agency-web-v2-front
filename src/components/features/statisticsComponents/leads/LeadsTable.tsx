@@ -10,9 +10,15 @@ import {
     Loader2,
     Eye,
     X,
+    ClipboardList,
+    Plus,
 } from "lucide-react";
 import type { Lead, LeadStatus } from "../../../../services/types/moderation-types";
-import { updateModerationCampaignLeadStatus, updateModerationCampaignLeadArea } from "../../../../services/campaigns";
+import {
+    updateModerationCampaignLeadStatus,
+    updateModerationCampaignLeadArea,
+    appendModerationCampaignLeadNextAction,
+} from "../../../../services/campaigns";
 import { useTranslation } from "react-i18next";
 import { getMyAreas } from "../../../../services/subaccounts";
 
@@ -957,6 +963,197 @@ function LeadSummaryModal({
     );
 }
 
+function formatDateTime(iso?: string | null) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    try {
+        return new Intl.DateTimeFormat(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+        }).format(d);
+    } catch {
+        return d.toISOString();
+    }
+}
+
+/** Modal interno: timeline manual "Siguiente acción" */
+function LeadNextActionModal({
+    lead,
+    open,
+    onClose,
+    onAdd,
+    adding,
+    error,
+}: {
+    lead: Lead | null;
+    open: boolean;
+    onClose: () => void;
+    onAdd: (text: string) => void;
+    adding?: boolean;
+    error?: string | null;
+}) {
+    const { t } = useTranslation("translations");
+    const [text, setText] = React.useState("");
+
+    React.useEffect(() => {
+        if (!open) return;
+
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const onKeyDown = (ev: KeyboardEvent) => {
+            if (ev.key === "Escape") onClose();
+        };
+        document.addEventListener("keydown", onKeyDown);
+
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            document.removeEventListener("keydown", onKeyDown);
+        };
+    }, [open, onClose]);
+
+    React.useEffect(() => {
+        if (!open) return;
+        setText("");
+    }, [open]);
+
+    if (!open || !lead) return null;
+
+    const items = Array.isArray((lead as any).nextAction)
+        ? ([...(lead as any).nextAction] as any[])
+        : [];
+    items.sort((a, b) => {
+        const da = new Date(a?.createdAt || 0).getTime();
+        const db = new Date(b?.createdAt || 0).getTime();
+        return db - da;
+    });
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+            }}
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+            }}
+            aria-modal="true"
+            role="dialog"
+        >
+            <div
+                className="w-full max-w-2xl rounded-2xl bg-white dark:bg-neutral-950 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                            <div className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-emerald-500/10 ring-1 ring-emerald-400/20">
+                                <ClipboardList className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-sm font-semibold">{t("stats_next_action")}</div>
+                                <div className="mt-1">
+                                    <ContactCell lead={lead} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-200 dark:hover:bg-neutral-800 ring-1 ring-neutral-300/60 dark:ring-neutral-700/60"
+                        onClick={onClose}
+                        title={t("close")}
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="px-5 py-4">
+                    <div className="rounded-xl bg-neutral-50 dark:bg-neutral-900/40 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-4">
+                        <div className="flex items-start gap-2">
+                            <input
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                className="flex-1 h-10 px-3 rounded-xl bg-white/80 dark:bg-neutral-950/50 ring-1 ring-neutral-300/60 dark:ring-neutral-800/70 outline-none"
+                                placeholder={t("stats_next_action_placeholder")}
+                                disabled={!!adding}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        const v = text.trim();
+                                        if (v) onAdd(v);
+                                    }
+                                }}
+                            />
+                            <button
+                                type="button"
+                                className="inline-flex items-center gap-2 h-10 px-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
+                                disabled={!!adding || !text.trim()}
+                                onClick={() => {
+                                    const v = text.trim();
+                                    if (v) onAdd(v);
+                                }}
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span className="text-sm">{t("add")}</span>
+                            </button>
+                        </div>
+
+                        {error ? (
+                            <div className="mt-3 rounded-lg bg-rose-500/10 ring-1 ring-rose-500/20 px-3 py-2 text-[12px] text-rose-400">
+                                {error}
+                            </div>
+                        ) : null}
+
+                        <div className="mt-4">
+                            {items.length === 0 ? (
+                                <p className="text-sm opacity-70">{t("stats_next_action_empty")}</p>
+                            ) : (
+                                <ul className="space-y-2 max-h-[46vh] overflow-auto pr-1">
+                                    {items.map((it) => (
+                                        <li
+                                            key={it?._id || `${it?.createdAt || ""}-${it?.text || ""}`}
+                                            className="rounded-xl bg-white/70 dark:bg-neutral-950/40 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 px-3 py-2"
+                                        >
+                                            <div className="text-[11px] uppercase tracking-wide opacity-70">
+                                                {formatDateTime(it?.createdAt)}
+                                            </div>
+                                            <div className="mt-1 text-sm whitespace-pre-wrap">
+                                                {String(it?.text || "").trim() || "—"}
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="px-5 py-4 border-t border-neutral-200/70 dark:border-neutral-800/70 flex justify-end">
+                    <button
+                        type="button"
+                        className="text-sm px-4 py-2 rounded-xl bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+                        onClick={onClose}
+                    >
+                        {t("close")}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
 interface LeadsTableProps {
     leads: Lead[];
     /** Callback opcional (por si querés trackear o hacer algo al abrir el modal) */
@@ -973,16 +1170,37 @@ interface LeadsTableProps {
         conversationId: string;
         area: string;
     }) => Promise<unknown>;
+
+    onAppendLeadNextAction?: (args: {
+        campaignId: string;
+        conversationId: string;
+        text: string;
+    }) => Promise<unknown>;
 }
 
-export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, onUpdateLeadArea }: LeadsTableProps) {
+export function LeadsTable({
+    leads,
+    onOpenLead,
+    campaignId,
+    onUpdateLeadStatus,
+    onUpdateLeadArea,
+    onAppendLeadNextAction,
+}: LeadsTableProps) {
     const { t } = useTranslation("translations");
 
     console.log('my leads', leads);
 
 
     const [overrides, setOverrides] = React.useState<
-        Record<string, { status?: LeadStatus; customStatusLabel?: string; area?: string }>
+        Record<
+            string,
+            {
+                status?: LeadStatus;
+                customStatusLabel?: string;
+                area?: string;
+                nextAction?: Lead["nextAction"];
+            }
+        >
     >({});
 
     const [areas, setAreas] = React.useState<UserArea[]>([]);
@@ -991,6 +1209,11 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, 
 
     const [summaryOpen, setSummaryOpen] = React.useState(false);
     const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
+
+    const [nextActionOpen, setNextActionOpen] = React.useState(false);
+    const [nextActionLead, setNextActionLead] = React.useState<Lead | null>(null);
+    const [nextActionAdding, setNextActionAdding] = React.useState(false);
+    const [nextActionError, setNextActionError] = React.useState<string | null>(null);
 
     const mergedLeads = React.useMemo(() => {
         return leads.map((l) => {
@@ -1041,6 +1264,69 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, 
         setSelectedLead(null);
     }, []);
 
+    const openNextAction = React.useCallback((lead: Lead) => {
+        setNextActionError(null);
+        setNextActionLead(lead);
+        setNextActionOpen(true);
+    }, []);
+
+    const closeNextAction = React.useCallback(() => {
+        setNextActionOpen(false);
+        setNextActionLead(null);
+        setNextActionError(null);
+        setNextActionAdding(false);
+    }, []);
+
+    const addNextAction = React.useCallback(
+        async (text: string) => {
+            const trimmed = (text || "").trim();
+            if (!trimmed) return;
+
+            const lead = nextActionLead;
+            const convId = lead ? getLeadConversationId(lead) : null;
+            const effectiveCampaignId = campaignId || ((lead as any)?.campaignId as string | undefined);
+            if (!lead || !convId || !effectiveCampaignId) return;
+
+            setNextActionAdding(true);
+            setNextActionError(null);
+            try {
+                const updater = onAppendLeadNextAction || appendModerationCampaignLeadNextAction;
+                const updated: any = await updater({
+                    campaignId: effectiveCampaignId,
+                    conversationId: convId,
+                    text: trimmed,
+                });
+
+                const updatedNextAction = Array.isArray(updated?.nextAction)
+                    ? (updated.nextAction as any)
+                    : undefined;
+
+                if (updatedNextAction) {
+                    setOverrides((prev) => ({
+                        ...prev,
+                        [convId]: {
+                            ...(prev[convId] || {}),
+                            nextAction: updatedNextAction,
+                        },
+                    }));
+                    setNextActionLead((prevLead) =>
+                        prevLead
+                            ? ({
+                                ...(prevLead as any),
+                                nextAction: updatedNextAction,
+                            } as Lead)
+                            : prevLead,
+                    );
+                }
+            } catch (e: any) {
+                setNextActionError(e?.message || "Error");
+            } finally {
+                setNextActionAdding(false);
+            }
+        },
+        [campaignId, nextActionLead, onAppendLeadNextAction],
+    );
+
     return (
         <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-emerald-400/10">
@@ -1056,6 +1342,7 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, 
                             <th className="px-4 py-2">{t("stats_score")}</th>
                             <th className="px-4 py-2">{t("stats_status")}</th>
                             <th className="px-4 py-2">{t("stats_area")}</th>
+                            <th className="px-4 py-2">{t("stats_next_action")}</th>
                             <th className="px-4 py-2">{t("stats_conversation")}</th>
                         </tr>
                     </thead>
@@ -1064,6 +1351,16 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, 
                         {mergedLeads.map((l) => {
                             const convLink = getConversationLink(l);
                             const convId = getLeadConversationId(l);
+                            const nextActions = Array.isArray((l as any).nextAction)
+                                ? ((l as any).nextAction as any[])
+                                : [];
+                            const nextCount = nextActions.length;
+                            const latestNext = nextActions
+                                .slice()
+                                .sort((a, b) =>
+                                    new Date(b?.createdAt || 0).getTime() -
+                                    new Date(a?.createdAt || 0).getTime(),
+                                )[0];
 
                             return (
                                 <tr
@@ -1079,6 +1376,7 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, 
                                     <td className="px-4 py-2 whitespace-nowrap">
                                         <ContactCell lead={l} />
                                     </td>
+
 
                                     <td className="px-4 py-2 max-w-[420px]">
                                         <div className="relative pr-10">
@@ -1149,6 +1447,28 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, 
                                         </div>
                                     </td>
 
+                                    <td className="px-4 py-2 whitespace-nowrap" data-stop-row>
+                                        <button
+                                            type="button"
+                                            className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                openNextAction(l);
+                                            }}
+                                            title={
+                                                latestNext?.text
+                                                    ? String(latestNext.text).trim()
+                                                    : t("stats_next_action")
+                                            }
+                                        >
+                                            <ClipboardList className="h-4 w-4 opacity-80" />
+                                            <span className="font-medium">
+                                                {nextCount > 0 ? nextCount : t("add")}
+                                            </span>
+                                        </button>
+                                    </td>
+
                                     <td className="px-4 py-2" data-stop-row>
                                         {convLink ? (
                                             <a
@@ -1175,6 +1495,14 @@ export function LeadsTable({ leads, onOpenLead, campaignId, onUpdateLeadStatus, 
             </div>
 
             <LeadSummaryModal lead={selectedLead} open={summaryOpen} onClose={closeSummary} />
+            <LeadNextActionModal
+                lead={nextActionLead}
+                open={nextActionOpen}
+                onClose={closeNextAction}
+                onAdd={addNextAction}
+                adding={nextActionAdding}
+                error={nextActionError}
+            />
         </div>
     );
 }

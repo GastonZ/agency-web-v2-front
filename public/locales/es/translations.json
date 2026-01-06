@@ -454,5 +454,27 @@
         "serverError": "Error del servidor. Intente más tarde.",
         "connectionError": "No se pudo conectar con el servidor. Intenta de nuevo."
     },
-    "all": "Todos"
+    "all": "Todos",
+    "stats_leads_table_title": "Leads",
+    "stats_filters": "Filtros",
+    "stats_showing": "Mostrando",
+    "stats_total": "Total",
+    "stats_filter_channels": "Canales",
+    "stats_filter_classifications": "Clasificaciones",
+    "stats_filter_priorities": "Prioridades",
+    "stats_filter_statuses": "Estados",
+    "stats_filter_area": "Área",
+    "stats_filter_score": "Puntaje",
+    "stats_filter_sort": "Orden",
+    "stats_any": "Cualquiera",
+    "stats_area_all_default": "All (default)",
+    "stats_next_action": "Siguiente acción",
+    "stats_next_action_placeholder": "Agregar una siguiente acción…",
+    "stats_next_action_empty": "Todavía no hay siguientes acciones.",
+    "apply": "Aplicar",
+    "clear": "Limpiar",
+    "reset": "Reiniciar",
+    "rows": "Filas",
+    "min": "Min",
+    "max": "Max"
 }

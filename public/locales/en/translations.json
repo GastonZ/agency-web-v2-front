@@ -456,5 +456,27 @@
         "serverError": "Server error. Please try again later.",
         "connectionError": "Could not connect to the server. Please try again."
     },
-    "all": "All"
+    "all": "All",
+    "stats_leads_table_title": "Leads",
+    "stats_filters": "Filters",
+    "stats_showing": "Showing",
+    "stats_total": "Total",
+    "stats_filter_channels": "Channels",
+    "stats_filter_classifications": "Classifications",
+    "stats_filter_priorities": "Priorities",
+    "stats_filter_statuses": "Statuses",
+    "stats_filter_area": "Area",
+    "stats_filter_score": "Score",
+    "stats_filter_sort": "Sort",
+    "stats_any": "Any",
+    "stats_area_all_default": "All (default)",
+    "stats_next_action": "Next action",
+    "stats_next_action_placeholder": "Add a next action…",
+    "stats_next_action_empty": "No next actions yet.",
+    "apply": "Apply",
+    "clear": "Clear",
+    "reset": "Reset",
+    "rows": "Rows",
+    "min": "Min",
+    "max": "Max"
 }
