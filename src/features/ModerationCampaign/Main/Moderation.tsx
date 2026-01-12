@@ -1050,7 +1050,7 @@ const Moderation: React.FC = () => {
                                     </div>
 
                                     <div className="lg:col-span-12">
-                                        <StepOneBottom />
+                                        <StepOneBottom isEditing={data.campaignId !== null && data.campaignId !== undefined} />
                                     </div>
                                 </>
                             )}

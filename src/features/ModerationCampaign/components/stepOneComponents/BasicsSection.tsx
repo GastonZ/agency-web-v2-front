@@ -4,10 +4,13 @@ import { useModeration } from "../../../../context/ModerationContext";
 import { notifyBotManualChange, flushBotManualChange } from "../../../../utils/helper";
 import { useTranslation } from "react-i18next";
 
-const BasicsSection: React.FC = () => {
+type BasicsSectionProps = {
+  isEditing: boolean;
+};
 
+const BasicsSection: React.FC<BasicsSectionProps> = ({ isEditing }) => {
   const { data, setBasics } = useModeration();
-  const { t } = useTranslation('translations');
+  const { t } = useTranslation("translations");
 
   return (
     <GlassCard>
@@ -22,6 +25,7 @@ const BasicsSection: React.FC = () => {
             data-testid="campaign-name"
             placeholder="Ej. Moderación Q4 LATAM"
             value={data.name}
+            disabled={isEditing}
             onChange={(e) => {
               const v = e.target.value;
               setBasics({ name: v });
@@ -65,9 +69,7 @@ const BasicsSection: React.FC = () => {
               })
             }
           />
-          <span className="text-sm text-gray-600">
-            Max 700 {t("characters")}.
-          </span>
+          <span className="text-sm text-gray-600">Max 700 {t("characters")}.</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,9 +99,7 @@ const BasicsSection: React.FC = () => {
                 })
               }
             />
-            <span className="text-sm text-gray-600">
-              Max 500 {t("characters")}.
-            </span>
+            <span className="text-sm text-gray-600">Max 500 {t("characters")}.</span>
           </div>
 
           <div>
@@ -128,9 +128,7 @@ const BasicsSection: React.FC = () => {
                 })
               }
             />
-            <span className="text-sm text-gray-600">
-              Max 400 {t("characters")}.
-            </span>
+            <span className="text-sm text-gray-600">Max 400 {t("characters")}.</span>
           </div>
         </div>
       </div>

@@ -11,18 +11,18 @@ export const StepOneTop: React.FC = () => {
   );
 };
 
-export const StepOneBottom: React.FC = () => {
+export const StepOneBottom: React.FC<{isEditing: boolean}> = ({isEditing}) => {
   return (
     <div className="w-full space-y-4 md:space-y-6">
-      <BasicsSection />
+      <BasicsSection isEditing={isEditing} />
     </div>
   );
 };
 
-const StepOne: React.FC = () => {
+const StepOne: React.FC<{isEditing: boolean}> = ({isEditing}) => {
   return (
     <div className="w-full space-y-4 md:space-y-6">
-      <BasicsSection />
+      <BasicsSection isEditing={isEditing} />
       <AudienceSection />
     </div>
   );
