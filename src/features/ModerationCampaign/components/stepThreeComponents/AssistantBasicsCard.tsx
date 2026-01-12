@@ -44,10 +44,10 @@ const AssistantBasicsCard: React.FC = () => {
           placeholder={t("conversation_example")}
           value={data.assistant.conversationLogic}
           onChange={(e) => setAssistant({ conversationLogic: e.target.value })}
-          maxLength={2000}
+          maxLength={13000}
         />
         <span className="text-sm text-gray-600">
-          Max 2000 {t("characters")}.
+          Max 13000 {t("characters")}.
         </span>
       </div>
     </GlassCard>
