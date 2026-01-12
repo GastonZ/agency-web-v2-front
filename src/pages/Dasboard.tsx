@@ -7,6 +7,7 @@ import WipeMemoryBtn from "../components/features/WipeMemoryBtn";
 import HeroConversational from "../WebLanding/components/HeroConversational";
 import HeroConversationalAgency from "../components/features/HeroConversationalAgency";
 import { useTranslation } from "react-i18next";
+import { V2ConversationalWidget } from "../V2Conversational";
 
 type GlassCardProps = {
     title?: React.ReactNode;
@@ -78,25 +79,12 @@ const Dashboard: React.FC = () => {
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
-                    {/* Chatbot */}
-{/*                     <AgencyChatbot
-                        autoStart
-                        mode="floating"
-                        placeholder="Decime algo como: 'cambiá a tema oscuro' o 'andá a campaigns'"
-                        persistNamespace="global"
-                        userId={userId}
-                        getBusinessSnapshot={() => ({
-                            __summary: "Por ahora no hay resumen definido.",
-                            page: "dashboard",
-                        })}
-                        bootExtraInstructions={uiLang === "en" ? DASHBOARD_PLAYBOOK : DASHBOARD_PLAYBOOK_ES}
-                    /> */}
+                    {/* <V2ConversationalWidget profile="dashboard"/> */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch pb-2">
                     <div className="lg:col-span-12 flex">
                         <HeroConversationalAgency />
                     </div>
 
-                    <WipeMemoryBtn userId={userId} />
                 </div>
             </div>
         </OnlineLayout>

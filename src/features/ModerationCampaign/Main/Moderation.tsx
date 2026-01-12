@@ -701,7 +701,7 @@ const Moderation: React.FC = () => {
                             <StepperTop steps={STEPS_T} current={current} onStepClick={jumpTo} />
                         </div>
 
-                        <EditModeBanner />
+                        <EditModeBanner goToStep={() => jumpTo(0)}/>
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                             <div className="lg:col-span-5">
                                 {/*                                 <AgencyChatbot

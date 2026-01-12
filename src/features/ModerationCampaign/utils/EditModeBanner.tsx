@@ -6,9 +6,10 @@ import { useTranslation } from "react-i18next";
 type Props = {
   className?: string;
   onStartNew?: () => void;
+  goToStep: (step: number) => void;
 };
 
-const EditModeBanner: React.FC<Props> = ({ className }) => {
+const EditModeBanner: React.FC<Props> = ({ className, goToStep }) => {
   const { data, resetAll } = useModeration();
   const isEditing = Boolean(data.campaignId);
   const { t } = useTranslation('translations');
@@ -16,6 +17,7 @@ const EditModeBanner: React.FC<Props> = ({ className }) => {
 
   const handleStartNew = () => {
     resetAll();
+    goToStep(0)
   };
 
   return (
