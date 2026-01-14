@@ -354,19 +354,19 @@
     "settings": {
         "subaccounts": {
             "badge": "Access & Organization",
-            "title": "Areas and Subaccounts",
-            "subtitle": "First you define Areas. Then you create Subaccounts and assign them to a specific Area."
+            "title": "Areas and Members",
+            "subtitle": "First you define Areas. Then you create Members and assign them to a specific Area."
         },
         "tabs": {
             "areas": "Areas",
-            "subaccounts": "Subaccounts"
+            "subaccounts": "Members"
         },
         "areas": {
             "panel_title": "Areas",
             "panel_subtitle": "Use short names (max 2 words). The description guides the AI to classify and assign leads.",
             "create": "Create Area",
             "empty_title": "You don't have any areas yet.",
-            "empty_desc": "Create at least one to be able to assign subaccounts. E.g., “sales”, “support”, “appointments”.",
+            "empty_desc": "Create at least one to be able to assign members. E.g., “sales”, “support”, “appointments”.",
             "edit_title": "Edit Area",
             "create_title": "Create Area",
             "edit_subtitle": "You can only edit the description.",
@@ -383,20 +383,20 @@
             "updated": "Area updated.",
             "created": "Area created.",
             "save_error": "Couldn't save the area.",
-            "delete_confirm": "Delete this area?\n\nYou can only delete it if it has no assigned subaccounts.",
+            "delete_confirm": "Delete this area?\n\nYou can only delete it if it has no assigned members.",
             "deleted": "Area deleted.",
             "delete_error": "Couldn't delete the area.",
             "delete_title": "Confirm deletion",
             "delete_subtitle": "This action cannot be undone."
         },
         "sub": {
-            "panel_title": "Subaccounts",
+            "panel_title": "Members",
             "panel_subtitle": "Assign each subaccount to an Area. Save credentials and use reset if you need to rotate the password.",
             "create": "Create Subaccount",
             "locked_title": "First you need to create at least 1 Area.",
-            "locked_desc": "Subaccounts require an existing area (The area of election must've been previously created).",
+            "locked_desc": "Members require an existing area (The area of election must've been previously created).",
             "go_areas": "Go to Areas",
-            "empty_title": "You haven't created subaccounts yet.",
+            "empty_title": "You haven't created members yet.",
             "empty_desc": "Create a subaccount, assign it to an area, and share the credentials with your team.",
             "last_login": "Last login:",
             "toggle": "Active",

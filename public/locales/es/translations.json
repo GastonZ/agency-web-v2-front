@@ -352,19 +352,19 @@
     "settings": {
         "subaccounts": {
             "badge": "Acceso y organización",
-            "title": "Áreas y subcuentas",
-            "subtitle": "Primero definís Áreas. Luego creás Subcuentas y las asignás a un Área específica."
+            "title": "Áreas y miembros",
+            "subtitle": "Primero definís Áreas. Luego creás Miembros y los asignás a un Área específica."
         },
         "tabs": {
             "areas": "Áreas",
-            "subaccounts": "Subcuentas"
+            "subaccounts": "Miembros"
         },
         "areas": {
             "panel_title": "Áreas",
             "panel_subtitle": "Usá nombres cortos (máx. 2 palabras). La descripción guía a la IA para clasificar y asignar leads.",
             "create": "Crear área",
             "empty_title": "Todavía no tenés áreas.",
-            "empty_desc": "Creá al menos una para poder asignar subcuentas. Ej.: “ventas”, “soporte”, “turnos”.",
+            "empty_desc": "Creá al menos una para poder asignar miembros. Ej.: “ventas”, “soporte”, “turnos”.",
             "edit_title": "Editar área",
             "create_title": "Crear área",
             "edit_subtitle": "Solo podés editar la descripción.",
@@ -381,20 +381,20 @@
             "updated": "Área actualizada.",
             "created": "Área creada.",
             "save_error": "No se pudo guardar el área.",
-            "delete_confirm": "¿Eliminar esta área?\n\nSolo podés eliminarla si no tiene subcuentas asignadas.",
+            "delete_confirm": "¿Eliminar esta área?\n\nSolo podés eliminarla si no tiene miembros asignados.",
             "deleted": "Área eliminada.",
             "delete_error": "No se pudo eliminar el área.",
             "delete_title": "Confirmar borrado",
             "delete_subtitle": "Esta acción no se puede deshacer."
         },
         "sub": {
-            "panel_title": "Subcuentas",
+            "panel_title": "Miembros",
             "panel_subtitle": "Asigná cada subcuenta a un Área. Guardá las credenciales y usá “Restablecer” si necesitás rotar la contraseña.",
             "create": "Crear subcuenta",
             "locked_title": "Primero necesitás crear al menos 1 Área.",
-            "locked_desc": "Las subcuentas requieren un área existente (El area de eleccion debe haber sido creada previamente).",
+            "locked_desc": "Los miembros requieren un área existente (El area de eleccion debe haber sido creada previamente).",
             "go_areas": "Ir a Áreas",
-            "empty_title": "Todavía no creaste subcuentas.",
+            "empty_title": "Todavía no creaste miembros.",
             "empty_desc": "Creá una subcuenta, asignala a un área y compartí las credenciales con tu equipo.",
             "last_login": "Último inicio de sesión:",
             "toggle": "Activa",
