@@ -662,11 +662,6 @@ export default function Settings() {
                                                         )}
                                                     />
                                                 </div>
-
-                                                <PunkButton onClick={openCreateArea}>
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    {t("settings.areas.create", { defaultValue: "Crear Área" })}
-                                                </PunkButton>
                                             </div>
                                         }
                                     >
@@ -811,10 +806,6 @@ export default function Settings() {
                                                     />
                                                 </div>
 
-                                                <PunkButton onClick={openCreateSub} disabled={!hasAreas}>
-                                                    <UserPlus className="h-4 w-4 mr-2" />
-                                                    {t("settings.sub.create", { defaultValue: "Crear Subcuenta" })}
-                                                </PunkButton>
                                             </div>
                                         }
                                     >
