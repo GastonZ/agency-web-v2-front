@@ -93,7 +93,7 @@
     "invalid_format_contact": "Formato inválido. Usa +NN NNNNNNNNN.",
     "error_process_file": "No se pudo procesar el archivo",
     "empty_file": "Archivo vacío",
-    "knowledge_base": "Preguntas y Respuestas (Q&A) - Base de Conocimiento",
+    "knowledge_base": "Preguntas y Respuestas (Q&A) - Base de Conocimiento (TXT - CSV)",
     "qa_q_placeholder": "¿Cuánto cuesta el modelo 0km que ofrecen?",
     "qa_a_placeholder": "El precio depende del modelo y la versión. Puedo ayudarte a cotizarlo y ver opciones de financiación. ¿Qué auto te interesa así te paso el valor actualizado?",
     "proccess_file": "Procesando archivo",

@@ -93,7 +93,7 @@
     "invalid_format_contact": "Invalid format. Use +NN NNNNNNNNN.",
     "error_process_file": "Could not process the file",
     "empty_file": "Empty file",
-    "knowledge_base": "Questions and Answers (Q&A) - Knowledge Base",
+    "knowledge_base": "Questions and Answers (Q&A) - Knowledge Base (TXT - CSV)",
     "qa_q_placeholder": "How much does the new 0km model cost?",
     "qa_a_placeholder": "The price depends on the model and version. I can help you get a quote and see financing options. What car interests you so I can give you the updated price?",
     "question": "Customer asks",
