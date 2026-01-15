@@ -18,6 +18,7 @@ type CampaignType = "marketing" | "moderation" | "listening";
 
 type CardSpec = {
     id: CampaignType;
+    campaignW: string;
     title: string;
     icon: React.ElementType;
     short: string;
@@ -26,50 +27,7 @@ type CardSpec = {
     goto: string;
 };
 
-const CARDS: CardSpec[] = [
-/*     {
-        id: "marketing",
-        title: "Marketing Campaign",
-        icon: Megaphone,
-        short:
-            "Omnicanal + IA para captar, calificar y nutrir leads con analítica y mini-CRM.",
-        bullets: [
-            "Objetivos, audiencia, contenidos e influencers guiados",
-            "Calendario + pauta + lógica de interacción omnicanal",
-            "Seguimiento y remarketing integrados",
-        ],
-        badge: "Leads",
-        goto: '/campaign_marketing_creation'
-    }, */
-    {
-        id: "moderation",
-        title: "Moderation Campaign",
-        icon: ShieldCheck,
-        short:
-            "Bandeja unificada: recibís y respondés mensajes a escala con IA + humano-en-el-loop.",
-        bullets: [
-            "Respuestas automáticas con reglas y desvíos a humano",
-            "Historial organizado y métricas de tiempos de respuesta",
-            "No envía mensajes salientes masivos (solo recepciona)",
-        ],
-        badge: "Atención",
-        goto: '/campaign_moderation_creation'
-    },
-/*     {
-        id: "listening",
-        title: "Social Listening",
-        icon: Waves,
-        short:
-            "Monitoreo de conversaciones, opiniones y tendencias en redes y web.",
-        bullets: [
-            "Google Query + scraping multi-plataforma",
-            "Sinónimos + búsquedas booleanas + filtro por ubicación",
-            "Dashboards con KPIs, perfiles y segmentación opcional",
-        ],
-        badge: "Insights",
-        goto: '/'
-    }, */
-];
+
 
 export default function CampaignCreation({
     defaultValue,
@@ -78,6 +36,41 @@ export default function CampaignCreation({
     defaultValue?: CampaignType;
     onConfirm?: (type: CampaignType) => void;
 }) {
+
+    const { t } = useTranslation('translations');
+    const CARDS: CardSpec[] = [
+        {
+            id: "moderation",
+            campaignW: "Campaign",
+            title: t("campaigns_moderation_title"),
+            icon: ShieldCheck,
+            short: t("campaigns_moderation_desc_1"),
+            bullets: [
+                t("campaigns_moderation_desc_2"),
+                t("campaigns_moderation_desc_3"),
+                t("campaigns_moderation_desc_4"),
+                t("campaigns_moderation_desc_5"),
+                t("campaigns_moderation_desc_6"),
+            ],
+            badge: "Atención",
+            goto: '/campaign_moderation_creation'
+        },
+        /*     {
+                id: "listening",
+                title: "Social Listening",
+                icon: Waves,
+                short:
+                    "Monitoreo de conversaciones, opiniones y tendencias en redes y web.",
+                bullets: [
+                    "Google Query + scraping multi-plataforma",
+                    "Sinónimos + búsquedas booleanas + filtro por ubicación",
+                    "Dashboards con KPIs, perfiles y segmentación opcional",
+                ],
+                badge: "Insights",
+                goto: '/'
+            }, */
+    ];
+
     const [value, setValue] = React.useState<CampaignType>(defaultValue ?? "marketing");
     const [expanded, setExpanded] = React.useState<CampaignType | null>(null);
 
@@ -85,7 +78,6 @@ export default function CampaignCreation({
         setValue(id);
     }
 
-    const { t } = useTranslation('translations');
 
     return (
         <OnlineLayout>
@@ -212,7 +204,7 @@ export default function CampaignCreation({
                                                     "ring-1 ring-emerald-400/30 hover:ring-emerald-400/40"
                                                 )}
                                             >
-                                                Create {card.title.split(" ")[0]}
+                                                Create {card.campaignW}
                                             </PunkButton>
                                         </Link>
                                     </div>

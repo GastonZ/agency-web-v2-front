@@ -476,5 +476,12 @@
     "reset": "Reiniciar",
     "rows": "Filas",
     "min": "Min",
-    "max": "Max"
+    "max": "Max",
+    "campaigns_moderation_title": "Campaña de Gestión de Conversaciones",
+    "campaigns_moderation_desc_1": "Automatizá y coordiná interacciones en todos tus canales con asistentes inteligentes y supervisión humana.",
+    "campaigns_moderation_desc_2": "Asistentes conversacionales con IA (no flujos rígidos).",
+    "campaigns_moderation_desc_3": "Bandeja unificada para Instagram, Facebook, WhatsApp y Webchat.",
+    "campaigns_moderation_desc_4": "Escalamiento automático a humanos cuando hace falta.",
+    "campaigns_moderation_desc_5": "Historial completo y métricas de desempeño. Incluye CRM.",
+    "campaigns_moderation_desc_6": "Ideal para atención, ventas y soporte."
 }

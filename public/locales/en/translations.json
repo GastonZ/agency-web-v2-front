@@ -478,5 +478,12 @@
     "reset": "Reset",
     "rows": "Rows",
     "min": "Min",
-    "max": "Max"
+    "max": "Max",
+    "campaigns_moderation_title": "Conversation Management Campaign",
+    "campaigns_moderation_desc_1": "Automate and coordinate interactions across all your channels with intelligent assistants and human supervision.",
+    "campaigns_moderation_desc_2": "Conversational AI assistants (no rigid flows).",
+    "campaigns_moderation_desc_3": "Unified inbox for Instagram, Facebook, WhatsApp, and Webchat.",
+    "campaigns_moderation_desc_4": "Automatic escalation to humans when needed.",
+    "campaigns_moderation_desc_5": "Full history and performance metrics. Includes CRM.",
+    "campaigns_moderation_desc_6": "Ideal for support, sales, and customer service."
 }
