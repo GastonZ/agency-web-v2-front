@@ -392,7 +392,7 @@
         "sub": {
             "panel_title": "Members",
             "panel_subtitle": "Assign each subaccount to an Area. Save credentials and use reset if you need to rotate the password.",
-            "create": "Create Subaccount",
+            "create": "Create Member",
             "locked_title": "First you need to create at least 1 Area.",
             "locked_desc": "Members require an existing area (The area of election must've been previously created).",
             "go_areas": "Go to Areas",
@@ -401,7 +401,7 @@
             "last_login": "Last login:",
             "toggle": "Active",
             "edit_title": "Edit Subaccount",
-            "create_title": "Create Subaccount",
+            "create_title": "Create Member",
             "edit_subtitle": "You can change the area and enable/disable.",
             "create_subtitle": "Choose an existing area. Save and share the credentials with your team.",
             "username_label": "Username",
