@@ -64,7 +64,15 @@ export default function ConnectedAccountsPanel({
   const ig = socialAccsData?.instagram;
   const fb = socialAccsData?.facebook;
 
-  const isWhatsConnected = Boolean(whatsappStatus?.qrScanned);
+  const showWhatsCard = Boolean(whatsappStatus) || Boolean(onReconnectWhatsapp);
+  const isWhatsConnected = whatsappStatus?.qrScanned === true;
+  const whatsStatusLabel =
+    isWhatsConnected
+      ? `${t("connected")}`
+      : uiLang === "en"
+        ? "Disconnected"
+        : "Desconectado";
+
   const isIgConnected = Boolean(ig && (ig.username || ig.profilePicture || ig.name));
   const isFbConnected = Boolean(fb && (fb.id || fb.name || fb.profilePicture));
 
@@ -188,7 +196,7 @@ export default function ConnectedAccountsPanel({
           ) : (
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* WHATSAPP */}
-              {isWhatsConnected && (
+              {showWhatsCard && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -202,60 +210,61 @@ export default function ConnectedAccountsPanel({
                     >
                       <MessageSquare className="h-4 w-4" />
                     </motion.div>
+
                     <div className="flex-1">
                       <div className="text-[13px] font-semibold">
-                        WhatsApp {t("connected")}
+                        WhatsApp {whatsStatusLabel}
                       </div>
-                      <div className="mt-0.5 text-xs opacity-80">
-                        {t("number")}{" "}
-                        <span className="font-mono">
-                          {whatsPhone || t("unknown")}
-                        </span>
-                      </div>
-                      {whatsWhen && (
-                        <div className="mt-0.5 text-xs opacity-70">
-                          {t("since")}{" "}
-                          {(() => {
-                            const d = new Date(whatsWhen);
-                            return isNaN(d.getTime())
-                              ? whatsWhen
-                              : d.toLocaleString();
-                          })()}
-                        </div>
-                      )}
 
-                      <p className="mt-1 text-xs opacity-80">
-                        {pausedLabel(localPaused.whatsapp)}
-                      </p>
-                      <div className="flex flex-col w-max">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleChannel("whatsapp")}
-                          disabled={loadingChannel === "whatsapp"}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-60"
-                        >
-                          {localPaused.whatsapp ? (
-                            <PlayCircle className="h-3.5 w-3.5" />
-                          ) : (
-                            <PauseCircle className="h-3.5 w-3.5" />
+                      {isWhatsConnected ? (
+                        <>
+                          <div className="mt-0.5 text-xs opacity-80">
+                            {t("number")} <span className="font-mono">{whatsPhone || t("unknown")}</span>
+                          </div>
+
+                          {whatsWhen && (
+                            <div className="mt-0.5 text-xs opacity-70">
+                              {t("since")}{" "}
+                              {(() => {
+                                const d = new Date(whatsWhen);
+                                return isNaN(d.getTime()) ? whatsWhen : d.toLocaleString();
+                              })()}
+                            </div>
                           )}
-                          {loadingChannel === "whatsapp"
-                            ? uiLang === "en"
-                              ? "Updating..."
-                              : "Actualizando..."
-                            : btnText(localPaused.whatsapp)}
-                        </button>
 
-                        {onReconnectWhatsapp && (
+                          <p className="mt-1 text-xs opacity-80">
+                            {pausedLabel(localPaused.whatsapp)}
+                          </p>
+
                           <button
                             type="button"
-                            onClick={onReconnectWhatsapp}
-                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ring-1 ring-neutral-400/40 bg-neutral-500/5 hover:bg-neutral-500/10"
+                            onClick={() => handleToggleChannel("whatsapp")}
+                            disabled={loadingChannel === "whatsapp"}
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ring-1 ring-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-60"
                           >
-                            {uiLang === "en" ? "Relink WhatsApp" : "Re-vincular WhatsApp"}
+                            {localPaused.whatsapp ? <PlayCircle className="h-3.5 w-3.5" /> : <PauseCircle className="h-3.5 w-3.5" />}
+                            {loadingChannel === "whatsapp"
+                              ? uiLang === "en" ? "Updating..." : "Actualizando..."
+                              : btnText(localPaused.whatsapp)}
                           </button>
-                        )}
-                      </div>
+                        </>
+                      ) : (
+                        <p className="mt-1 text-xs opacity-80">
+                          {uiLang === "en"
+                            ? "WhatsApp is not linked (or the session expired)."
+                            : "WhatsApp no está vinculado (o la sesión expiró)."}
+                        </p>
+                      )}
+
+                      {onReconnectWhatsapp && (
+                        <button
+                          type="button"
+                          onClick={onReconnectWhatsapp}
+                          className="mt-2 ml-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ring-1 ring-neutral-400/40 bg-neutral-500/5 hover:bg-neutral-500/10"
+                        >
+                          {uiLang === "en" ? "Relink WhatsApp" : "Re-vincular WhatsApp"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
