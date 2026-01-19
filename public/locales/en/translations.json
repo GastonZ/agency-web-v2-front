@@ -141,6 +141,7 @@
     "url_voice": "Voice URL (optional)",
     "select_file": "Select file",
     "previous": "Previous",
+    "previous_page": "Prev. page",
     "campaign_definition": "Campaign definition",
     "complete_campaign_data": "Complete the base data of your campaign",
     "brief_objectives_summary": "We are a dealership and provide automated guidance on available models, estimated prices, financing options, unit availability, and handling sales and after-sales inquiries.",

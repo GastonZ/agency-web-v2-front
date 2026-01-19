@@ -564,7 +564,7 @@ export function LeadsTablePanel({
               className="h-9 px-3 rounded-xl ring-1 ring-neutral-300/60 dark:ring-neutral-800/70 hover:bg-neutral-50 dark:hover:bg-white/5 disabled:opacity-50"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
-              {t("previous") || "Prev"}
+              {t("previous_page") || "Prev"}
             </button>
 
             <span className="text-sm">
