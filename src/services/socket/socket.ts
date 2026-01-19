@@ -5,26 +5,40 @@ let socket: Socket | null = null;
 type InitOpts = {
   url?: string;
   token?: string;
+  userId?: string; // <- client account id (owner)
 };
 
-export function initSocket({ url = import.meta.env.VITE_API_URL, token }: InitOpts = {}) {
+export function initSocket(
+  { url = import.meta.env.VITE_API_URL, token, userId }: InitOpts = {}
+) {
+  // Si ya está conectado, devolvemos el mismo
   if (socket?.connected) return socket;
 
-  socket = io(url, {
-    // 👇 IMPORTANTE: dejar el valor por defecto de transports
-    // (["polling","websocket"]) o, si querés ser explícito:
-    // transports: ["polling", "websocket"],
+  // Si existe pero estaba desconectado, evitamos duplicados
+  if (socket && !socket.connected) {
+    try {
+      socket.removeAllListeners();
+      socket.disconnect();
+    } catch { }
+    socket = null;
+  }
 
-    // Si querés, podés agregar path explícito, aunque no es obligatorio:
-    // path: "/socket.io",
+  socket = io(url, {
+    path: "/socket.io",
+
+    transports: ["polling"], 
+    upgrade: false,   
 
     autoConnect: true,
     reconnection: true,
     reconnectionAttempts: 10,
     reconnectionDelay: 800,
     timeout: 10_000,
+
     auth: token ? { token } : undefined,
+    query: userId ? { userId } : undefined,
   });
+
 
   return socket;
 }

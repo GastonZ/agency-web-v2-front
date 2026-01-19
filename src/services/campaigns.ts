@@ -51,7 +51,6 @@ function buildStepOnePayload(ctxData: StepOneCtx, opts?: { includeUserId?: boole
 
 export async function createModerationCampaignFromStepOne(ctxData: StepOneCtx) {
   const payload = buildStepOnePayload(ctxData, { includeUserId: true });
-  console.log('my payload', payload);
 
   const res: AxiosResponse<ModerationCampaignCreateResponse> = await api.post(
     "moderation-campaigns",
@@ -63,7 +62,6 @@ export async function createModerationCampaignFromStepOne(ctxData: StepOneCtx) {
 // ---- update (PUT) — same schema as POST
 export async function updateModerationCampaignFromStepOne(campaignId: string, ctxData: StepOneCtx) {
   const payload = buildStepOnePayload(ctxData, { includeUserId: false });
-  console.log('my payload edit', payload);
   const res: AxiosResponse<ModerationCampaignUpdateResponse> = await api.put(
     `moderation-campaigns/${campaignId}`,
     payload

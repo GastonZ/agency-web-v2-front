@@ -25,8 +25,6 @@ function Inner() {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const { data, setCampaignId } = useListening();
-
-  console.log(data);
   
   const canNext = React.useMemo(() => {
     if (step === 0) return !!data.basics.name && !!data.basics.objective; // mínimos

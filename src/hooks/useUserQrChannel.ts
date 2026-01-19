@@ -99,7 +99,7 @@ export function useUserQrChannel({
   // NEW: start on demand
   const startSocket = useCallback(async () => {
     if (!userId) throw new Error("userId requerido para conectar el socket");
-    const socket = initSocket({ url: socketUrl, token }); // creates (or returns) the singleton
+    const socket = initSocket({ url: socketUrl, token, userId }); // creates (or returns) the singleton
     attachListeners(socket);
 
     if (socket.connected) {

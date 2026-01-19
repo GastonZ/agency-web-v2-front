@@ -121,9 +121,11 @@ function Chip({
 export function LeadsTablePanel({
   campaignId,
   onOpenLead,
+  refreshKey,
 }: {
   campaignId: string;
   onOpenLead?: (lead: Lead) => void;
+  refreshKey?: number;
 }) {
   const { t } = useTranslation("translations");
 
@@ -284,7 +286,7 @@ export function LeadsTablePanel({
     return () => {
       cancelled = true;
     };
-  }, [campaignId, applied, page, limit]);
+  }, [campaignId, applied, page, limit, refreshKey]);
 
   const total = pagination?.total;
   const totalPages = pagination?.totalPages || 1;
