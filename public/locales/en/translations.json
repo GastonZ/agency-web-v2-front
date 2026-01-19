@@ -485,5 +485,6 @@
     "campaigns_moderation_desc_3": "Unified inbox for Instagram, Facebook, WhatsApp, and Webchat.",
     "campaigns_moderation_desc_4": "Automatic escalation to humans when needed.",
     "campaigns_moderation_desc_5": "Full history and performance metrics. Includes CRM.",
-    "campaigns_moderation_desc_6": "Ideal for support, sales, and customer service."
+    "campaigns_moderation_desc_6": "Ideal for support, sales, and customer service.",
+    "auth_subaccount": "I have a member account"
 }

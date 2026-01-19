@@ -26,7 +26,7 @@ const Auth: React.FC = () => {
                 className="flex justify-center items-center w-full mt-2 p-2 bg-white/70 dark:bg-neutral-900/50 rounded-md cursor-pointer hover:scale-105 transition-transform border border-black/10 dark:border-white/10"
             >
                 <p className="text-center w-full text-sm text-neutral-800 dark:text-neutral-200">
-                    {t("auth_subaccount", { defaultValue: "Tengo una subcuenta" })}
+                    {t("auth_subaccount", { defaultValue: "Tengo una cuenta de miembro" })}
                 </p>
             </Link>
         </OfflineLayout>
