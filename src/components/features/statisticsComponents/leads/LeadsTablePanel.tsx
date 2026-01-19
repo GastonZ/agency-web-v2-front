@@ -142,11 +142,11 @@ export function LeadsTablePanel({
   const [leads, setLeads] = React.useState<Lead[]>([]);
   const [pagination, setPagination] = React.useState<
     | {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-      }
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    }
     | null
   >(null);
 
@@ -212,9 +212,8 @@ export function LeadsTablePanel({
     if (applied.scoreMin || applied.scoreMax) {
       chips.push({
         key: "score",
-        label: `${t("stats_filter_score")}: ${applied.scoreMin || "—"}–${
-          applied.scoreMax || "—"
-        }`,
+        label: `${t("stats_filter_score")}: ${applied.scoreMin || "—"}–${applied.scoreMax || "—"
+          }`,
       });
     }
     if (applied.sortBy || applied.sortOrder) {
@@ -254,7 +253,24 @@ export function LeadsTablePanel({
         if (cancelled) return;
 
         const apiLeads = Array.isArray(res?.analysisResults) ? res.analysisResults : [];
-        setLeads(apiLeads.map(mapApiLeadToLead));
+
+        const containsLid = (v: unknown): boolean => {
+          if (!v) return false;
+          if (Array.isArray(v)) return v.some(containsLid);
+          if (typeof v === "string") return v.includes("@lid");
+          return false;
+        };
+
+        const isLidLead = (l: any) =>
+          containsLid(l?.conversationId) || containsLid(l?.id) || containsLid(l?.contactNumber);
+        const filteredApiLeads = apiLeads.filter((l: any) => !isLidLead(l));
+        const mapped = filteredApiLeads.map(mapApiLeadToLead);
+        const finalLeads = mapped.filter((lead: { conversationId: any; id: any; }) => {
+          const key = lead.conversationId ?? lead.id;
+          return !String(key).includes("@lid");
+        });
+
+        setLeads(finalLeads);
         setPagination(res?.pagination || null);
       } catch (e: any) {
         if (cancelled) return;
