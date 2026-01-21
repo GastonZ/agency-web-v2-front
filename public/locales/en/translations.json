@@ -417,7 +417,7 @@
             "area_label": "Area",
             "no_areas": "No areas",
             "area_hint": "You can only select existing areas.",
-            "active_label": "Active subaccount",
+            "active_label": "Activate member",
             "username_required": "Username is required.",
             "area_required": "Choose an area.",
             "password_required": "Password is required.",

@@ -74,6 +74,7 @@ function mapApiLeadToLead(l: any): Lead {
     name: normalizedName,
     summary: l?.summary || "",
     score: typeof l?.finalScore === "number" ? l.finalScore : 0,
+    requiresAction: Boolean(l?.requiresAction),
     channel: (l?.channel || "unknown") as any,
     channelLink: undefined,
     status: (l?.status || l?.leadStatus || "new") as any,
@@ -120,12 +121,13 @@ function Chip({
 
 export function LeadsTablePanel({
   campaignId,
+  campaignName,
   onOpenLead,
-  refreshKey,
 }: {
   campaignId: string;
+  /** Used for Inbox routing (agentId = campaign name). */
+  campaignName?: string;
   onOpenLead?: (lead: Lead) => void;
-  refreshKey?: number;
 }) {
   const { t } = useTranslation("translations");
 
@@ -286,7 +288,7 @@ export function LeadsTablePanel({
     return () => {
       cancelled = true;
     };
-  }, [campaignId, applied, page, limit, refreshKey]);
+  }, [campaignId, applied, page, limit]);
 
   const total = pagination?.total;
   const totalPages = pagination?.totalPages || 1;
@@ -540,7 +542,7 @@ export function LeadsTablePanel({
       ) : null}
 
       <div className="relative">
-        <LeadsTable leads={leads} onOpenLead={onOpenLead} campaignId={campaignId} />
+        <LeadsTable leads={leads} onOpenLead={onOpenLead} campaignId={campaignId} inboxAgentId={campaignName?.toLowerCase()} />
 
         {loading ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-neutral-950/40 backdrop-blur-sm">

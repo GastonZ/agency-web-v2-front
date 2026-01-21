@@ -9,11 +9,12 @@ import {
     getModerationHotLeads,
     updateWebchatConfig,
 } from "../../../services/campaigns";
-import { getLastLaunchedModeration, clearLastLaunchedModeration, getToken, getUserId } from "../../../utils/helper";
+import { getLastLaunchedModeration, clearLastLaunchedModeration } from "../../../utils/helper";
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { MessageSquare, ClipboardList, CalendarRange, CheckCircle2, Users, Zap, Star } from "lucide-react";
 import WhatsappQrPanel from "../../../components/features/WhatsappQrPannel";
 import InstagramConnectPanel from "../../../components/features/InstagramConnectButton";
+import { getUserId } from "../../../utils/helper";
 import InstagramConnectButton from "../../../components/features/InstagramConnectButton";
 import AgencyChatbot from "../../../components/features/AgencyChatbot";
 import { useTranslation } from "react-i18next";
@@ -30,7 +31,6 @@ import { ConversionFunnel } from "../../../components/features/statisticsCompone
 import FacebookConnectPanel from "../../../components/features/FacebookConnectPanel";
 import { toast } from "react-toastify";
 import { InstagramMetaReviewSendSection } from "../../../components/features/InstagramMetaReviewSendSection";
-import { initSocket } from "../../../services/socket/socket";
 
 export default function StatisticsView() {
     const { id } = useParams<{ id: string }>();
@@ -44,8 +44,6 @@ export default function StatisticsView() {
     const { i18n } = useTranslation();
     const { t } = useTranslation('translations');
     const uiLang = i18n.language.startsWith("en") ? "en" : "es";
-    const [analysisReloadKey, setAnalysisReloadKey] = React.useState(0);
-    const [leadsTableRefreshKey, setLeadsTableRefreshKey] = React.useState(0);
 
     const [analysisLoading, setAnalysisLoading] = React.useState(false);
 
@@ -54,7 +52,9 @@ export default function StatisticsView() {
             if (!id) return;
             try {
                 setAnalysisLoading(true);
+                console.log(`[ModerationAnalysis] Calling ${label} for campaign`, id);
                 const res = await fn();
+                console.log(`[ModerationAnalysis] Result from ${label}`, res);
             } catch (err) {
                 console.error(`[ModerationAnalysis] Error in ${label}`, err);
             } finally {
@@ -135,6 +135,12 @@ export default function StatisticsView() {
                     getModerationHotLeads(id),
                     getModerationAnalysisSummary(id),
                 ]);
+
+                console.log(metricsRes);
+                console.log(summaryRes);
+
+
+
                 if (cancelled) return;
 
                 if (metricsRes) setAnalysisMetrics(metricsRes);
@@ -195,38 +201,7 @@ export default function StatisticsView() {
         return () => {
             cancelled = true;
         };
-    }, [id, analysisReloadKey]);
-
-    React.useEffect(() => {
-        if (!id) return;
-
-        const clientAccountId =
-            (typeof window !== "undefined" && localStorage.getItem("aiaClientAccountId")) ||
-            userId ||
-            "";
-
-        if (!clientAccountId) return;
-
-        const s = initSocket({
-            url: import.meta.env.VITE_API_URL,
-            token: getToken(),
-            userId: clientAccountId,
-        });
-        const onUpdated = (payload: any) => {
-            if (!payload?.campaignId) return;
-            if (payload.campaignId !== id) return;
-
-            // 1) refetch tabla
-            setLeadsTableRefreshKey((v) => v + 1);
-            // 2) refetch métricas/summary del view
-            setAnalysisReloadKey((v) => v + 1);
-        };
-
-        s.on("moderation-leads-updated", onUpdated);
-        return () => {
-            s.off("moderation-leads-updated", onUpdated);
-        };
-    }, [id, userId]);
+    }, [id]);
 
     const [whatsappLinkedInfo, setWhatsappLinkedInfo] = React.useState<{
         phoneNumber?: string;
@@ -243,6 +218,9 @@ export default function StatisticsView() {
                 const data = await getModerationCampaignById(id!);
 
                 const socialAccs = await getModerationAccounts(id!)
+
+                console.log(socialAccs);
+
 
                 if (!mounted) return;
                 setCampaign(data);
@@ -585,8 +563,8 @@ export default function StatisticsView() {
                 <section className="mt-2">
                     <LeadsTablePanel
                         campaignId={campaign?.id || id!}
+                        campaignName={campaign?.name || undefined}
                         onOpenLead={handleOpenLead}
-                        refreshKey={leadsTableRefreshKey}
                     />
                 </section>
 

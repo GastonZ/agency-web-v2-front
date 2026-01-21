@@ -12,7 +12,10 @@ import {
     X,
     ClipboardList,
     Plus,
+    Inbox,
+    AlertTriangle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { Lead, LeadStatus } from "../../../../services/types/moderation-types";
 import {
     updateModerationCampaignLeadStatus,
@@ -119,6 +122,8 @@ function ContactCell({ lead }: { lead: Lead }) {
     const profilePic = (lead as any).profilePic as string | null | undefined;
     const username = (lead as any).username as string | null | undefined;
     const contactNumber = (lead as any).contactNumber as string | null | undefined;
+    const requiresAction = isRequiresAction(lead);
+    const wspName = (lead as any).name as string | null | undefined;
 
     if (channel === "instagram") {
         const primary = username ? `@${username}` : (lead as any).name || "Instagram";
@@ -138,7 +143,18 @@ function ContactCell({ lead }: { lead: Lead }) {
                 )}
 
                 <div className="leading-tight">
-                    <div className="font-medium">{primary}</div>
+                    <div className="flex items-center gap-2">
+                        <div className="font-medium">{primary}</div>
+                        {requiresAction ? (
+                            <span
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
+                                title="Requiere acción humana"
+                            >
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                <span className="hidden md:inline">Acción</span>
+                            </span>
+                        ) : null}
+                    </div>
                     {secondary ? <div className="text-xs opacity-70">{secondary}</div> : null}
                 </div>
             </div>
@@ -147,13 +163,24 @@ function ContactCell({ lead }: { lead: Lead }) {
 
     if (channel === "whatsapp") {
         const number = prettifyWhatsNumber(contactNumber);
-        const primary = "Whatsapp user";
+        const primary = wspName !== 'WhatsApp Bot' ? wspName : 'Whatsapp';
 
         return (
             <div className="flex items-center gap-3 min-w-[220px]">
                 <ChannelBadge channel="whatsapp" />
                 <div className="leading-tight">
-                    <div className="font-medium">{primary}</div>
+                    <div className="flex items-center gap-2">
+                        <div className="font-medium">{primary}</div>
+                        {requiresAction ? (
+                            <span
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
+                                title="Requiere acción humana"
+                            >
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                <span className="hidden md:inline">Acción</span>
+                            </span>
+                        ) : null}
+                    </div>
                     {number ? <div className="text-xs opacity-70 font-mono">{number}</div> : null}
                 </div>
             </div>
@@ -167,7 +194,18 @@ function ContactCell({ lead }: { lead: Lead }) {
             <div className="flex items-center gap-3 min-w-[220px]">
                 <ChannelBadge channel="facebook" />
                 <div className="leading-tight">
-                    <div className="font-medium">{primary}</div>
+                    <div className="flex items-center gap-2">
+                        <div className="font-medium">{primary}</div>
+                        {requiresAction ? (
+                            <span
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
+                                title="Requiere acción humana"
+                            >
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                <span className="hidden md:inline">Acción</span>
+                            </span>
+                        ) : null}
+                    </div>
                 </div>
             </div>
         );
@@ -189,6 +227,37 @@ function getLeadStatus(lead: Lead): { status?: LeadStatus; customStatusLabel?: s
 
 function getLeadArea(lead: Lead): string | undefined {
     return (lead as any).area as string | undefined;
+}
+
+function isRequiresAction(lead: Lead): boolean {
+    return Boolean((lead as any).requiresAction);
+}
+
+/**
+ * Derives Inbox contactId for WhatsApp leads.
+ * Backend expects WhatsApp JID format: "<digits>@s.whatsapp.net".
+ */
+function getInboxContactIdFromLead(lead: Lead): string | null {
+    const channel = String((lead as any).channel || "").toLowerCase();
+    if (channel !== "whatsapp") return null;
+
+    const raw =
+        ((lead as any).contactId as string | undefined) ||
+        ((lead as any).contactNumber as string | undefined) ||
+        ((lead as any).phone as string | undefined) ||
+        null;
+
+    if (!raw) return null;
+    const s = String(raw).trim();
+    if (!s) return null;
+
+    // Already a jid
+    if (s.includes("@")) return s;
+
+    // If it's just digits / +digits, coerce to jid
+    const digits = s.replace(/[^\d+]/g, "").replace(/^\+/, "");
+    if (!digits) return null;
+    return `${digits}@s.whatsapp.net`;
 }
 
 function StatusPill({
@@ -827,12 +896,16 @@ function LeadSummaryModal({
     lead,
     open,
     onClose,
+    inboxAgentId,
 }: {
     lead: Lead | null;
     open: boolean;
     onClose: () => void;
+    /** Inbox routing: agentId = campaign name */
+    inboxAgentId?: string;
 }) {
     const { t } = useTranslation("translations");
+    const navigate = useNavigate();
 
     React.useEffect(() => {
         if (!open) return;
@@ -855,6 +928,9 @@ function LeadSummaryModal({
 
     const summary = String((lead as any).summary || "").trim();
     const convLink = getConversationLink(lead);
+    const inboxContactId = inboxAgentId ? getInboxContactIdFromLead(lead) : null;
+    const canOpenInbox = Boolean(inboxAgentId && inboxContactId);
+    const requiresAction = isRequiresAction(lead);
     const { status, customStatusLabel } = getLeadStatus(lead);
 
     const statusLabel =
@@ -911,7 +987,33 @@ function LeadSummaryModal({
                                 <span className="font-medium">{statusLabel}</span>
                             </span>
 
-                            {convLink ? (
+                            {requiresAction ? (
+                                <span
+                                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
+                                    title="Requiere acción humana"
+                                >
+                                    <AlertTriangle className="h-4 w-4" />
+                                    <span className="font-medium">Acción</span>
+                                </span>
+                            ) : null}
+
+                            {inboxAgentId && inboxContactId ? (
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px] hover:bg-emerald-500/10"
+                                    title="Abrir en Inbox"
+                                    onClick={() => {
+                                        navigate(
+                                            `/inbox/${encodeURIComponent(inboxAgentId)}?contactId=${encodeURIComponent(
+                                                inboxContactId,
+                                            )}`,
+                                        );
+                                    }}
+                                >
+                                    <Inbox className="h-4 w-4" />
+                                    <span>Inbox</span>
+                                </button>
+                            ) : convLink ? (
                                 <a
                                     href={convLink}
                                     target="_blank"
@@ -1159,6 +1261,8 @@ interface LeadsTableProps {
     /** Callback opcional (por si querés trackear o hacer algo al abrir el modal) */
     onOpenLead?: (lead: Lead) => void;
     campaignId?: string;
+    /** Inbox routing: agentId = campaign name */
+    inboxAgentId?: string;
     onUpdateLeadStatus?: (args: {
         campaignId: string;
         conversationId: string;
@@ -1182,11 +1286,13 @@ export function LeadsTable({
     leads,
     onOpenLead,
     campaignId,
+    inboxAgentId,
     onUpdateLeadStatus,
     onUpdateLeadArea,
     onAppendLeadNextAction,
 }: LeadsTableProps) {
     const { t } = useTranslation("translations");
+    const navigate = useNavigate();
 
     console.log('my leads', leads);
 
@@ -1350,7 +1456,9 @@ export function LeadsTable({
                     <tbody>
                         {mergedLeads.map((l) => {
                             const convLink = getConversationLink(l);
+                            const inboxContactId = inboxAgentId ? getInboxContactIdFromLead(l) : null;
                             const convId = getLeadConversationId(l);
+                            const requiresActionRow = isRequiresAction(l);
                             const nextActions = Array.isArray((l as any).nextAction)
                                 ? ((l as any).nextAction as any[])
                                 : [];
@@ -1365,7 +1473,10 @@ export function LeadsTable({
                             return (
                                 <tr
                                     key={(l as any).id}
-                                    className="group border-b border-emerald-400/10 hover:bg-emerald-500/5 cursor-pointer"
+                                    className={
+                                        "group border-b border-emerald-400/10 hover:bg-emerald-500/5 cursor-pointer " +
+                                        (requiresActionRow ? "bg-amber-500/5 dark:bg-amber-500/10" : "")
+                                    }
                                     onClick={(e) => {
                                         const target = e.target as HTMLElement;
                                         if (target?.closest?.("[data-stop-row]")) return;
@@ -1470,7 +1581,25 @@ export function LeadsTable({
                                     </td>
 
                                     <td className="px-4 py-2" data-stop-row>
-                                        {convLink ? (
+                                        {inboxAgentId && inboxContactId ? (
+                                            <button
+                                                type="button"
+                                                className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
+                                                title="Abrir en Inbox"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(
+                                                        `/inbox/${encodeURIComponent(inboxAgentId)}?contactId=${encodeURIComponent(
+                                                            inboxContactId,
+                                                        )}`,
+                                                    );
+                                                }}
+                                            >
+                                                <Inbox className="h-4 w-4 opacity-80" />
+                                                <span className="hidden sm:inline">Inbox</span>
+                                            </button>
+                                        ) : convLink ? (
                                             <a
                                                 href={convLink}
                                                 target="_blank"
@@ -1494,7 +1623,7 @@ export function LeadsTable({
                 </table>
             </div>
 
-            <LeadSummaryModal lead={selectedLead} open={summaryOpen} onClose={closeSummary} />
+            <LeadSummaryModal lead={selectedLead} open={summaryOpen} onClose={closeSummary} inboxAgentId={inboxAgentId} />
             <LeadNextActionModal
                 lead={nextActionLead}
                 open={nextActionOpen}

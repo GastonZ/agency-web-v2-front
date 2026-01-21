@@ -128,6 +128,7 @@ export type Lead = {
   score: number;
   channel?: "whatsapp" | "instagram" | "facebook" | "email" | "x" | "unknown";
   channelLink?: string;
+  requiresAction?: boolean;
   /** Raw conversationId from backend (preferred for updates) */
   conversationId?: string;
   /** Campaign id (sometimes returned by backend) */

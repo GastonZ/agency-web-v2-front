@@ -4,7 +4,8 @@ import {
   Settings,
   Folder,
   X,
-  Factory
+  Factory,
+  MessageSquare
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "../features/ThemeToggle";
@@ -137,5 +138,6 @@ export const defaultNavItems: NavItem[] = [
   { id: "home", label: "Dashboard", href: "/", icon: Home },
   { id: "campaign", label: "Campaign", href: "/campaign_selection", icon: Folder },
   { id: "myCampaigns", label: "My Campaigns", href: "/my_campaigns", icon: Factory },
+  { id: "inbox", label: "Inbox", href: "/inbox", icon: MessageSquare },
   { id: "settings", label: "Settings", href: "/settings", icon: Settings },
 ];

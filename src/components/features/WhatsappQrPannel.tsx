@@ -146,6 +146,14 @@ const WhatsappQrPanel: React.FC<Props> = ({
             setInfo("Activando el bot de WhatsApp y generando QR…");
 
             const resp = await activateWhatsappBot(campaignId);
+            // Store agentId so Inbox can be opened later without guessing.
+            try {
+                if ((resp as any)?.agentId) {
+                    localStorage.setItem("wa:agentId:campaign:" + campaignId, String((resp as any).agentId));
+                    localStorage.setItem("wa:agentId:last", String((resp as any).agentId));
+                }
+            } catch {}
+
             if (!resp?.success) {
                 setActionError(resp?.message || "No se pudo activar el bot de WhatsApp.");
                 return;

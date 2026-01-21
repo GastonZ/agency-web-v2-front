@@ -23,6 +23,7 @@ import Settings from '../pages/Settings';
 import InstagramCallback from '../pages/InstagramCallback';
 import FacebookCallback from '../pages/FacebookCallback';
 import SubAuth from '../pages/SubAuth';
+import Inbox from '../pages/Inbox';
 
 const AppRouter: React.FC = () => (
     <Router>
@@ -51,6 +52,9 @@ const AppRouter: React.FC = () => (
             <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/campaign_selection" element={<CampaignCreation />} />
+
+                <Route path="/inbox" element={<Inbox />} />
+                <Route path="/inbox/:agentId" element={<Inbox />} />
 
                 <Route
                     path="/campaign_moderation_creation/*"
