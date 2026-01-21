@@ -15,7 +15,7 @@ function isPathAllowedForSubAccount(pathname: string): boolean {
     if (pathname.startsWith("/my_moderation_campaign/")) return true;
     if (pathname.startsWith("/my_marketing_campaign/")) return true;
 
-    // Allow Inbox (new)
+    // Allow Inbox
     if (pathname === "/inbox" || pathname.startsWith("/inbox/")) return true;
 
     return false;

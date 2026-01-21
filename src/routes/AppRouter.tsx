@@ -52,10 +52,6 @@ const AppRouter: React.FC = () => (
             <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/campaign_selection" element={<CampaignCreation />} />
-
-                <Route path="/inbox" element={<Inbox />} />
-                <Route path="/inbox/:agentId" element={<Inbox />} />
-
                 <Route
                     path="/campaign_moderation_creation/*"
                     element={
@@ -91,6 +87,9 @@ const AppRouter: React.FC = () => (
                 <Route path="my_campaigns" element={<CampaignsTable />} />
                 <Route path="my_marketing_campaign/:id/statistics" element={<MarketingStatisticsView />} />
                 <Route path="my_moderation_campaign/:id/statistics" element={<StatisticsView />} />
+
+                <Route path="/inbox" element={<Inbox />} />
+                <Route path="/inbox/:agentId" element={<Inbox />} />
 
                 <Route path="/settings" element={<Settings />} />
             </Route>

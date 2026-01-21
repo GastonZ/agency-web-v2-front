@@ -21,7 +21,9 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
   const navItems = React.useMemo(() => {
     if (!isSub) return defaultNavItems;
     // Sub accounts: only Dashboard + My Campaigns
-    return defaultNavItems.filter((it) => it.id === "home" || it.id === "myCampaigns");
+    return defaultNavItems.filter(
+      (it) => it.id === "home" || it.id === "myCampaigns" || it.id === "inbox",
+    );
   }, [isSub]);
 
   return (
@@ -78,9 +80,8 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
         </header>
 
         <main
-          className={`flex-1 px-4 pb-8 pt-4 lg:pt-6 ${
-            SIDE_WIDTH ? "lg:pl-64" : "lg:pl-[72px]"
-          }`}
+          className={`flex-1 px-4 pb-8 pt-4 lg:pt-6 ${SIDE_WIDTH ? "lg:pl-64" : "lg:pl-[72px]"
+            }`}
         >
           {children}
         </main>
