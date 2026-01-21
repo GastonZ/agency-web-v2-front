@@ -846,7 +846,7 @@ export default function Inbox() {
               >
                 <option value="">Seleccionar campaña…</option>
                 {campaigns.map((c) => (
-                  <option key={c.id} value={c.name}>
+                  <option key={c.id} value={c.name.toLowerCase()}>
                     {c.name}
                   </option>
                 ))}
