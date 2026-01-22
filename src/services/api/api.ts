@@ -11,7 +11,9 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const token = getToken();
-        if (token && config.headers) {
+        if (token) {
+            // Ensure headers object exists (defensive across axios versions/config merges)
+            config.headers = (config.headers || {}) as any;
             (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
         }
         return config;

@@ -277,7 +277,7 @@ function StatusPill({
                 "inline-flex items-center gap-1.5 rounded-lg ring-1 px-2.5 py-1.5 text-[12px] transition " +
                 (muted
                     ? "opacity-60 ring-neutral-300/60 dark:ring-neutral-700/60 cursor-not-allowed"
-                    : "ring-emerald-400/20 hover:bg-emerald-500/10")
+                    : "ring-emerald-400/20 hover:bg-emerald-500/10 dark:hover:bg-white/5")
             }
         >
             {label}
@@ -303,7 +303,7 @@ function AreaPill({
                 "inline-flex items-center gap-1.5 rounded-lg ring-1 px-2.5 py-1.5 text-[12px] transition " +
                 (muted
                     ? "opacity-60 ring-neutral-300/60 dark:ring-neutral-700/60 cursor-not-allowed"
-                    : "ring-emerald-400/20 hover:bg-emerald-500/10")
+                    : "ring-emerald-400/20 hover:bg-emerald-500/10 dark:hover:bg-white/5")
             }
         >
             <span className="max-w-[150px] truncate">{label}</span>
@@ -488,7 +488,7 @@ function AreaCell({
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    <div className="rounded-xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 shadow-xl overflow-hidden">
+                                    <div className="rounded-xl bg-white/95 dark:bg-neutral-900/95 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 shadow-xl overflow-hidden">
                                         <div className="px-3 py-2 text-[11px] uppercase tracking-wide opacity-70 border-b border-neutral-200/60 dark:border-neutral-800/60">
                                             {t("stats_area")}
                                         </div>
@@ -510,7 +510,7 @@ function AreaCell({
                                                         type="button"
                                                         disabled={!effectiveCampaignId || !convId || !!loading}
                                                         className={
-                                                            "w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-emerald-500/10 disabled:opacity-50 disabled:hover:bg-transparent " +
+                                                            "w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-emerald-500/10 dark:hover:bg-white/5 disabled:opacity-50 disabled:hover:bg-transparent " +
                                                             (active
                                                                 ? "ring-1 ring-emerald-400/20"
                                                                 : "ring-1 ring-transparent")
@@ -723,7 +723,7 @@ function StatusCell({
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    <div className="rounded-xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 shadow-xl overflow-hidden">
+                                    <div className="rounded-xl bg-white/95 dark:bg-neutral-900/95 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 shadow-xl overflow-hidden">
                                         <div className="px-3 py-2 text-[11px] uppercase tracking-wide opacity-70 border-b border-neutral-200/60 dark:border-neutral-800/60">
                                             {t("stats_status")}
                                         </div>
@@ -737,7 +737,7 @@ function StatusCell({
                                                         type="button"
                                                         disabled={!effectiveCampaignId || !convId || !!loading}
                                                         className={
-                                                            "w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-emerald-500/10 disabled:opacity-50 disabled:hover:bg-transparent " +
+                                                            "w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-emerald-500/10 dark:hover:bg-white/5 disabled:opacity-50 disabled:hover:bg-transparent " +
                                                             (active
                                                                 ? "ring-1 ring-emerald-400/20"
                                                                 : "ring-1 ring-transparent")
@@ -761,7 +761,7 @@ function StatusCell({
                                                 type="button"
                                                 disabled={!effectiveCampaignId || !convId || !!loading}
                                                 className={
-                                                    "w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-emerald-500/10 disabled:opacity-50 disabled:hover:bg-transparent ring-1 " +
+                                                    "w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-emerald-500/10 dark:hover:bg-white/5 disabled:opacity-50 disabled:hover:bg-transparent ring-1 " +
                                                     (status === "custom"
                                                         ? "ring-emerald-400/20"
                                                         : "ring-transparent")
@@ -807,7 +807,7 @@ function StatusCell({
                         }}
                     >
                         <div
-                            className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-950 ring-1 ring-emerald-400/30 shadow-xl p-5"
+                            className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-xl p-5"
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -957,11 +957,11 @@ function LeadSummaryModal({
             role="dialog"
         >
             <div
-                className="w-full max-w-3xl rounded-2xl bg-white dark:bg-neutral-950 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+                className="w-full max-w-3xl rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 flex items-start justify-between gap-4">
+                <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-950/35 flex items-start justify-between gap-4">
                     <div className="min-w-0">
                         <div className="flex items-center gap-3">
                             <div className="min-w-0">
@@ -1000,7 +1000,7 @@ function LeadSummaryModal({
                             {inboxAgentId && inboxContactId ? (
                                 <button
                                     type="button"
-                                    className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px] hover:bg-emerald-500/10"
+                                    className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px] hover:bg-emerald-500/10 dark:hover:bg-white/5"
                                     title="Abrir en Inbox"
                                     onClick={() => {
                                         navigate(
@@ -1018,7 +1018,7 @@ function LeadSummaryModal({
                                     href={convLink}
                                     target="_blank"
                                     rel="noreferrer noopener"
-                                    className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px] hover:bg-emerald-500/10"
+                                    className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px] hover:bg-emerald-500/10 dark:hover:bg-white/5"
                                     title="Abrir conversación"
                                 >
                                     <ChannelIcon channel={(lead as any).channel} />
@@ -1151,11 +1151,11 @@ function LeadNextActionModal({
             role="dialog"
         >
             <div
-                className="w-full max-w-2xl rounded-2xl bg-white dark:bg-neutral-950 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+                className="w-full max-w-2xl rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 flex items-start justify-between gap-4">
+                <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-950/35 flex items-start justify-between gap-4">
                     <div className="min-w-0">
                         <div className="flex items-center gap-2">
                             <div className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-emerald-500/10 ring-1 ring-emerald-400/20">
@@ -1434,22 +1434,22 @@ export function LeadsTable({
     );
 
     return (
-        <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-emerald-400/10">
+        <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-neutral-200/60 dark:border-neutral-800/70 bg-white/40 dark:bg-neutral-950/20">
                 <h3 className="text-sm font-semibold">Leads</h3>
             </div>
 
             <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
-                    <thead className="text-left">
-                        <tr className="border-b border-emerald-400/10">
-                            <th className="px-4 py-2">{t("stats_name")}</th>
-                            <th className="px-4 py-2">{t("stats_summary")}</th>
-                            <th className="px-4 py-2">{t("stats_score")}</th>
-                            <th className="px-4 py-2">{t("stats_status")}</th>
-                            <th className="px-4 py-2">{t("stats_area")}</th>
-                            <th className="px-4 py-2">{t("stats_next_action")}</th>
-                            <th className="px-4 py-2">{t("stats_conversation")}</th>
+                    <thead className="text-left bg-neutral-50/70 dark:bg-neutral-950/30 text-neutral-600 dark:text-neutral-300">
+                        <tr className="border-b border-neutral-200/60 dark:border-neutral-800/70">
+                            <th className="px-4 py-2 font-semibold">{t("stats_name")}</th>
+                            <th className="px-4 py-2 font-semibold">{t("stats_summary")}</th>
+                            <th className="px-4 py-2 font-semibold">{t("stats_score")}</th>
+                            <th className="px-4 py-2 font-semibold">{t("stats_status")}</th>
+                            <th className="px-4 py-2 font-semibold">{t("stats_area")}</th>
+                            <th className="px-4 py-2 font-semibold">{t("stats_next_action")}</th>
+                            <th className="px-4 py-2 font-semibold">{t("stats_conversation")}</th>
                         </tr>
                     </thead>
 
@@ -1474,7 +1474,7 @@ export function LeadsTable({
                                 <tr
                                     key={(l as any).id}
                                     className={
-                                        "group border-b border-emerald-400/10 hover:bg-emerald-500/5 cursor-pointer " +
+                                        "group border-b border-neutral-200/50 dark:border-neutral-800/70 hover:bg-emerald-500/5 dark:hover:bg-white/5 cursor-pointer " +
                                         (requiresActionRow ? "bg-amber-500/5 dark:bg-amber-500/10" : "")
                                     }
                                     onClick={(e) => {
@@ -1491,13 +1491,13 @@ export function LeadsTable({
 
                                     <td className="px-4 py-2 max-w-[420px]">
                                         <div className="relative pr-10">
-                                            <p className="line-clamp-2 opacity-80">{(l as any).summary}</p>
+                                            <p className="line-clamp-2 text-neutral-700 dark:text-neutral-200/80">{(l as any).summary}</p>
 
                                             {/* Botón ojo: abre modal sin afectar otras acciones */}
                                             <button
                                                 type="button"
                                                 data-stop-row
-                                                className="absolute right-0 top-0 inline-flex items-center justify-center h-8 w-8 rounded-lg ring-1 ring-emerald-400/20 hover:bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition"
+                                                className="absolute right-0 top-0 inline-flex items-center justify-center h-8 w-8 rounded-lg ring-1 ring-emerald-400/20 dark:ring-emerald-400/30 hover:bg-emerald-500/10 dark:hover:bg-white/5 opacity-0 group-hover:opacity-100 transition"
                                                 onMouseDown={(e) => e.stopPropagation()}
                                                 onClick={(e) => {
                                                     e.stopPropagation();

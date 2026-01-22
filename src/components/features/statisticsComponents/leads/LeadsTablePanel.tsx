@@ -295,7 +295,7 @@ export function LeadsTablePanel({
 
   return (
     <div>
-      <div className="mb-3 rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl px-4 py-3">
+      <div className="mb-3 rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl px-4 py-3">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -311,8 +311,7 @@ export function LeadsTablePanel({
               <button
                 type="button"
                 onClick={() => setFiltersOpen((v) => !v)}
-                className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 ring-emerald-400/20 hover:bg-emerald-500/10"
-              >
+                className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 ring-emerald-400/20 dark:ring-emerald-400/30 hover:bg-emerald-500/10 dark:hover:bg-white/5"              >
                 <SlidersHorizontal className="h-4 w-4" />
                 {t("stats_filters")}
               </button>
@@ -337,8 +336,7 @@ export function LeadsTablePanel({
               {activeChips.map((c) => (
                 <span
                   key={c.key}
-                  className="inline-flex items-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/20 px-3 py-1 text-[12px]"
-                >
+                  className="inline-flex items-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/20 px-3 py-1 text-[12px] text-emerald-700 dark:text-emerald-200"                >
                   {c.label}
                 </span>
               ))}

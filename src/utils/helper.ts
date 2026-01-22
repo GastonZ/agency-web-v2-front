@@ -24,6 +24,14 @@ export type SessionMeta = {
 export function saveSession(meta: SessionMeta) {
   saveToken(meta.token);
   localStorage.setItem(AUTH_KIND_KEY, meta.kind);
+
+  // Prevent stale keys when switching between main user and sub-account sessions
+  // (this can incorrectly lock a main user as a sub-account in the UI).
+  if (meta.kind === "user") {
+    localStorage.removeItem(SUBACCOUNT_ID_KEY);
+    localStorage.removeItem(AREA_NAME_KEY);
+  }
+
   if (meta.userId) localStorage.setItem(USER_ID_KEY, meta.userId);
   if (meta.email) localStorage.setItem(EMAIL_KEY, meta.email);
   if (meta.subAccountId) localStorage.setItem(SUBACCOUNT_ID_KEY, meta.subAccountId);

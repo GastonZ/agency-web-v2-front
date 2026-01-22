@@ -1,4 +1,5 @@
 import api from "./api/api";
+import { getAreaName, isSubAccountSession } from "../utils/helper";
 
 export type UserArea = {
   _id: string;
@@ -49,10 +50,29 @@ function writeAreasCache(areas: UserArea[]) {
   } catch {}
 }
 
+function buildFallbackAreasFromSession(): UserArea[] {
+  const areaName = (getAreaName() || "").trim();
+  if (!areaName) return [];
+  return [
+    {
+      _id: `sub:${encodeURIComponent(areaName)}`,
+      name: areaName,
+      description: "",
+    },
+  ];
+}
+
 // Areas
 
 export async function getMyAreas(): Promise<UserArea[]> {
   try {
+    // UX optimization: if a sub-account is blocked by the backend (403), prefer cache/fallback
+    // so the UI can still show an area selector and avoid a hard failure.
+    if (isSubAccountSession()) {
+      const cached = readAreasCache();
+      if (cached && cached.length) return cached;
+    }
+
     const { data } = await api.get<UserArea[]>("users/me/areas");
     const areas = Array.isArray(data) ? data : [];
     // Cache for UX (also helps subaccounts if the API is temporarily unavailable).
@@ -62,6 +82,18 @@ export async function getMyAreas(): Promise<UserArea[]> {
     // Fallback to cache (frontend-only UX improvement)
     const cached = readAreasCache();
     if (cached && cached.length) return cached;
+
+    // Common real-world case:
+    // - sub accounts are sometimes forbidden by the backend on this endpoint (403)
+    // - new browsers/PCs won't have the cache yet
+    // In that scenario we return the sub-account's own assigned area (from localStorage)
+    // instead of breaking the UI.
+    if (error?.status === 403 && isSubAccountSession()) {
+      const fallback = buildFallbackAreasFromSession();
+      writeAreasCache(fallback);
+      return fallback;
+    }
+
     throw new Error(pickErrorMessage(error, "No se pudieron cargar las áreas."));
   }
 }

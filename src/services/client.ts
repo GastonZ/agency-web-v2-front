@@ -80,7 +80,8 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
 }
 
 export async function googleLogin(idToken: string): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/auth/google-login", { idToken });
+  // Keep endpoints relative so baseURL (usually includes /api) is respected.
+  const { data } = await api.post<LoginResponse>("auth/google-login", { idToken });
   return data;
 }
 
@@ -129,12 +130,14 @@ export async function validateToken(tokenArg?: string): Promise<boolean> {
   if (!token) return false;
 
   try {
-    await api.post<void>("/auth/validate-token", { token });
+    // Keep endpoints relative so baseURL (usually includes /api) is respected.
+    await api.post<void>("auth/validate-token", { token });
     return true;
   } catch (error: any) {
-    if (error?.response) {
-      const status: number = error.response.status;
-      const message: string = error.response.data?.message;
+    // api/api.ts rejects with `error.response` (AxiosResponse), not AxiosError.
+    if (error?.status) {
+      const status: number = error.status;
+      const message: string = error.data?.message;
 
       if (status === 401 && message === "Invalid or expired token") {
         return false;
