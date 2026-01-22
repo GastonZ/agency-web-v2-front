@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Mic, Paperclip, Send, ShieldAlert, Square, X, Video } from "lucide-react";
+import { ArrowLeft, Mic, Paperclip, Send, ShieldAlert, Square, X, Video } from "lucide-react";
 import OnlineLayout from "../layout/OnlineLayout";
 import { initSocket, getSocket } from "../services/socket/socket";
 import { getToken, getUserId } from "../utils/helper";
@@ -157,6 +157,18 @@ export default function Inbox() {
   const [campaigns, setCampaigns] = React.useState<ModerationCampaignItem[]>([]);
   const [agentId, setAgentId] = React.useState<string>(routeAgentId || "");
 
+  const selectedCampaign = React.useMemo(() => {
+    const norm = (v: string) => (v || "").trim().toLowerCase();
+    const a = norm(agentId);
+    if (!a) return null;
+    return (
+      campaigns.find((c) => norm(c.id) === a) ||
+      campaigns.find((c) => norm(c.name) === a) ||
+      campaigns.find((c) => norm(c.assistantName || "") === a) ||
+      null
+    );
+  }, [agentId, campaigns]);
+
   const queryContactId = React.useMemo(() => {
     const raw = new URLSearchParams(location.search).get("contactId") || "";
     if (!raw) return "";
@@ -182,6 +194,7 @@ export default function Inbox() {
 
   const [draft, setDraft] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   const [pending, setPending] = React.useState<PendingAttachment | null>(null);
 
@@ -195,6 +208,21 @@ export default function Inbox() {
   const recorderStreamRef = React.useRef<MediaStream | null>(null);
   const recorderChunksRef = React.useRef<BlobPart[]>([]);
   const [isRecording, setIsRecording] = React.useState(false);
+
+  const resizeTextarea = React.useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    // Reset and fit content.
+    el.style.height = "auto";
+    const max = 180; // px
+    const next = Math.min(el.scrollHeight, max);
+    el.style.height = `${next}px`;
+    el.style.overflowY = el.scrollHeight > max ? "auto" : "hidden";
+  }, []);
+
+  React.useEffect(() => {
+    resizeTextarea();
+  }, [draft, resizeTextarea]);
 
   // Ensure we stop recording/streams on unmount.
   React.useEffect(() => {
@@ -853,6 +881,19 @@ export default function Inbox() {
               </select>
 
               <button
+                onClick={() => {
+                  if (!selectedCampaign?.id) return;
+                  navigate(`/my_moderation_campaign/${selectedCampaign.id}/statistics`);
+                }}
+                disabled={!selectedCampaign?.id}
+                className="px-3 py-2 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-60 inline-flex items-center gap-2"
+                title={selectedCampaign?.id ? "Volver a estadísticas" : "Seleccioná una campaña"}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver a estadísticas
+              </button>
+
+              <button
                 onClick={refreshThreads}
                 disabled={!agentId || threadsLoading}
                 className="px-3 py-2 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
@@ -957,9 +998,18 @@ export default function Inbox() {
                 {activeThread && (
                   <button
                     onClick={onToggleTakeover}
-                    className="px-3 py-1.5 rounded-lg text-xs bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700"
+                    disabled={isReadOnlyLock}
+                    className={[
+                      "px-4 py-2 rounded-xl text-sm font-semibold inline-flex items-center gap-2 shadow-sm ring-1 transition",
+                      isReadOnlyLock ? "opacity-60 cursor-not-allowed" : "hover:shadow",
+                      activeThread.metadata?.takeoverMode === "HUMAN"
+                        ? "bg-emerald-600 text-white ring-emerald-400/40 hover:bg-emerald-500"
+                        : "bg-amber-600 text-white ring-amber-400/40 hover:bg-amber-500 animate-pulse",
+                    ].join(" ")}
+                    title={isReadOnlyLock ? "Bloqueado por otro usuario" : "Cambiar modo (BOT / HUMANO)"}
                   >
-                    {activeThread.metadata?.takeoverMode === "HUMAN" ? "Devolver a BOT" : "Tomar control (Modo humano)"}
+                    <ShieldAlert className="h-4 w-4" />
+                    {activeThread.metadata?.takeoverMode === "HUMAN" ? "Modo humano (activo)" : "Tomar control (modo humano)"}
                   </button>
                 )}
               </div>
@@ -1016,6 +1066,22 @@ export default function Inbox() {
 
             {/* Composer */}
             <div className="p-3 border-t border-neutral-200/40 dark:border-neutral-800/60">
+              {activeThread?.metadata?.takeoverMode === "BOT" && (
+                <div className="mb-2 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-200">
+                    <ShieldAlert className="h-4 w-4" />
+                    Para responder, activá el <span className="font-semibold">modo humano</span>.
+                  </div>
+                  <button
+                    onClick={onToggleTakeover}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white hover:bg-amber-500"
+                    title="Activar modo humano"
+                  >
+                    Tomar control
+                  </button>
+                </div>
+              )}
+
               {isReadOnlyLock && (
                 <div className="mb-2 flex items-center gap-2 text-xs text-red-600 dark:text-red-300">
                   <ShieldAlert className="h-4 w-4" />
@@ -1068,7 +1134,7 @@ export default function Inbox() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-end gap-2">
                 <button
                   onClick={onPickFile}
                   disabled={!activeThread || !canSend}
@@ -1103,7 +1169,8 @@ export default function Inbox() {
                 >
                   <Video className="h-5 w-5" />
                 </button>
-                <input
+                <textarea
+                  ref={textareaRef}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
@@ -1112,15 +1179,16 @@ export default function Inbox() {
                       onSend();
                     }
                   }}
+                  rows={1}
                   disabled={!activeThread || !canSend}
                   placeholder={
                     !activeThread
                       ? "Seleccioná una conversación…"
                       : !canSend
-                        ? "Necesitás activar el modo humano arriba a la derecha y tu cuenta debe ser propietaria del chat."
-                        : "Escribí un mensaje…"
+                        ? "Activá modo humano para responder (Shift+Enter para salto de línea)."
+                        : "Escribí un mensaje… (Shift+Enter para salto de línea)"
                   }
-                  className="flex-1 rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60"
+                  className="flex-1 rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none"
                 />
                 <button
                   onClick={onSend}
