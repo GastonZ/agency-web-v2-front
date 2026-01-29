@@ -529,6 +529,8 @@ const Moderation: React.FC = () => {
                 tone: data.tone,
                 customTone: (data as any).customTone,
             });
+            console.log('the payload',payload);
+            
             setSaving(true);
             try {
                 await updateAssistantSettings(data.campaignId!, payload);

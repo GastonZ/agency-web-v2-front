@@ -122,6 +122,8 @@ export function mapAssistantSettingsFromContext(data: {
       (data.allowedTopics || []).length ? data.allowedTopics.join(", ") : undefined,
     humanEscalation: (data.escalationItems || []).length ? data.escalationItems : undefined,
     escalationContactNumber: data.escalationPhone || undefined,
+    communicationTone: data.customTone ? '' : data.tone,
+    communicationToneOther: data.customTone,
     calendars: (data.calendars?.length ?? 0) > 0 ? data.calendars : undefined
   });
 }
