@@ -62,6 +62,68 @@ function isValidContactId(v: any): v is string {
   return true;
 }
 
+function normalizeContactId(raw: any): string {
+  const s = String(raw ?? "").trim().toLowerCase();
+  if (!s || s === "undefined" || s === "null") return "";
+
+  // WhatsApp: normalize domain and strip non-digits from user part.
+  if (s.includes("@")) {
+    const [user, domainRaw] = s.split("@");
+    const domain = String(domainRaw || "").trim().toLowerCase();
+    const digits = String(user || "").replace(/\D/g, "");
+    if (digits) {
+      if (domain === "c.us" || domain === "s.whatsapp.net") return `${digits}@s.whatsapp.net`;
+      return `${digits}@${domain}`;
+    }
+    return s;
+  }
+
+  const digits = s.replace(/\D/g, "");
+  return digits ? `${digits}@s.whatsapp.net` : s;
+}
+
+function threadKey(channel: any, contactId: any): string {
+  return `${String(channel || "").toLowerCase()}|${normalizeContactId(contactId)}`;
+}
+
+function mergeThread(prev: InboxThread, next: InboxThread): InboxThread {
+  const nextNameOk = isViableName(next.name);
+  const prevNameOk = isViableName(prev.name);
+
+  const merged: InboxThread = {
+    ...prev,
+    ...next,
+    channel: (next.channel ?? prev.channel) as any,
+    contactId: normalizeContactId(next.contactId ?? prev.contactId),
+    name: nextNameOk ? next.name : prevNameOk ? prev.name : next.name ?? prev.name,
+    metadata: { ...(prev.metadata || {}), ...(next.metadata || {}) },
+    lastMessageDate:
+      new Date(
+        Math.max(
+          new Date(prev.lastMessageDate || 0).getTime(),
+          new Date(next.lastMessageDate || 0).getTime(),
+        ),
+      ).toISOString(),
+  };
+
+  return merged;
+}
+
+function dedupeThreads(list: InboxThread[]): InboxThread[] {
+  const map = new Map<string, InboxThread>();
+  for (const t of list || []) {
+    const key = threadKey(t.channel, t.contactId);
+    if (!key.endsWith("|")) {
+      const prev = map.get(key);
+      map.set(
+        key,
+        prev ? mergeThread(prev, { ...t, contactId: normalizeContactId(t.contactId) }) : { ...t, contactId: normalizeContactId(t.contactId) },
+      );
+    }
+  }
+  return Array.from(map.values());
+}
+
 function isViableName(name?: string | null): boolean {
   const n = (name ?? "").trim();
   if (!n) return false;
@@ -674,8 +736,7 @@ export default function Inbox() {
   const params = useParams();
   const location = useLocation();
 
-  const { t } = useTranslation("translations")
-
+  const { t } = useTranslation("translations");
   const executingUserId = getUserId() || "";
   const token = getToken() || "";
 
@@ -695,7 +756,6 @@ export default function Inbox() {
   const [agentId, setAgentId] = React.useState<string>(routeAgentKey || "");
 
   const agentKey = React.useMemo(() => normalizeBotId(agentId ?? ""), [agentId]);
-
   const selectedCampaign = React.useMemo(() => {
     const a = agentKey;
     if (!a) return null;
@@ -934,7 +994,7 @@ export default function Inbox() {
           setAgentId(initialKey);
           if (!routeAgentRaw) navigate(`/inbox/${encodeURIComponent(initialKey)}`, { replace: true });
         }
-} catch (e: any) {
+      } catch (e: any) {
         // Ignore; user might still select manually once campaigns load.
         console.error(e);
       }
@@ -958,12 +1018,20 @@ export default function Inbox() {
     setThreadsError(null);
     try {
       const data = await listThreads(agentKey, { limit: 100, channel: "whatsapp" });
-      const ordered = (data || []).slice().sort((a, b) => {
+
+      // Normalize + dedupe by (channel, contactId) to avoid duplicates and "ghost threads".
+      const normalized = dedupeThreads(
+        (data || []).map((t: any) => ({ ...t, contactId: normalizeContactId(t.contactId) })),
+      );
+
+      const ordered = normalized.slice().sort((a, b) => {
         const da = new Date(a.lastMessageDate || 0).getTime();
         const db = new Date(b.lastMessageDate || 0).getTime();
         return db - da;
       });
+
       setThreads(ordered);
+      (ordered);
     } catch (e: any) {
       setThreadsError(e?.data?.message || e?.message || "No se pudo cargar la bandeja");
     } finally {
@@ -983,37 +1051,76 @@ export default function Inbox() {
     setChatError(null);
   }, [agentKey, refreshThreads]);
 
+
   const openThread = React.useCallback(
     async (t: InboxThread) => {
       if (!agentKey) return;
-      setActiveContactId(t.contactId);
-      setActiveThread(t);
+
+      const cid = normalizeContactId(t.contactId);
+      if (!isValidContactId(cid)) {
+        setChatError("Thread inválido (contactId vacío/undefined).");
+        return;
+      }
+
+      const baseThread: InboxThread = { ...t, contactId: cid };
+
+      setActiveContactId(cid);
+      setActiveThread(baseThread);
       setMessages([]);
       setChatError(null);
       setPending(null);
       setDraft("");
       setChatLoading(true);
+
       try {
-        const res: ThreadMessagesResponse = await getThreadMessages(agentKey, t.contactId, {
+        const res: ThreadMessagesResponse = await getThreadMessages(agentKey, cid, {
           limit: 50,
           channel: "whatsapp",
         });
-        setActiveThread(res.thread);
+
+        const fetchedThread = res.thread
+          ? ({ ...res.thread, contactId: normalizeContactId(res.thread.contactId) } as InboxThread)
+          : null;
+
+        const mergedThread = fetchedThread ? mergeThread(baseThread, fetchedThread) : baseThread;
+
+        // Keep the list thread merged (avoid losing the name when backend returns empty name).
+        setThreads((prev) => {
+          const key = threadKey(mergedThread.channel, mergedThread.contactId);
+          const existing = prev.find((x) => threadKey(x.channel, x.contactId) === key);
+          const merged = existing ? mergeThread(existing, mergedThread) : mergedThread;
+
+          const others = prev.filter((x) => threadKey(x.channel, x.contactId) !== key);
+          const next = [merged, ...others];
+          next.sort((a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime());
+          return next;
+        });
+
+        setActiveThread(mergedThread);
         setMessages((res.messages || []).slice().sort((a, b) => a.time - b.time));
 
         // Mark read if needed.
-        const unread = res.thread?.metadata?.unreadCount ?? 0;
+        const unread = mergedThread?.metadata?.unreadCount ?? 0;
         if (unread > 0) {
-          const mr = await markThreadRead(agentKey, t.contactId, { expectedUnread: unread }, { channel: "whatsapp" });
+          const mr = await markThreadRead(
+            agentKey,
+            cid,
+            { expectedUnread: unread },
+            { channel: "whatsapp" },
+          );
+
           setThreads((prev) =>
             prev.map((x) =>
-              x.contactId === t.contactId
+              threadKey(x.channel, x.contactId) === threadKey(mergedThread.channel, cid)
                 ? { ...x, metadata: { ...x.metadata, unreadCount: mr.unreadCount } }
-                : x
-            )
+                : x,
+            ),
           );
+
           setActiveThread((prev) =>
-            prev ? { ...prev, metadata: { ...prev.metadata, unreadCount: mr.unreadCount } } : prev
+            prev
+              ? { ...prev, metadata: { ...prev.metadata, unreadCount: mr.unreadCount } }
+              : prev,
           );
         }
       } catch (e: any) {
@@ -1073,83 +1180,47 @@ export default function Inbox() {
     });
   }, [messages]);
 
+
   // Auto-open a contact when navigated from Leads -> Inbox (e.g. /inbox/:agentId?contactId=...)
   React.useEffect(() => {
     if (!agentKey || !isValidContactId(queryContactId)) return;
-    const key = `${agentKey}|${queryContactId}`;
+
+    const qCid = normalizeContactId(queryContactId);
+    if (!isValidContactId(qCid)) return;
+
+    const key = `${agentKey}|${qCid}`;
     if (autoOpenedRef.current === key) return;
-    if (activeContactId === queryContactId) {
+
+    if (activeContactId && normalizeContactId(activeContactId) === qCid) {
       autoOpenedRef.current = key;
       return;
     }
 
-    const existing = threads.find((t) => t.contactId === queryContactId);
+    const existing = threads.find((t) => normalizeContactId(t.contactId) === qCid);
     if (existing) {
       autoOpenedRef.current = key;
       openThread(existing);
       return;
     }
 
-    // If not in list (limit), try direct fetch.
     autoOpenedRef.current = key;
-    (async () => {
-      setActiveContactId(queryContactId);
-      setActiveThread(null);
-      setMessages([]);
-      setChatError(null);
-      setChatLoading(true);
 
-      try {
-        const res: ThreadMessagesResponse = await getThreadMessages(agentKey, queryContactId, {
-          limit: 50,
-          channel: "whatsapp",
-        });
-
-        setActiveThread(res.thread);
-        setMessages((res.messages || []).slice().sort((a, b) => a.time - b.time));
-
-        // Ensure appears in list.
-        if (res.thread) {
-          setThreads((prev) => {
-            const next = prev.filter((x) => x.contactId !== res.thread.contactId);
-            next.unshift(res.thread);
-            next.sort(
-              (a, b) =>
-                new Date(b.lastMessageDate || 0).getTime() -
-                new Date(a.lastMessageDate || 0).getTime(),
-            );
-            return next;
-          });
-        }
-
-        // Mark read if needed.
-        const unread = res.thread?.metadata?.unreadCount ?? 0;
-        if (unread > 0) {
-          const mr = await markThreadRead(
-            agentId,
-            queryContactId,
-            { expectedUnread: unread },
-            { channel: "whatsapp" },
-          );
-          setThreads((prev) =>
-            prev.map((x) =>
-              x.contactId === queryContactId
-                ? { ...x, metadata: { ...x.metadata, unreadCount: mr.unreadCount } }
-                : x,
-            ),
-          );
-          setActiveThread((prev) =>
-            prev
-              ? { ...prev, metadata: { ...prev.metadata, unreadCount: mr.unreadCount } }
-              : prev,
-          );
-        }
-      } catch (e: any) {
-        setChatError(e?.data?.message || e?.message || "No se pudo cargar el chat");
-      } finally {
-        setChatLoading(false);
-      }
-    })();
+    // If not in list (limit), try direct open with a minimal thread stub.
+    openThread({
+      agentId: agentKey,
+      channel: "whatsapp",
+      contactId: qCid,
+      name: "",
+      lastMessageDate: new Date(0).toISOString(),
+      metadata: {
+        takeoverMode: "BOT",
+        lockedByUserId: null,
+        lockedAt: null,
+        unreadCount: 0,
+        lastMessagePreview: "",
+        lastMessageDirection: "in",
+      } as any,
+    } as any);
   }, [agentKey, queryContactId, threads, openThread, activeContactId]);
 
   const canSend = React.useMemo(() => {
@@ -1183,11 +1254,23 @@ export default function Inbox() {
     const md = activeThread.metadata;
     const nextMode = md.takeoverMode === "HUMAN" ? "BOT" : "HUMAN";
     try {
-      const res = await takeoverThread(agentKey, activeThread.contactId, { mode: nextMode, force: false }, { channel: "whatsapp" });
-      setActiveThread(res.thread);
-      setThreads((prev) =>
-        prev.map((x) => (x.contactId === activeThread.contactId ? res.thread : x))
+      const res = await takeoverThread(
+        agentKey,
+        normalizeContactId(activeThread.contactId),
+        { mode: nextMode, force: false },
+        { channel: "whatsapp" },
       );
+
+      const nextThread: InboxThread = res.thread
+        ? ({ ...res.thread, contactId: normalizeContactId((res.thread as any).contactId) } as any)
+        : (activeThread as any);
+
+      setActiveThread((prev) => (prev ? mergeThread(prev, nextThread) : nextThread));
+
+      setThreads((prev) => {
+        const key = threadKey(activeThread.channel, activeThread.contactId);
+        return prev.map((x) => (threadKey(x.channel, x.contactId) === key ? mergeThread(x, nextThread) : x));
+      });
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || "No se pudo cambiar el takeover";
       alert(msg);
@@ -1223,7 +1306,7 @@ export default function Inbox() {
           };
         }
 
-        await sendMessage(agentKey, activeContactId, body, { channel: "whatsapp" });
+        await sendMessage(agentKey, normalizeContactId(activeContactId), body, { channel: "whatsapp" });
         setPending(null);
         setDraft("");
         scrollToBottom("smooth");
@@ -1237,7 +1320,7 @@ export default function Inbox() {
     if (!text) return;
 
     const optimistic: InboxMessage = {
-      agentId,
+      agentId: agentKey,
       userId: executingUserId,
       role: "assistant",
       content: text,
@@ -1252,7 +1335,7 @@ export default function Inbox() {
 
     try {
       const body: SendMessageBody = { type: "text", text };
-      await sendMessage(agentKey, activeContactId, body, { channel: "whatsapp" });
+      await sendMessage(agentKey, normalizeContactId(activeContactId), body, { channel: "whatsapp" });
       scrollToBottom("smooth");
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || "No se pudo enviar el mensaje";
@@ -1405,6 +1488,7 @@ export default function Inbox() {
     }
   }, [activeThread, activeContactId, canSend, pending]);
 
+
   // Realtime: inbox-thread-updated + inbox-message
   React.useEffect(() => {
     let socket: any;
@@ -1418,68 +1502,71 @@ export default function Inbox() {
       if (!payload) return;
       if (!agentKey) return;
       if (normalizeBotId(String(payload.agentId || "")) !== agentKey) return;
-      if (!isValidContactId(payload.contactId)) return;
+
+      const cid = normalizeContactId(payload.contactId);
+      if (!isValidContactId(cid)) return;
+
+      const incoming: InboxThread = {
+        agentId: agentKey,
+        channel: payload.channel || "whatsapp",
+        contactId: cid,
+        name: payload.name,
+        lastMessageDate: payload.lastMessageDate,
+        metadata: payload.metadata,
+      } as any;
 
       setThreads((prev) => {
-        const existing = prev.find((t) => t.contactId === payload.contactId);
-        const merged: InboxThread = {
-          agentId: agentKey,
-          channel: payload.channel || existing?.channel || "whatsapp",
-          contactId: payload.contactId,
-          name: payload.name ?? existing?.name,
-          lastMessageDate: payload.lastMessageDate ?? existing?.lastMessageDate,
-          metadata: { ...(existing?.metadata || {}), ...(payload.metadata || {}) },
-        };
+        const key = threadKey(incoming.channel, cid);
+        const existing = prev.find((t) => threadKey(t.channel, t.contactId) === key);
+        const merged = existing ? mergeThread(existing, incoming) : incoming;
 
-        const next = prev.filter((t) => t.contactId !== merged.contactId);
-        next.unshift(merged);
-        next.sort(
-          (a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime(),
-        );
+        const others = prev.filter((t) => threadKey(t.channel, t.contactId) !== key);
+        const next = [merged, ...others];
+        next.sort((a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime());
         return next;
       });
 
-      setActiveThread((prev) =>
-        prev && prev.contactId === payload.contactId
-          ? {
-            ...prev,
-            name: payload.name ?? prev.name,
-            lastMessageDate: payload.lastMessageDate ?? prev.lastMessageDate,
-            metadata: { ...(prev.metadata || {}), ...(payload.metadata || {}) },
-          }
-          : prev,
-      );
+      setActiveThread((prev) => {
+        if (!prev) return prev;
+        return threadKey(prev.channel, prev.contactId) === threadKey(incoming.channel, cid) ? mergeThread(prev, incoming) : prev;
+      });
     };
 
     const onInboxMessage = (payload: any) => {
       if (!payload) return;
       if (!agentKey) return;
       if (normalizeBotId(String(payload.agentId || "")) !== agentKey) return;
-      if (!isValidContactId(payload.contactId)) return;
-      const contactId = payload.contactId;
+
+      const cid = normalizeContactId(payload.contactId);
+      if (!isValidContactId(cid)) return;
+
       const msg = payload.message as InboxMessage;
       if (!msg) return;
 
       const ts = typeof msg.time === "number" ? msg.time : Date.now();
 
-      // Update preview / date ordering.
+      // Update preview / ordering, but never overwrite a meaningful name with an empty one.
       setThreads((prev) => {
-        const existing = prev.find((t) => t.contactId === contactId);
-        const updated: InboxThread = existing
+        const key = threadKey(payload.channel || "whatsapp", cid);
+        const existing = prev.find((t) => threadKey(t.channel, t.contactId) === key);
+
+        const updatedThread: InboxThread = existing
           ? {
             ...existing,
+            contactId: cid,
             lastMessageDate: new Date(ts).toISOString(),
             metadata: {
               ...existing.metadata,
               lastMessagePreview: msg.content,
               lastMessageDirection: payload.direction,
-              // unreadCount will be handled by inbox-thread-updated; keep existing here.
             },
+            // Keep name as-is unless payload provides a meaningful one.
+            name: isViableName(payload.name) ? payload.name : existing.name,
           }
           : {
             agentId: agentKey,
-            channel: "whatsapp",
-            contactId,
+            channel: payload.channel || "whatsapp",
+            contactId: cid,
             name: payload.name,
             lastMessageDate: new Date(ts).toISOString(),
             metadata: {
@@ -1492,14 +1579,16 @@ export default function Inbox() {
             },
           };
 
-        const next = prev.filter((t) => t.contactId !== contactId);
-        next.unshift(updated);
+        const merged = existing ? mergeThread(existing, updatedThread) : updatedThread;
+
+        const others = prev.filter((t) => threadKey(t.channel, t.contactId) !== key);
+        const next = [merged, ...others];
         next.sort((a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime());
         return next;
       });
 
       // If chat open, append (deduped).
-      if (activeContactId && contactId === activeContactId) {
+      if (activeContactId && normalizeContactId(activeContactId) === cid) {
         setMessages((prev) => mergeUniqueMessages(prev, [msg]));
       }
     };
@@ -1526,7 +1615,7 @@ export default function Inbox() {
     }
 
     try {
-      const res = await getThreadMessages(agentKey, activeContactId, {
+      const res = await getThreadMessages(agentKey, normalizeContactId(activeContactId), {
         limit: 50,
         before: oldest.time,
         channel: "whatsapp",
@@ -1639,13 +1728,13 @@ export default function Inbox() {
               ) : (
                 <ul className="divide-y divide-neutral-200/40 dark:divide-neutral-800/60">
                   {filteredThreads.map((t) => {
-                    const isActive = activeContactId === t.contactId;
+                    const isActive = Boolean(activeContactId) && normalizeContactId(activeContactId) === normalizeContactId(t.contactId);
                     const unread = t.metadata?.unreadCount || 0;
                     const takeover = t.metadata?.takeoverMode;
                     const lockedBy = t.metadata?.lockedByUserId;
 
                     return (
-                      <li key={t.contactId}>
+                      <li key={threadKey(t.channel, t.contactId)}>
                         <button
                           onClick={() => openThread(t)}
                           className={[
