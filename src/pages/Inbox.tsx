@@ -1,11 +1,34 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Mic, Paperclip, Send, ShieldAlert, Square, X, Video } from "lucide-react";
+import {
+  ArrowLeft,
+  ClipboardList,
+  Copy,
+  Check,
+  Loader2,
+  Mic,
+  Paperclip,
+  Send,
+  ShieldAlert,
+  Square,
+  X,
+  Video,
+} from "lucide-react";
 import OnlineLayout from "../layout/OnlineLayout";
 import { initSocket, getSocket } from "../services/socket/socket";
 import { getToken, getUserId } from "../utils/helper";
-import { searchMyModerationCampaigns } from "../services/campaigns";
-import type { ModerationCampaignItem } from "../services/types/moderation-types";
+import { useTranslation } from "react-i18next";
+import {
+  searchMyModerationCampaigns,
+  updateModerationCampaignLeadStatus,
+  updateModerationCampaignLeadArea,
+  appendModerationCampaignLeadNextAction,
+  getModerationCampaignLead,
+  lookupModerationCampaignLeads,
+} from "../services/campaigns";
+import { getMyAreas } from "../services/subaccounts";
+import type { LeadStatus, ModerationCampaignItem } from "../services/types/moderation-types";
 import {
   listThreads,
   getThreadMessages,
@@ -136,10 +159,501 @@ type PendingAttachment =
     fileName: string;
   };
 
+type UserArea = {
+  _id?: string;
+  name: string;
+  description?: string;
+};
+
+const STATUS_OPTIONS: LeadStatus[] = [
+  "new",
+  "on_following",
+  "contacted",
+  "negotiating",
+  "closed_won",
+  "closed_lost",
+  "custom",
+];
+
+function countWords(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function LeadActionsModal({
+  open,
+  onClose,
+  title,
+  campaignId,
+  conversationId,
+  areas,
+  areasLoading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  campaignId: string | null;
+  conversationId: string | null;
+  areas: UserArea[];
+  areasLoading: boolean;
+}) {
+  const { t } = useTranslation("translations");
+
+  const [statusLoading, setStatusLoading] = React.useState<LeadStatus | null>(null);
+  const [areaLoading, setAreaLoading] = React.useState<string | null>(null);
+  const [nextActionLoading, setNextActionLoading] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  const [copied, setCopied] = React.useState(false);
+
+  const [customModalOpen, setCustomModalOpen] = React.useState(false);
+  const [customValue, setCustomValue] = React.useState("");
+
+  const [selectedArea, setSelectedArea] = React.useState("all");
+  const [nextActionText, setNextActionText] = React.useState("");
+  const [nextActions, setNextActions] = React.useState<any[]>([]);
+
+  const [loadingLead, setLoadingLead] = React.useState(false);
+  const [currentStatus, setCurrentStatus] = React.useState<LeadStatus | null>(null);
+  const [currentCustomLabel, setCurrentCustomLabel] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (!open) return;
+    setErr(null);
+    setCopied(false);
+    setStatusLoading(null);
+    setAreaLoading(null);
+    setNextActionLoading(false);
+    setSelectedArea("all");
+    setNextActionText("");
+    setNextActions([]);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        setCustomModalOpen(false);
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, onClose]);
+
+  React.useEffect(() => {
+    if (!open || !campaignId || !conversationId) return;
+    let cancelled = false;
+
+    (async () => {
+      setLoadingLead(true);
+      setErr(null);
+      try {
+        const lead: any = await getModerationCampaignLead({ campaignId, conversationId });
+        if (cancelled) return;
+
+        setCurrentStatus(lead?.status || null);
+        setCurrentCustomLabel(String(lead?.customStatusLabel || ""));
+        setSelectedArea(String(lead?.area || "all"));
+        setNextActions(Array.isArray(lead?.nextAction) ? lead.nextAction : []);
+      } catch (e: any) {
+        if (!cancelled) setErr(e?.message || "No se pudo cargar el lead");
+      } finally {
+        if (!cancelled) setLoadingLead(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, campaignId, conversationId]);
+
+  const disabled = !campaignId || !conversationId;
+
+  const doUpdateStatus = React.useCallback(
+    async (status: LeadStatus, customStatusLabel?: string) => {
+      if (!campaignId || !conversationId) return;
+      setErr(null);
+      setStatusLoading(status);
+      try {
+        const updated: any = await updateModerationCampaignLeadStatus({
+          campaignId,
+          conversationId,
+          status,
+          customStatusLabel,
+        } as any);
+        setCurrentStatus(updated?.status || status);
+        setCurrentCustomLabel(String(updated?.customStatusLabel || ""));
+      } catch (e: any) {
+        setErr(e?.message || "Error");
+      } finally {
+        setStatusLoading(null);
+      }
+    },
+    [campaignId, conversationId],
+  );
+
+  const doUpdateArea = React.useCallback(async () => {
+    if (!campaignId || !conversationId) return;
+    setErr(null);
+    setAreaLoading(selectedArea);
+    try {
+      const updated: any = await updateModerationCampaignLeadArea({
+        campaignId,
+        conversationId,
+        area: selectedArea,
+      });
+      setSelectedArea(String(updated?.area || selectedArea));
+    } catch (e: any) {
+      setErr(e?.message || "Error");
+    } finally {
+      setAreaLoading(null);
+
+    }
+  }, [campaignId, conversationId, selectedArea]);
+
+  const doAppendNextAction = React.useCallback(async () => {
+    const trimmed = (nextActionText || "").trim();
+    if (!trimmed || !campaignId || !conversationId) return;
+    setErr(null);
+    setNextActionLoading(true);
+    try {
+      const updated: any = await appendModerationCampaignLeadNextAction({
+        campaignId,
+        conversationId,
+        text: trimmed,
+      });
+
+      if (Array.isArray(updated?.nextAction)) {
+        setNextActions(updated.nextAction);
+      } else {
+        setNextActions((prev) => [
+          { text: trimmed, createdAt: new Date().toISOString() },
+          ...prev,
+        ]);
+      }
+      setNextActionText("");
+    } catch (e: any) {
+      setErr(e?.message || "Error");
+    } finally {
+      setNextActionLoading(false);
+    }
+  }, [nextActionText, campaignId, conversationId]);
+
+  const areaOptions = React.useMemo(() => {
+    const names = Array.from(new Set(["all", ...areas.map((a) => a.name).filter(Boolean)]));
+    return names;
+  }, [areas]);
+
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="w-full max-w-2xl rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-950/35 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">Acciones del lead</div>
+            <div className="mt-1 text-xs opacity-70 truncate">{title}</div>
+          </div>
+
+          <button
+            type="button"
+            className="text-xs px-3 py-1 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70"
+            onClick={onClose}
+          >
+            {t("close")}
+          </button>
+        </div>
+        <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4 mx-2 mt-2">
+          {loadingLead ? (
+            <div className="mt-2 text-xs opacity-70">Cargando estado actual…</div>
+          ) : currentStatus ? (
+            <div className="mt-2 text-xs opacity-70">
+              Estado: <span className="font-semibold">
+                {currentStatus === "custom" ? (currentCustomLabel || "custom") : t("lead_status" + '.' + currentStatus)}
+              </span>{" "}
+              · Área: <span className="font-semibold">{t(selectedArea)}</span>
+            </div>
+          ) : null}
+        </div>
+        <div className="p-5 grid grid-cols-1 gap-4">
+          {disabled ? (
+            <div className="rounded-xl bg-amber-500/10 ring-1 ring-amber-400/25 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+              Para editar un lead necesitás tener seleccionada una campaña y una conversación.
+            </div>
+          ) : null}
+
+          {/* STATUS */}
+          <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4">
+            <div className="text-xs uppercase tracking-wide opacity-70 mb-3">
+              {t("stats_status")}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {STATUS_OPTIONS.filter((s) => s !== "custom").map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  disabled={disabled || !!statusLoading}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-emerald-500/10 dark:hover:bg-white/5 disabled:opacity-50 ring-1 ring-transparent"
+                  onClick={() => doUpdateStatus(s)}
+                >
+                  <span className="truncate">{t(`lead_status.${s}`)}</span>
+                  {statusLoading === s ? <Loader2 className="h-4 w-4 animate-spin opacity-70" /> : null}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                disabled={disabled || !!statusLoading}
+                className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-emerald-500/10 dark:hover:bg-white/5 disabled:opacity-50 ring-1 ring-transparent"
+                onClick={() => {
+                  setCustomValue("");
+                  setCustomModalOpen(true);
+                }}
+              >
+                <span className="truncate">{t("lead_status.custom")}</span>
+                <ChevronHint />
+              </button>
+            </div>
+          </div>
+
+          {/* AREA */}
+          <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4">
+            <div className="text-xs uppercase tracking-wide opacity-70 mb-3">
+              {t("stats_area")}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <select
+                value={selectedArea}
+                onChange={(e) => setSelectedArea(e.target.value)}
+                disabled={disabled || areasLoading || !!areaLoading}
+                className="flex-1 rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60"
+              >
+                {areaOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name === "all" ? t("all") : name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                disabled={disabled || areasLoading || !!areaLoading}
+                className="px-4 py-2 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                onClick={doUpdateArea}
+              >
+                {areaLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Guardar
+              </button>
+            </div>
+
+            {areasLoading ? (
+              <div className="mt-2 text-xs opacity-70">Cargando áreas…</div>
+            ) : null}
+          </div>
+
+          {/* NEXT ACTION */}
+          <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4">
+            <div className="text-xs uppercase tracking-wide opacity-70 mb-3">
+              {t("stats_next_action")}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <textarea
+                value={nextActionText}
+                onChange={(e) => setNextActionText(e.target.value)}
+                disabled={disabled || nextActionLoading}
+                rows={3}
+                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none"
+                placeholder="Agregar próxima acción…"
+              />
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  disabled={disabled || nextActionLoading || !nextActionText.trim()}
+                  className="px-4 py-2 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 inline-flex items-center gap-2"
+                  onClick={doAppendNextAction}
+                >
+                  {nextActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Agregar
+                </button>
+              </div>
+
+              {nextActions.length ? (
+                <div className="mt-2 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 p-3">
+                  <div className="text-xs opacity-70 mb-2">Últimas acciones</div>
+                  <ul className="space-y-2">
+                    {nextActions
+                      .slice()
+                      .sort(
+                        (a, b) =>
+                          new Date(b?.createdAt || 0).getTime() -
+                          new Date(a?.createdAt || 0).getTime(),
+                      )
+                      .slice(0, 5)
+                      .map((na, idx) => (
+                        <li key={String(na?._id || idx)} className="text-sm">
+                          <div className="whitespace-pre-wrap break-words">{String(na?.text || na?.content || "")}</div>
+                          {na?.createdAt ? (
+                            <div className="text-[11px] opacity-60 mt-0.5">
+                              {new Date(na.createdAt).toLocaleString()}
+                            </div>
+                          ) : null}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {err ? (
+            <div className="rounded-xl bg-rose-500/10 ring-1 ring-rose-500/20 px-4 py-3 text-sm text-rose-500">
+              {err}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {customModalOpen ? (
+        <div
+          className="fixed inset-0 z-[12001] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setCustomModalOpen(false);
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setCustomModalOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-xl p-5"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h4 className="text-[15px] font-semibold">{t("lead_status.custom")}</h4>
+                <p className="text-xs opacity-70 mt-1">{t("lead_status.custom_hint")}</p>
+              </div>
+              <button
+                type="button"
+                className="text-xs px-3 py-1 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70"
+                onClick={() => setCustomModalOpen(false)}
+              >
+                {t("close")}
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm opacity-80">{t("lead_status.custom_label")}</label>
+              <input
+                autoFocus
+                value={customValue}
+                onChange={(e) => setCustomValue(e.target.value)}
+                placeholder={t("lead_status.custom_placeholder")}
+                className="mt-1 w-full rounded-xl bg-white/80 dark:bg-neutral-950/40 px-3 py-2.5 text-sm ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 outline-none focus:ring-emerald-400/30"
+              />
+              {countWords(customValue) > 2 ? (
+                <div className="mt-2 text-[12px] text-rose-500">{t("lead_status.custom_too_long")}</div>
+              ) : null}
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="text-sm px-4 py-2 rounded-xl bg-neutral-200/70 dark:bg-neutral-800/70"
+                onClick={() => setCustomModalOpen(false)}
+              >
+                {t("cancel")}
+              </button>
+              <button
+                type="button"
+                disabled={disabled || !!statusLoading || !customValue.trim() || countWords(customValue) > 2}
+                className="text-sm px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
+                onClick={async () => {
+                  await doUpdateStatus("custom", customValue.trim());
+                  setCustomModalOpen(false);
+                }}
+              >
+                {statusLoading === "custom" ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("saving")}
+                  </span>
+                ) : (
+                  t("save")
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>,
+    document.body,
+  );
+}
+
+function ChevronHint() {
+  return <span className="text-[11px] opacity-70">…</span>;
+}
+
 export default function Inbox() {
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
+
+  const { t } = useTranslation("translations")
 
   const executingUserId = React.useMemo(() => getUserId() || "", []);
   const token = React.useMemo(() => getToken(), []);
@@ -185,6 +699,12 @@ export default function Inbox() {
   const [threadsLoading, setThreadsLoading] = React.useState(false);
   const [threadsError, setThreadsError] = React.useState<string | null>(null);
 
+  const [threadQuery, setThreadQuery] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | LeadStatus | "untracked">("all");
+
+  const [leadMiniMap, setLeadMiniMap] = React.useState<Record<string, any>>({});
+  const [leadMiniLoading, setLeadMiniLoading] = React.useState(false);
+
   const [activeContactId, setActiveContactId] = React.useState<string | null>(null);
   const [activeThread, setActiveThread] = React.useState<InboxThread | null>(null);
 
@@ -197,6 +717,112 @@ export default function Inbox() {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   const [pending, setPending] = React.useState<PendingAttachment | null>(null);
+
+  // Lead actions (status/area/next-action) directly from Inbox.
+  const [leadModalOpen, setLeadModalOpen] = React.useState(false);
+  const [areas, setAreas] = React.useState<UserArea[]>([]);
+  const [areasLoading, setAreasLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setAreasLoading(true);
+      try {
+        const res = await getMyAreas();
+        if (!cancelled) setAreas((res as any) || []);
+      } catch (e) {
+        // Non-blocking for Inbox
+        console.error(e);
+      } finally {
+        if (!cancelled) setAreasLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!selectedCampaign?.id) return;
+    if (!threads.length) {
+      setLeadMiniMap({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      setLeadMiniLoading(true);
+      try {
+        const conversationIds = threads.map((t) => {
+          const ch = String(t.channel || "whatsapp").toLowerCase();
+          return `${selectedCampaign.id}_${ch}_${t.contactId}`;
+        });
+
+        const items: any[] = await lookupModerationCampaignLeads({
+          campaignId: selectedCampaign.id,
+          conversationIds,
+        });
+
+        if (cancelled) return;
+
+        const map: Record<string, any> = {};
+        for (const it of items || []) {
+          if (it?.conversationId) map[it.conversationId] = it;
+        }
+        setLeadMiniMap(map);
+      } catch (e) {
+        // silencioso: inbox debe seguir
+        console.error(e);
+      } finally {
+        if (!cancelled) setLeadMiniLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCampaign?.id, threads]);
+
+  const leadConversationId = React.useMemo(() => {
+    if (!selectedCampaign?.id || !activeThread) return null;
+    const channel = String(activeThread.channel || "whatsapp").toLowerCase();
+    return `${selectedCampaign.id}_${channel}_${activeThread.contactId}`;
+  }, [selectedCampaign?.id, activeThread]);
+
+  const leadTitle = React.useMemo(() => {
+    if (!activeThread) return "";
+    return `${threadDisplayName(activeThread)} · ${activeThread.channel}`;
+  }, [activeThread]);
+
+  const filteredThreads = React.useMemo(() => {
+    const q = (threadQuery || "").trim().toLowerCase();
+    const qDigits = q.replace(/\D/g, "");
+
+    return threads.filter((t) => {
+      const name = threadDisplayName(t).toLowerCase();
+      const cid = String(t.contactId || "").toLowerCase();
+      const cidDigits = cid.replace(/\D/g, "");
+
+      const matchesText = !q
+        ? true
+        : qDigits
+          ? cidDigits.includes(qDigits)
+          : name.includes(q) || cid.includes(q);
+
+      if (!matchesText) return false;
+
+      if (!selectedCampaign?.id) return true;
+      const convId = `${selectedCampaign.id}_${String(t.channel || "whatsapp").toLowerCase()}_${t.contactId}`;
+      const meta = leadMiniMap[convId];
+
+      if (statusFilter === "all") return true;
+      if (statusFilter === "untracked") return !meta?.status;
+
+      return meta?.status === statusFilter;
+    });
+  }, [threads, threadQuery, statusFilter, selectedCampaign?.id, leadMiniMap]);
 
   const chatScrollRef = React.useRef<HTMLDivElement | null>(null);
   const bottomRef = React.useRef<HTMLDivElement | null>(null);
@@ -917,7 +1543,32 @@ export default function Inbox() {
               <div className="text-sm font-medium">Conversaciones</div>
               {threadsLoading && <div className="text-xs text-neutral-500">Cargando…</div>}
             </div>
+            <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">Conversaciones</div>
+                {leadMiniLoading ? <div className="text-xs text-neutral-500">Cargando status…</div> : null}
+              </div>
 
+              <input
+                value={threadQuery}
+                onChange={(e) => setThreadQuery(e.target.value)}
+                placeholder="Buscar por nombre o teléfono…"
+                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+              />
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+              >
+                <option value="all">Todos los estados</option>
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {t("lead_status" + '.' + s)}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="flex-1 overflow-y-auto">
               {threads.length === 0 && !threadsLoading ? (
                 <div className="p-4 text-sm text-neutral-600 dark:text-neutral-300">
@@ -925,7 +1576,7 @@ export default function Inbox() {
                 </div>
               ) : (
                 <ul className="divide-y divide-neutral-200/40 dark:divide-neutral-800/60">
-                  {threads.map((t) => {
+                  {filteredThreads.map((t) => {
                     const isActive = activeContactId === t.contactId;
                     const unread = t.metadata?.unreadCount || 0;
                     const takeover = t.metadata?.takeoverMode;
@@ -995,6 +1646,27 @@ export default function Inbox() {
               </div>
 
               <div className="flex items-center gap-2">
+                {activeThread && (
+                  <button
+                    onClick={() => setLeadModalOpen(true)}
+                    disabled={!selectedCampaign?.id}
+                    className={
+                      "px-3 py-2 rounded-xl text-sm font-semibold inline-flex items-center gap-2 shadow-sm ring-1 transition " +
+                      "bg-white/70 dark:bg-neutral-950/40 ring-neutral-200/70 dark:ring-neutral-800/70 " +
+                      "hover:bg-neutral-100 dark:hover:bg-neutral-900 disabled:opacity-60"
+                    }
+                    title={
+                      selectedCampaign?.id
+                        ? "Editar lead (status / área / próxima acción)"
+                        : "Seleccioná la campaña (arriba) para obtener el campaignId"
+                    }
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    Modificar
+                  </button>
+
+                )}
+
                 {activeThread && (
                   <button
                     onClick={onToggleTakeover}
@@ -1144,7 +1816,7 @@ export default function Inbox() {
                   <Paperclip className="h-5 w-5" />
                 </button>
 
-{/*                 <button
+                {/*                 <button
                   onClick={isRecording ? stopRecording : startRecording}
                   disabled={!activeThread || !canSend}
                   className={[
@@ -1211,6 +1883,16 @@ export default function Inbox() {
           </div>
         </div>
       </div>
+
+      <LeadActionsModal
+        open={leadModalOpen}
+        onClose={() => setLeadModalOpen(false)}
+        title={leadTitle}
+        campaignId={selectedCampaign?.id || null}
+        conversationId={leadConversationId}
+        areas={areas}
+        areasLoading={areasLoading}
+      />
     </OnlineLayout>
   );
 }

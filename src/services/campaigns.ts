@@ -497,3 +497,24 @@ export async function sendFacebookReviewMessage(message: string) {
     message,
   });
 }
+
+export async function getModerationCampaignLead(args: {
+  campaignId: string;
+  conversationId: string;
+}) {
+  const res = await api.get(
+    `moderation-campaigns/${args.campaignId}/leads/${encodeURIComponent(args.conversationId)}`,
+  );
+  return res.data;
+}
+
+export async function lookupModerationCampaignLeads(args: {
+  campaignId: string;
+  conversationIds: string[];
+}) {
+  const res = await api.post(
+    `moderation-campaigns/${args.campaignId}/leads/lookup`,
+    { conversationIds: args.conversationIds },
+  );
+  return res.data;
+}
