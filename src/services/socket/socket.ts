@@ -14,8 +14,13 @@ function sameUserId(a?: unknown, b?: unknown) {
 
 function currentUserId(s: Socket | null): string {
   try {
-    const q = (s?.io?.opts as any)?.query as any;
-    return q?.userId ? String(q.userId) : "";
+    const opts = (s?.io?.opts as any) || {};
+    // Prefer auth.userId (newer socket.io usage), fall back to query.userId for compatibility
+    const auth = opts.auth as any;
+    const query = opts.query as any;
+    if (auth && auth.userId) return String(auth.userId);
+    if (query && query.userId) return String(query.userId);
+    return "";
   } catch {
     return "";
   }
@@ -47,17 +52,18 @@ export function initSocket(
 
   socket = io(url, {
     path: "/socket.io",
-
-    transports: ["polling"],
-    upgrade: false,
-
+    // allow engine to pick transports and perform upgrade to websocket when available
     autoConnect: true,
     reconnection: true,
     reconnectionAttempts: 10,
     reconnectionDelay: 800,
     timeout: 10_000,
-
-    auth: token ? { token } : undefined,
+    // Send token in auth (preferred) and also include userId for server routing compatibility
+    auth: {
+      ...(token ? { token } : {}),
+      ...(nextUserId ? { userId: nextUserId } : {}),
+    },
+    // keep query for older server implementations that expect it
     query: nextUserId ? { userId: nextUserId } : undefined,
   });
 

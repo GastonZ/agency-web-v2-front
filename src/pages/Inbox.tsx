@@ -41,6 +41,27 @@ import {
   type SendMessageBody,
 } from "../services/inbox";
 
+function normalizeBotId(input: string): string {
+  if (!input) return "";
+
+  // Remove diacritics, trim, lower, replace non-alnum with underscores.
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
+}
+
+function isValidContactId(v: any): v is string {
+  const s = String(v ?? "").trim();
+  if (!s) return false;
+  if (s === "undefined" || s === "null") return false;
+  return true;
+}
+
 function isViableName(name?: string | null): boolean {
   const n = (name ?? "").trim();
   if (!n) return false;
@@ -655,8 +676,8 @@ export default function Inbox() {
 
   const { t } = useTranslation("translations")
 
-  const executingUserId = React.useMemo(() => getUserId() || "", []);
-  const token = React.useMemo(() => getToken(), []);
+  const executingUserId = getUserId() || "";
+  const token = getToken() || "";
 
   const routeAgentRaw = params.agentId;
   const routeAgentId = React.useMemo(() => {
@@ -668,20 +689,25 @@ export default function Inbox() {
     }
   }, [routeAgentRaw]);
 
+  const routeAgentKey = React.useMemo(() => normalizeBotId(routeAgentId), [routeAgentId]);
+
   const [campaigns, setCampaigns] = React.useState<ModerationCampaignItem[]>([]);
-  const [agentId, setAgentId] = React.useState<string>(routeAgentId || "");
+  const [agentId, setAgentId] = React.useState<string>(routeAgentKey || "");
+
+  const agentKey = React.useMemo(() => normalizeBotId(agentId ?? ""), [agentId]);
 
   const selectedCampaign = React.useMemo(() => {
-    const norm = (v: string) => (v || "").trim().toLowerCase();
-    const a = norm(agentId);
+    const a = agentKey;
     if (!a) return null;
+
     return (
-      campaigns.find((c) => norm(c.id) === a) ||
-      campaigns.find((c) => norm(c.name) === a) ||
-      campaigns.find((c) => norm(c.assistantName || "") === a) ||
+      campaigns.find((c) => normalizeBotId(String((c as any)?.agentId ?? "")) === a) ||
+      campaigns.find((c) => normalizeBotId(String((c as any)?.botId ?? "")) === a) ||
+      campaigns.find((c) => normalizeBotId(c.name) === a) ||
+      campaigns.find((c) => normalizeBotId(String((c as any)?.assistantName ?? "")) === a) ||
       null
     );
-  }, [agentId, campaigns]);
+  }, [agentKey, campaigns]);
 
   const queryContactId = React.useMemo(() => {
     const raw = new URLSearchParams(location.search).get("contactId") || "";
@@ -902,12 +928,13 @@ export default function Inbox() {
         // 2) from localStorage
         // 3) first whatsapp campaign
         const last = localStorage.getItem("inbox:lastAgentId") || "";
-        const initial = (routeAgentId || last || items?.[0]?.name || "").trim();
-        if (initial) {
-          setAgentId(initial);
-          if (!routeAgentId) navigate(`/inbox/${encodeURIComponent(initial)}`, { replace: true });
+        const initialRaw = (routeAgentId || last || items?.[0]?.name || "").trim();
+        const initialKey = normalizeBotId(initialRaw);
+        if (initialKey) {
+          setAgentId(initialKey);
+          if (!routeAgentRaw) navigate(`/inbox/${encodeURIComponent(initialKey)}`, { replace: true });
         }
-      } catch (e: any) {
+} catch (e: any) {
         // Ignore; user might still select manually once campaigns load.
         console.error(e);
       }
@@ -919,18 +946,18 @@ export default function Inbox() {
 
   // Keep internal agentId in sync with route.
   React.useEffect(() => {
-    if (routeAgentId && routeAgentId !== agentId) {
-      setAgentId(routeAgentId);
+    if (routeAgentKey && routeAgentKey !== agentKey) {
+      setAgentId(routeAgentKey);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeAgentId]);
+  }, [routeAgentKey]);
 
   const refreshThreads = React.useCallback(async () => {
-    if (!agentId) return;
+    if (!agentKey) return;
     setThreadsLoading(true);
     setThreadsError(null);
     try {
-      const data = await listThreads(agentId, { limit: 100, channel: "whatsapp" });
+      const data = await listThreads(agentKey, { limit: 100, channel: "whatsapp" });
       const ordered = (data || []).slice().sort((a, b) => {
         const da = new Date(a.lastMessageDate || 0).getTime();
         const db = new Date(b.lastMessageDate || 0).getTime();
@@ -942,22 +969,23 @@ export default function Inbox() {
     } finally {
       setThreadsLoading(false);
     }
-  }, [agentId]);
+  }, [agentKey]);
 
   // Load threads when agent changes.
   React.useEffect(() => {
-    if (!agentId) return;
-    localStorage.setItem("inbox:lastAgentId", agentId);
+    if (!agentKey) return;
+    localStorage.setItem("inbox:lastAgentId", agentKey);
     refreshThreads();
     // Reset chat on agent change
     setActiveContactId(null);
     setActiveThread(null);
     setMessages([]);
     setChatError(null);
-  }, [agentId, refreshThreads]);
+  }, [agentKey, refreshThreads]);
 
   const openThread = React.useCallback(
     async (t: InboxThread) => {
+      if (!agentKey) return;
       setActiveContactId(t.contactId);
       setActiveThread(t);
       setMessages([]);
@@ -966,7 +994,7 @@ export default function Inbox() {
       setDraft("");
       setChatLoading(true);
       try {
-        const res: ThreadMessagesResponse = await getThreadMessages(agentId, t.contactId, {
+        const res: ThreadMessagesResponse = await getThreadMessages(agentKey, t.contactId, {
           limit: 50,
           channel: "whatsapp",
         });
@@ -976,7 +1004,7 @@ export default function Inbox() {
         // Mark read if needed.
         const unread = res.thread?.metadata?.unreadCount ?? 0;
         if (unread > 0) {
-          const mr = await markThreadRead(agentId, t.contactId, { expectedUnread: unread }, { channel: "whatsapp" });
+          const mr = await markThreadRead(agentKey, t.contactId, { expectedUnread: unread }, { channel: "whatsapp" });
           setThreads((prev) =>
             prev.map((x) =>
               x.contactId === t.contactId
@@ -994,7 +1022,7 @@ export default function Inbox() {
         setChatLoading(false);
       }
     },
-    [agentId]
+    [agentKey],
   );
 
   const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "auto") => {
@@ -1047,8 +1075,8 @@ export default function Inbox() {
 
   // Auto-open a contact when navigated from Leads -> Inbox (e.g. /inbox/:agentId?contactId=...)
   React.useEffect(() => {
-    if (!agentId || !queryContactId) return;
-    const key = `${agentId}|${queryContactId}`;
+    if (!agentKey || !isValidContactId(queryContactId)) return;
+    const key = `${agentKey}|${queryContactId}`;
     if (autoOpenedRef.current === key) return;
     if (activeContactId === queryContactId) {
       autoOpenedRef.current = key;
@@ -1072,7 +1100,7 @@ export default function Inbox() {
       setChatLoading(true);
 
       try {
-        const res: ThreadMessagesResponse = await getThreadMessages(agentId, queryContactId, {
+        const res: ThreadMessagesResponse = await getThreadMessages(agentKey, queryContactId, {
           limit: 50,
           channel: "whatsapp",
         });
@@ -1122,26 +1150,40 @@ export default function Inbox() {
         setChatLoading(false);
       }
     })();
-  }, [agentId, queryContactId, threads, openThread, activeContactId]);
+  }, [agentKey, queryContactId, threads, openThread, activeContactId]);
 
   const canSend = React.useMemo(() => {
     if (!activeThread) return false;
-    const md = activeThread.metadata;
-    return md?.takeoverMode === "HUMAN" && md?.lockedByUserId === executingUserId;
+
+    const md: any = (activeThread as any).metadata || {};
+    const takeover = String(md.takeoverMode || "BOT").toUpperCase();
+    const lockedBy =
+      md.lockedByUserId ?? md.lockedByUserID ?? md.lockedBy ?? md.locked_by_user_id ?? null;
+
+    if (takeover !== "HUMAN") return false;
+
+    // Align with backend: allow send when HUMAN and either unlocked OR locked by me.
+    if (!lockedBy) return true;
+    return String(lockedBy) === String(executingUserId);
   }, [activeThread, executingUserId]);
 
   const isReadOnlyLock = React.useMemo(() => {
     if (!activeThread) return false;
-    const md = activeThread.metadata;
-    return md?.takeoverMode === "HUMAN" && Boolean(md?.lockedByUserId) && md?.lockedByUserId !== executingUserId;
+
+    const md: any = (activeThread as any).metadata || {};
+    const takeover = String(md.takeoverMode || "BOT").toUpperCase();
+    const lockedBy =
+      md.lockedByUserId ?? md.lockedByUserID ?? md.lockedBy ?? md.locked_by_user_id ?? null;
+
+    return takeover === "HUMAN" && Boolean(lockedBy) && String(lockedBy) !== String(executingUserId);
   }, [activeThread, executingUserId]);
 
   const onToggleTakeover = React.useCallback(async () => {
-    if (!activeThread || !agentId) return;
+    if (!activeThread || !agentKey) return;
     const md = activeThread.metadata;
     const nextMode = md.takeoverMode === "HUMAN" ? "BOT" : "HUMAN";
     try {
-      const res = await takeoverThread(agentId, activeThread.contactId, { mode: nextMode, force: false }, { channel: "whatsapp" });
+      const res = await takeoverThread(agentKey, activeThread.contactId, { mode: nextMode, force: false }, { channel: "whatsapp" });
       setActiveThread(res.thread);
       setThreads((prev) =>
         prev.map((x) => (x.contactId === activeThread.contactId ? res.thread : x))
@@ -1150,12 +1192,12 @@ export default function Inbox() {
       const msg = e?.data?.message || e?.message || "No se pudo cambiar el takeover";
       alert(msg);
     }
-  }, [activeThread, agentId]);
+  }, [activeThread, agentKey]);
 
   const onSend = React.useCallback(async () => {
-    if (!activeThread || !activeContactId) return;
+    if (!agentKey || !activeThread || !activeContactId) return;
     if (!canSend) {
-      alert("Tenés que estar en HUMAN y con lock propio para enviar.");
+      alert("Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.");
       return;
     }
 
@@ -1181,7 +1223,7 @@ export default function Inbox() {
           };
         }
 
-        await sendMessage(agentId, activeContactId, body, { channel: "whatsapp" });
+        await sendMessage(agentKey, activeContactId, body, { channel: "whatsapp" });
         setPending(null);
         setDraft("");
         scrollToBottom("smooth");
@@ -1210,13 +1252,13 @@ export default function Inbox() {
 
     try {
       const body: SendMessageBody = { type: "text", text };
-      await sendMessage(agentId, activeContactId, body, { channel: "whatsapp" });
+      await sendMessage(agentKey, activeContactId, body, { channel: "whatsapp" });
       scrollToBottom("smooth");
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || "No se pudo enviar el mensaje";
       alert(msg);
     }
-  }, [draft, activeThread, activeContactId, canSend, agentId, executingUserId, pending, scrollToBottom]);
+  }, [draft, activeThread, activeContactId, canSend, agentKey, agentId, executingUserId, pending, scrollToBottom]);
 
   const onPickFile = React.useCallback(() => {
     fileInputRef.current?.click();
@@ -1228,7 +1270,7 @@ export default function Inbox() {
       e.target.value = "";
       if (!file || !activeThread || !activeContactId) return;
       if (!canSend) {
-        alert("Tenés que estar en HUMAN y con lock propio para enviar.");
+        alert("Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.");
         return;
       }
 
@@ -1314,7 +1356,7 @@ export default function Inbox() {
   const startRecording = React.useCallback(async () => {
     if (!activeThread || !activeContactId) return;
     if (!canSend) {
-      alert("Tenés que estar en HUMAN y con lock propio para enviar.");
+      alert("Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.");
       return;
     }
 
@@ -1374,32 +1416,51 @@ export default function Inbox() {
 
     const onThreadUpdated = (payload: any) => {
       if (!payload) return;
-      if (payload.agentId !== agentId) return;
-      const updated: InboxThread = {
-        agentId: payload.agentId,
-        channel: payload.channel,
-        contactId: payload.contactId,
-        name: payload.name,
-        lastMessageDate: payload.lastMessageDate,
-        metadata: payload.metadata,
-      };
+      if (!agentKey) return;
+      if (normalizeBotId(String(payload.agentId || "")) !== agentKey) return;
+      if (!isValidContactId(payload.contactId)) return;
 
       setThreads((prev) => {
-        const next = prev.filter((t) => t.contactId !== updated.contactId);
-        next.unshift(updated);
-        next.sort((a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime());
+        const existing = prev.find((t) => t.contactId === payload.contactId);
+        const merged: InboxThread = {
+          agentId: agentKey,
+          channel: payload.channel || existing?.channel || "whatsapp",
+          contactId: payload.contactId,
+          name: payload.name ?? existing?.name,
+          lastMessageDate: payload.lastMessageDate ?? existing?.lastMessageDate,
+          metadata: { ...(existing?.metadata || {}), ...(payload.metadata || {}) },
+        };
+
+        const next = prev.filter((t) => t.contactId !== merged.contactId);
+        next.unshift(merged);
+        next.sort(
+          (a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime(),
+        );
         return next;
       });
 
-      setActiveThread((prev) => (prev && prev.contactId === updated.contactId ? updated : prev));
+      setActiveThread((prev) =>
+        prev && prev.contactId === payload.contactId
+          ? {
+            ...prev,
+            name: payload.name ?? prev.name,
+            lastMessageDate: payload.lastMessageDate ?? prev.lastMessageDate,
+            metadata: { ...(prev.metadata || {}), ...(payload.metadata || {}) },
+          }
+          : prev,
+      );
     };
 
     const onInboxMessage = (payload: any) => {
       if (!payload) return;
-      if (payload.agentId !== agentId) return;
+      if (!agentKey) return;
+      if (normalizeBotId(String(payload.agentId || "")) !== agentKey) return;
+      if (!isValidContactId(payload.contactId)) return;
       const contactId = payload.contactId;
       const msg = payload.message as InboxMessage;
       if (!msg) return;
+
+      const ts = typeof msg.time === "number" ? msg.time : Date.now();
 
       // Update preview / date ordering.
       setThreads((prev) => {
@@ -1407,7 +1468,7 @@ export default function Inbox() {
         const updated: InboxThread = existing
           ? {
             ...existing,
-            lastMessageDate: new Date(msg.time).toISOString(),
+            lastMessageDate: new Date(ts).toISOString(),
             metadata: {
               ...existing.metadata,
               lastMessagePreview: msg.content,
@@ -1416,11 +1477,11 @@ export default function Inbox() {
             },
           }
           : {
-            agentId,
+            agentId: agentKey,
             channel: "whatsapp",
             contactId,
             name: payload.name,
-            lastMessageDate: new Date(msg.time).toISOString(),
+            lastMessageDate: new Date(ts).toISOString(),
             metadata: {
               takeoverMode: "BOT",
               lockedByUserId: null,
@@ -1450,10 +1511,10 @@ export default function Inbox() {
       socket.off("inbox-thread-updated", onThreadUpdated);
       socket.off("inbox-message", onInboxMessage);
     };
-  }, [agentId, activeContactId]);
+  }, [agentKey, activeContactId]);
 
   const loadOlder = React.useCallback(async () => {
-    if (!activeThread || !activeContactId) return;
+    if (!agentKey || !activeThread || !activeContactId) return;
     const oldest = messages[0];
     if (!oldest) return;
 
@@ -1465,7 +1526,7 @@ export default function Inbox() {
     }
 
     try {
-      const res = await getThreadMessages(agentId, activeContactId, {
+      const res = await getThreadMessages(agentKey, activeContactId, {
         limit: 50,
         before: oldest.time,
         channel: "whatsapp",
@@ -1474,7 +1535,7 @@ export default function Inbox() {
     } catch (e: any) {
       alert(e?.data?.message || e?.message || "No se pudieron cargar mensajes anteriores");
     }
-  }, [activeThread, activeContactId, messages, agentId]);
+  }, [activeThread, activeContactId, messages, agentKey]);
 
   return (
     <OnlineLayout>
@@ -1500,7 +1561,7 @@ export default function Inbox() {
               >
                 <option value="">Seleccionar campaña…</option>
                 {campaigns.map((c) => (
-                  <option key={c.id} value={c.name.toLowerCase()}>
+                  <option key={c.id} value={normalizeBotId(c.name)}>
                     {c.name}
                   </option>
                 ))}
@@ -1562,6 +1623,7 @@ export default function Inbox() {
                 className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               >
                 <option value="all">Todos los estados</option>
+                <option value="untracked">Sin análisis</option>
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
                     {t("lead_status" + '.' + s)}
