@@ -15,7 +15,7 @@ function getDomainTheme(): Theme {
   if (host === "agency-web-v2-front.vercel.app") return "light";
 
   // fallback
-  return "light";
+  return "dark";
 }
 
 export default function ThemeToggle() {
