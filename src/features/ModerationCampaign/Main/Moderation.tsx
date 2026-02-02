@@ -5,15 +5,17 @@ import { StepperTop, StepControls } from "../stepper/Stepper";
 import { StepOneBottom, StepOneTop } from "../steps/StepOne";
 import StepTwo from "../steps/StepTwo";
 import { StepThreeTop, StepThreeBottom } from "../steps/StepThree";
+import StepVoice from "../steps/StepVoice";
 import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
-import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus, updateWebchatConfig } from "../../../services/campaigns";
-import { buildTranscriptFromHistory, clampStep, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep, getUserId } from "../../../utils/helper";
+import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus, updateWebchatConfig, getModerationCampaignVoiceStatus } from "../../../services/campaigns";
+import { buildTranscriptFromHistory, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep, getUserId } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
 import EditModeBanner from "../utils/EditModeBanner";
+import { uploadModerationCampaignVoice } from "../../../services/campaigns";
 import { moderationSchemas } from "../../../AIconversational/voice/schemas/moderationSchemas";
 import { useModerationBasicsTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationBasicsTools";
 import { useModerationGeoTools } from "../../../AIconversational/voice/tools/ModerationTools/useModerationGeoTools";
@@ -34,13 +36,6 @@ import { loadBotSnapshot } from "../../../AIconversational/voice/session/persist
 import { MODERATION_PLAYBOOK, MODERATION_PLAYBOOK_ES } from "../utils/campaignsInstructions";
 import ModerationSkeleton from "../components/ModerationSkeleton";
 import { useTranslation } from "react-i18next";
-
-const STEPS = [
-    { id: 1, title: "Datos" },
-    { id: 3, title: "Reglas" },
-    { id: 2, title: "Canales" },
-    { id: 4, title: "Revisión" },
-];
 
 const Moderation: React.FC = () => {
 
@@ -90,13 +85,6 @@ const Moderation: React.FC = () => {
 
     const { t } = useTranslation('translations')
 
-    const STEPS_T = [
-        { id: 1, title: t("data") },
-        { id: 2, title: t("rules") },
-        { id: 3, title: t("channels") },
-        { id: 4, title: t("review") },
-    ];
-
     const { i18n } = useTranslation();
     const uiLang = i18n.language.startsWith("en") ? "en" : "es";
 
@@ -115,6 +103,51 @@ const Moderation: React.FC = () => {
     const [showUI, setShowUI] = React.useState(false);
 
     const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
+
+    // --- Wizard steps (Voice step is only shown if WhatsApp is selected) ---
+    type WizardStepKey = "basics" | "rules" | "channels" | "voice" | "review";
+
+    const hasWhatsapp = Array.isArray(data?.channels) && (data.channels as any).includes("whatsapp");
+
+    const wizardSteps = useMemo(() => {
+        const base: Array<{ key: WizardStepKey; title: string }> = [
+            { key: "basics", title: t("data") },
+            { key: "rules", title: t("rules") },
+            { key: "channels", title: t("channels") },
+        ];
+
+        if (hasWhatsapp) {
+            base.push({
+                key: "voice",
+                title: t("voiceStep.shortTitle", { defaultValue: "Voz" }),
+            });
+        }
+
+        base.push({ key: "review", title: t("review") });
+        return base;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasWhatsapp, t]);
+
+    const stepperSteps = useMemo(
+        () => wizardSteps.map((s, i) => ({ id: i + 1, title: s.title })),
+        [wizardSteps]
+    );
+
+    const lastIndex = wizardSteps.length - 1;
+    const currentKey: WizardStepKey = (wizardSteps[current]?.key ?? "basics") as WizardStepKey;
+
+    const clampWizardIndex = useCallback(
+        (i: number) => Math.max(0, Math.min(lastIndex, i)),
+        [lastIndex]
+    );
+
+    const lastVoiceUploadSigRef = React.useRef<string | null>(null);
+
+    // If the user changes channels (e.g., toggles WhatsApp), the wizard length can change.
+    // We clamp the current index so the UI never points to an out-of-range step.
+    React.useEffect(() => {
+        setCurrent((c) => clampWizardIndex(c));
+    }, [clampWizardIndex]);
 
     React.useEffect(() => {
         let aborted = false;
@@ -281,26 +314,32 @@ const Moderation: React.FC = () => {
         return missing;
     }
 
+    function missingFromVoiceStep(data: any) {
+        const missing: string[] = [];
+        if (!hasWhatsapp) return missing;
+        const f = (data as any)?.assistant?.voiceFile;
+        if (!f) missing.push("voice.file");
+        return missing;
+    }
+
     const validateStep = useCallback((index: number) => {
-        if (index === 0) {
-            return missingFromStep0(data).length === 0;
-        }
-        if (index === 1) {
-            return missingFromStep2(data).length === 0;
-        }
-        if (index === 2) {
-            return missingFromStep1(data).length === 0;
-        }
+        const key = wizardSteps[index]?.key as WizardStepKey | undefined;
+        if (key === "basics") return missingFromStep0(data).length === 0;
+        if (key === "rules") return missingFromStep2(data).length === 0;
+        if (key === "channels") return missingFromStep1(data).length === 0;
+        if (key === "voice") return missingFromVoiceStep(data).length === 0;
         return true;
-    }, [data]);
+    }, [data, hasWhatsapp, wizardSteps]);
 
     // ----- UX: on "Next" click, if fields are missing we show a toast and scroll to the first missing field.
     const getMissingForStep = useCallback((index: number): string[] => {
-        if (index === 0) return missingFromStep0(data);
-        if (index === 1) return missingFromStep2(data);
-        if (index === 2) return missingFromStep1(data);
+        const key = wizardSteps[index]?.key as WizardStepKey | undefined;
+        if (key === "basics") return missingFromStep0(data);
+        if (key === "rules") return missingFromStep2(data);
+        if (key === "channels") return missingFromStep1(data);
+        if (key === "voice") return missingFromVoiceStep(data);
         return [];
-    }, [data]);
+    }, [data, hasWhatsapp, wizardSteps]);
 
     const scrollToMissingField = useCallback((fieldKey: string) => {
         // 1) Prefer explicit mapping for anchors
@@ -319,6 +358,9 @@ const Moderation: React.FC = () => {
             // Step 3 (channels)
             channels: "channels",
             "webchat.domain": "webchatDomain",
+
+            // Voice
+            "voice.file": "voiceFileUpload",
         };
 
         const byDataField = document.querySelector<HTMLElement>(`[data-field="${fieldKey}"]`);
@@ -358,33 +400,29 @@ const Moderation: React.FC = () => {
 
     const sendStepSilentNote = useCallback(
         (nextIndex: number) => {
-            const safeIndex = clampStep(nextIndex);
+            const safeIndex = clampWizardIndex(nextIndex);
             const humanIndex = safeIndex + 1;
-
-            // títulos por paso
-            const stepTitlesEs = ["Datos", "Reglas", "Canales", "Revisión"];
-            const stepTitlesEn = ["Basics", "Assistant rules", "Channels", "Review"];
-
-            const stepTitleEs = stepTitlesEs[safeIndex] ?? `Paso ${humanIndex}`;
-            const stepTitleEn = stepTitlesEn[safeIndex] ?? `Step ${humanIndex}`;
-
-            const stepTitle = uiLang === "en" ? stepTitleEn : stepTitleEs;
+            const stepKey = (wizardSteps[safeIndex]?.key ?? "basics") as WizardStepKey;
+            const stepTitle = wizardSteps[safeIndex]?.title ?? (uiLang === "en" ? `Step ${humanIndex}` : `Paso ${humanIndex}`);
 
             let focusText: string;
 
             if (uiLang === "en") {
-                if (safeIndex === 0) {
+                if (stepKey === "basics") {
                     focusText =
-                        "Keep talking in english , your role is to guide the user to complete the basic campaign data: country , name, goal, and lead definition then, optionally, summary, city, culture and tone).";
-                } else if (safeIndex === 1) {
+                        "Keep talking in english. Your role is to guide the user to complete the basic campaign data: country, name, goal, and lead definition (optionally summary, city, culture and tone).";
+                } else if (stepKey === "rules") {
                     focusText =
-                        "Keep talking in english , your role is to define the assistant rules: assistant name, initial greet, conversational logic, knowledge base (question and answers *IMPORTANT: mention that at least one Q&A is needed), allowed topics, human escalation and calendars if the user is interested.";
-                } else if (safeIndex === 2) {
+                        "Keep talking in english. Your role is to define the assistant rules: assistant name, initial greeting, conversational logic, knowledge base (IMPORTANT: at least one Q&A is required), allowed topics, human escalation and calendars if the user is interested.";
+                } else if (stepKey === "channels") {
                     focusText =
-                        "Keep talking in english , your role is to help the user choose and configure the moderation channels, without talking about rules or review yet.";
+                        "Keep talking in english. Your role is to help the user choose and configure the moderation channels.";
+                } else if (stepKey === "voice") {
+                    focusText =
+                        "Keep talking in english. Your role is to help the user upload or record a short voice sample so the WhatsApp bot can reply with audio. Suggest a clear, natural reading and avoid talking about other steps.";
                 } else {
                     focusText =
-                        "Keep talking in english , your role is to review that everything is ready to launch the campaign, once done offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
+                        "Keep talking in english. Your role is to review that everything is ready to launch the campaign. Once done, offer to launch the campaign without reopening previous steps unless the user asks explicitly.";
                 }
 
                 const message =
@@ -419,18 +457,21 @@ const Moderation: React.FC = () => {
             }
 
             // === español ===
-            if (safeIndex === 0) {
+            if (stepKey === "basics") {
                 focusText =
-                    "Sigue hablando en español, Tu rol es guiar al usuario para completar los datos básicos de la campaña: país principal del público, nombre, objetivo  y definición de lead, luego, opcionalmente, resumen, ciudad, cultura y tono.";
-            } else if (safeIndex === 1) {
+                    "Sigue hablando en español. Tu rol es guiar al usuario para completar los datos básicos de la campaña: país principal del público, nombre, objetivo y definición de lead (opcionalmente resumen, ciudad, cultura y tono).";
+            } else if (stepKey === "rules") {
                 focusText =
-                    "Sigue hablando en español, tu rol es guiar al usuario para definir las reglas del asistente: nombre del asistente, saludo inicial, lógica conversacional, base de conocimiento (preguntas y respuestas *IMPORTANTE: menciona que es necesaria al menos una), temas permitidos y escalamiento humano, y calendarios si el usuario está interesado.";
-            } else if (safeIndex === 2) {
+                    "Sigue hablando en español. Tu rol es guiar al usuario para definir las reglas del asistente: nombre, saludo inicial, lógica conversacional, base de conocimiento (IMPORTANTE: es necesaria al menos una pregunta/respuesta), temas permitidos, escalamiento humano y calendarios si el usuario está interesado.";
+            } else if (stepKey === "channels") {
                 focusText =
-                    "Sigue hablando en español, tu rol es guiar al usuario para elegir y configurar los canales de la campaña, sin hablar de reglas ni revisión todavía.";
+                    "Sigue hablando en español. Tu rol es guiar al usuario para elegir y configurar los canales de la campaña.";
+            } else if (stepKey === "voice") {
+                focusText =
+                    "Sigue hablando en español. Tu rol es ayudar al usuario a subir o grabar una muestra de voz para que el bot de WhatsApp pueda responder con audios. Sugerí una lectura clara y natural, sin mezclar temas de otros pasos.";
             } else {
                 focusText =
-                    "Sigue hablando en español, Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña, una vez hecho eso ofrece lanzar la campaña sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
+                    "Sigue hablando en español. Tu rol es ayudar a revisar que todo esté listo para lanzar la campaña. Una vez hecho eso, ofrecé lanzarla sin volver a pedir datos de pasos anteriores salvo que el usuario lo pida explícitamente.";
             }
 
             const message =
@@ -462,16 +503,34 @@ const Moderation: React.FC = () => {
                 );
             }
         },
-        [uiLang]
+        [uiLang, clampWizardIndex, wizardSteps]
     );
 
     const jumpTo = (i: number) => {
-        if (i <= current || validateStep(current)) {
-            const next = clampStep(i);
+        const next = clampWizardIndex(i);
+
+        // Going backwards is always allowed
+        if (next <= current) {
             setCurrent(next);
             scrollToTop();
             sendStepSilentNote(next);
+            return;
         }
+
+        // Going forward: require all previous steps to be valid
+        for (let s = 0; s < next; s++) {
+            if (!validateStep(s)) {
+                toastAndScrollMissing(s);
+                setCurrent(s);
+                scrollToTop();
+                sendStepSilentNote(s);
+                return;
+            }
+        }
+
+        setCurrent(next);
+        scrollToTop();
+        sendStepSilentNote(next);
     };
 
     const saveStepOne = useCallback(async () => {
@@ -507,18 +566,20 @@ const Moderation: React.FC = () => {
             toastAndScrollMissing(current);
             return false;
         }
-        if (current === 3) return true;
 
+        if (currentKey === "review") return true;
 
-        if (!data.campaignId && current > 0) {
+        if (!data.campaignId && currentKey !== "basics") {
             toast.error("Falta crear la campaña en el Paso 1.");
             return false;
         }
 
-        if (current === 0) return await saveStepOne();
+        if (currentKey === "basics") {
+            return await saveStepOne();
+        }
 
-        if (current === 1) {
-            // Paso 2 - ASISTENTE / REGLAS
+        if (currentKey === "rules") {
+            // Reglas del asistente
             const payload = mapAssistantSettingsFromContext({
                 assistant: data.assistant || {},
                 knowHow: data.knowHow || [],
@@ -529,8 +590,7 @@ const Moderation: React.FC = () => {
                 tone: data.tone,
                 customTone: (data as any).customTone,
             });
-            console.log('the payload',payload);
-            
+
             setSaving(true);
             try {
                 await updateAssistantSettings(data.campaignId!, payload);
@@ -544,8 +604,7 @@ const Moderation: React.FC = () => {
             }
         }
 
-        if (current === 2) {
-            // Paso 3 - CANALES
+        if (currentKey === "channels") {
             const channels = (data.channels || []) as Array<"instagram" | "facebook" | "whatsapp" | "webchat">;
             const hasWebchat = channels.includes("webchat");
             const webchatDomain = (data as any).webchatDomain?.trim?.() ?? "";
@@ -567,12 +626,48 @@ const Moderation: React.FC = () => {
             }
         }
 
+        if (currentKey === "voice") {
+            const file: File | null = (data as any)?.assistant?.voiceFile ?? null;
+
+            // ✅ Paso opcional: si no subió/grabó nada, seguimos
+            if (!file) return true;
+
+            const sig = `${file.name}|${file.size}|${file.lastModified}`;
+            if (lastVoiceUploadSigRef.current === sig) {
+                // Si ya subimos este mismo archivo, confirmamos que la campaña siga teniendo voz.
+                // (Si el user la borró, hasVoice=false y volvemos a subir.)
+                try {
+                    const st = await getModerationCampaignVoiceStatus(data.campaignId!);
+                    if (st?.hasVoice) return true;
+                } catch {
+                    // si falla el check, seguimos con upload normal
+                }
+            }
+
+            setSaving(true);
+            try {
+                await uploadModerationCampaignVoice(data.campaignId!, file);
+                lastVoiceUploadSigRef.current = sig;
+                toast.success(
+                    t("voiceStep.toast.uploaded", {
+                        defaultValue: "Voz subida correctamente.",
+                    })
+                );
+                return true;
+            } catch (err: any) {
+                toast.error(err?.message || "No se pudo subir la voz.");
+                return false;
+            } finally {
+                setSaving(false);
+            }
+        }
+
         return true;
-    }, [current, data, saveStepOne, toastAndScrollMissing, validateStep]);
+    }, [current, currentKey, data, saveStepOne, t, toastAndScrollMissing, validateStep]);
 
     const goPrev = () =>
         setCurrent((c) => {
-            const next = Math.max(0, c - 1);
+            const next = clampWizardIndex(c - 1);
             sendStepSilentNote(next);
             scrollToTop();
             return next;
@@ -582,7 +677,7 @@ const Moderation: React.FC = () => {
         const ok = await saveCurrentStep();
         if (!ok) return;
 
-        if (current === 3) {
+        if (currentKey === "review") {
             if (!data.campaignId) {
                 toast.error("Falta el id de campaña.");
                 return;
@@ -611,26 +706,41 @@ const Moderation: React.FC = () => {
         }
 
         setCurrent((c) => {
-            const next = Math.min(3, c + 1);
+            const next = clampWizardIndex(c + 1);
             sendStepSilentNote(next);
             scrollToTop();
             return next;
         });
-    }, [saveCurrentStep, current, data, navigate, resetAll, setSaving, sendStepSilentNote]);
+    }, [saveCurrentStep, currentKey, data, navigate, resetAll, setSaving, sendStepSilentNote, clampWizardIndex]);
 
     async function finalizeCampaign() {
-        const miss0 = missingFromStep0(data);
-        const miss1 = missingFromStep1(data);
-        const miss2 = missingFromStep2(data);
+        const missBasics = missingFromStep0(data);
+        const missRules = missingFromStep2(data);
+        const missChannels = missingFromStep1(data);
+        const missVoice = missingFromVoiceStep(data);
 
-        if (miss0.length || miss1.length || miss2.length) {
-            const failingStep = miss0.length ? 0 : miss1.length ? 1 : 2;
-            const stepName = ["Datos", "Reglas", "Canales"][failingStep] ?? String(failingStep);
+        const ordered = [
+            { key: "basics" as WizardStepKey, miss: missBasics },
+            { key: "rules" as WizardStepKey, miss: missRules },
+            { key: "channels" as WizardStepKey, miss: missChannels },
+            { key: "voice" as WizardStepKey, miss: missVoice },
+        ].filter((x) => x.key !== "voice" || hasWhatsapp);
+
+        const firstFail = ordered.find((x) => (x.miss?.length ?? 0) > 0);
+        if (firstFail) {
+            const failingStep = Math.max(0, wizardSteps.findIndex((s) => s.key === firstFail.key));
+            const stepName = wizardSteps[failingStep]?.title ?? String(firstFail.key);
+
             return {
                 success: false,
                 message: `Faltan completar datos para finalizar. Revisá el paso "${stepName}".`,
                 failingStep,
-                missing: { step0: miss0, step1: miss1, step2: miss2 },
+                missing: {
+                    basics: missBasics,
+                    rules: missRules,
+                    channels: missChannels,
+                    voice: missVoice,
+                },
             };
         }
 
@@ -700,10 +810,10 @@ const Moderation: React.FC = () => {
                 <OnlineLayout>
                     <div className="w-full px-2 md:px-4">
                         <div className="mb-4 md:mb-6">
-                            <StepperTop steps={STEPS_T} current={current} onStepClick={jumpTo} />
+                            <StepperTop steps={stepperSteps} current={current} onStepClick={jumpTo} />
                         </div>
 
-                        <EditModeBanner goToStep={() => jumpTo(0)}/>
+                        <EditModeBanner goToStep={() => jumpTo(0)} />
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                             <div className="lg:col-span-5">
                                 {/*                                 <AgencyChatbot
@@ -836,7 +946,7 @@ const Moderation: React.FC = () => {
                                                 };
                                             }
 
-                                            const next = clampStep(current + 1);
+                                            const next = clampWizardIndex(current + 1);
                                             setCurrent(next);
                                             sendStepSilentNote(next);
                                             scrollToTop();
@@ -852,7 +962,7 @@ const Moderation: React.FC = () => {
                                                 };
                                             }
 
-                                            const next = clampStep(current - 1);
+                                            const next = clampWizardIndex(current - 1);
                                             setCurrent(next);
                                             sendStepSilentNote(next);
                                             scrollToTop();
@@ -867,9 +977,9 @@ const Moderation: React.FC = () => {
                                             }
                                             if (target === null && Number.isFinite(args?.n)) {
                                                 const delta = Number(args.n);
-                                                target = clampStep(current + delta);
+                                                target = clampWizardIndex(current + delta);
                                             }
-                                            if (target === null) target = clampStep(current + 1);
+                                            if (target === null) target = clampWizardIndex(current + 1);
 
                                             if (target === current) {
                                                 return {
@@ -924,9 +1034,9 @@ const Moderation: React.FC = () => {
                                             }
                                             if (target === null && Number.isFinite(args?.n)) {
                                                 const delta = Math.abs(Number(args.n));
-                                                target = clampStep(current - delta);
+                                                target = clampWizardIndex(current - delta);
                                             }
-                                            if (target === null) target = clampStep(current - 1);
+                                            if (target === null) target = clampWizardIndex(current - 1);
 
                                             if (target === current) {
                                                 return {
@@ -1045,7 +1155,7 @@ const Moderation: React.FC = () => {
                                 /> */}
                             </div>
 
-                            {current === 0 && (
+                            {currentKey === "basics" && (
                                 <>
                                     <div className="lg:col-span-12">
                                         <StepOneTop />
@@ -1057,7 +1167,7 @@ const Moderation: React.FC = () => {
                                 </>
                             )}
 
-                            {current === 1 && (
+                            {currentKey === "rules" && (
                                 <>
                                     <div className="lg:col-span-12">
                                         <StepThreeTop />
@@ -1068,9 +1178,19 @@ const Moderation: React.FC = () => {
                                 </>
                             )}
 
-                            {current === 2 && <div className="lg:col-span-12"><StepTwo /></div>}
+                            {currentKey === "channels" && (
+                                <div className="lg:col-span-12">
+                                    <StepTwo />
+                                </div>
+                            )}
 
-                            {current === 3 && (
+                            {currentKey === "voice" && (
+                                <div className="lg:col-span-12">
+                                    <StepVoice />
+                                </div>
+                            )}
+
+                            {currentKey === "review" && (
                                 <div className="lg:col-span-12">
                                     <StepReview />
                                 </div>
@@ -1083,13 +1203,17 @@ const Moderation: React.FC = () => {
                                     onPrev={goPrev}
                                     onNext={goNext}
                                     nextLabel={
-                                        current === 0
+                                        currentKey === "basics"
                                             ? (saving ? (data.campaignId ? t("saving") : t("creating")) : t("next"))
-                                            : current === 1
+                                            : currentKey === "rules"
                                                 ? (saving ? t("saving_assistant") : t("next"))
-                                                : current === 2
+                                                : currentKey === "channels"
                                                     ? (saving ? t("saving_channels") : t("next"))
-                                                    : (saving ? t("creating") : t("create_campaign"))
+                                                    : currentKey === "voice"
+                                                        ? (saving
+                                                            ? t("voiceStep.buttons.uploading", { defaultValue: "Subiendo voz..." })
+                                                            : t("next"))
+                                                        : (saving ? t("creating") : t("create_campaign"))
                                     }
                                 />
                             </div>

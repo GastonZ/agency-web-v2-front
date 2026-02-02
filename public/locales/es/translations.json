@@ -485,5 +485,51 @@
     "campaigns_moderation_desc_4": "Escalamiento automático a humanos cuando hace falta.",
     "campaigns_moderation_desc_5": "Historial completo y métricas de desempeño. Incluye CRM.",
     "campaigns_moderation_desc_6": "Ideal para atención, ventas y soporte.",
-    "auth_subaccount": "Tengo una cuenta de miembro"
+    "auth_subaccount": "Tengo una cuenta de miembro",
+    "voiceStep": {
+        "shortTitle": "Voz",
+        "title": "Configuración de voz",
+        "subtitle": "Cargá una voz o grabá tu voz para que el bot responda con audios (recomendado MP3).",
+        "mode": {
+            "upload": "Subir",
+            "record": "Grabar"
+        },
+        "upload": {
+            "help": "Elegí un archivo de audio (ideal: mp3).",
+            "hint": "Si grabás desde el navegador, el formato puede ser webm/ogg según el dispositivo. También podés subir un mp3.",
+            "or": "o"
+        },
+        "record": {
+            "title": "Grabá tu voz",
+            "scriptLabel": "Leé este texto",
+            "scriptText": "Hola, soy el asistente virtual. Estoy acá para ayudarte. Gracias por contactarte, contame en qué puedo acompañarte hoy.",
+            "tip": "Hablá natural, como lo harías en una conversación real. 10–20 segundos suele ser suficiente.",
+            "state": {
+                "recording": "Grabando",
+                "ready": "Grabación lista",
+                "idle": "Listo para grabar"
+            },
+            "start": "Grabar",
+            "stop": "Finalizar",
+            "reset": "Repetir"
+        },
+        "errors": {
+            "noMicSupport": "Tu navegador no soporta grabación de audio.",
+            "micDenied": "No se pudo acceder al micrófono. Revisá permisos del navegador.",
+            "recordingFailed": "Falló la grabación de audio.",
+            "badFileType": "Por favor seleccioná un archivo de audio válido.",
+            "fileTooBig": "El archivo es demasiado grande. Recomendado: hasta 15 MB."
+        },
+        "preview": {
+            "label": "Vista previa",
+            "nextHint": "Cuando hagas clic en “Siguiente”, subiremos este audio para configurar la voz del bot.",
+            "empty": "Todavía no seleccionaste un audio. Elegí “Subir” o “Grabar” para continuar."
+        },
+        "buttons": {
+            "uploading": "Subiendo voz..."
+        },
+        "toast": {
+            "uploaded": "Voz subida correctamente."
+        }
+    }
 }

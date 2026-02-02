@@ -487,5 +487,51 @@
     "campaigns_moderation_desc_4": "Automatic escalation to humans when needed.",
     "campaigns_moderation_desc_5": "Full history and performance metrics. Includes CRM.",
     "campaigns_moderation_desc_6": "Ideal for support, sales, and customer service.",
-    "auth_subaccount": "I have a member account"
+    "auth_subaccount": "I have a member account",
+    "voiceStep": {
+        "shortTitle": "Voice",
+        "title": "Voice setup",
+        "subtitle": "Upload or record a voice sample so the bot can reply with audio (MP3 recommended).",
+        "mode": {
+            "upload": "Upload",
+            "record": "Record"
+        },
+        "upload": {
+            "help": "Choose an audio file (ideally: mp3).",
+            "hint": "Browser recordings may be webm/ogg depending on the device. You can also upload an mp3.",
+            "or": "or"
+        },
+        "record": {
+            "title": "Record your voice",
+            "scriptLabel": "Read this text",
+            "scriptText": "Hello, I’m your virtual assistant. I’m here to help you. Thanks for reaching out—tell me how I can assist you today.",
+            "tip": "Speak naturally, as in a real conversation. 10–20 seconds is usually enough.",
+            "state": {
+                "recording": "Recording",
+                "ready": "Recording ready",
+                "idle": "Ready to record"
+            },
+            "start": "Record",
+            "stop": "Stop",
+            "reset": "Record again"
+        },
+        "errors": {
+            "noMicSupport": "Your browser does not support audio recording.",
+            "micDenied": "Could not access the microphone. Check browser permissions.",
+            "recordingFailed": "Audio recording failed.",
+            "badFileType": "Please select a valid audio file.",
+            "fileTooBig": "File is too large. Recommended: up to 15 MB."
+        },
+        "preview": {
+            "label": "Preview",
+            "nextHint": "When you click “Next”, we’ll upload this audio to configure the bot voice.",
+            "empty": "No audio selected yet. Choose “Upload” or “Record” to continue."
+        },
+        "buttons": {
+            "uploading": "Uploading voice..."
+        },
+        "toast": {
+            "uploaded": "Voice uploaded successfully."
+        }
+    }
 }

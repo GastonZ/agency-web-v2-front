@@ -518,3 +518,35 @@ export async function lookupModerationCampaignLeads(args: {
   );
   return res.data;
 }
+
+export async function uploadModerationCampaignVoice(campaignId: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+
+  const res: AxiosResponse<ExtractedQA[]> = await api.put(
+    `moderation-campaigns/${campaignId}/upload/audio/voice`,
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+
+  return res.data;
+}
+
+export type ModerationCampaignVoiceStatus = {
+  hasVoice: boolean;
+  voiceId?: string | null;
+};
+
+export async function getModerationCampaignVoiceStatus(campaignId: string) {
+  const res = await api.get<ModerationCampaignVoiceStatus>(
+    `moderation-campaigns/${campaignId}/voice`
+  );
+  return res.data;
+}
+
+export async function deleteModerationCampaignVoice(campaignId: string) {
+  const res = await api.delete<{ deleted: boolean }>(
+    `moderation-campaigns/${campaignId}/voice`
+  );
+  return res.data;
+}
