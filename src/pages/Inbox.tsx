@@ -1695,7 +1695,6 @@ export default function Inbox() {
             </div>
             <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">Conversaciones</div>
                 {leadMiniLoading ? <div className="text-xs text-neutral-500">Cargando status…</div> : null}
               </div>
 
