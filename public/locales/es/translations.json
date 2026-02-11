@@ -531,5 +531,64 @@
         "toast": {
             "uploaded": "Voz subida correctamente."
         }
+    },
+    "v2Conversational": {
+        "title": "",
+        "profile": "Perfil",
+        "status": {
+            "connected": "Conectado",
+            "connecting": "Conectando",
+            "disconnected": "Desconectado"
+        },
+        "actions": {
+            "connect": "Conectar",
+            "disconnect": "Desconectar",
+            "mic": "Micrófono",
+            "muted": "Silenciado",
+            "muteTitle": "Silenciar micrófono",
+            "unmuteTitle": "Activar micrófono",
+            "settings": "Configuración",
+            "settingsTitle": "Configuración de prompt / contexto",
+            "clear": "Limpiar",
+            "clearTitle": "Borrar chat",
+            "saveSession": "Guardar sesión",
+            "saveSessionTitle": "Guardar transcripción",
+            "send": "Enviar"
+        },
+        "empty": {
+            "connected": "Decí algo (voz) o escribí abajo.",
+            "disconnected": "Conectate para empezar a chatear."
+        },
+        "input": {
+            "placeholder": "Escribí un mensaje…"
+        },
+        "tip": "Tip: cuando estás conectado, también podés hablar — la sesión va a usar tu micrófono.",
+        "aiTalking": "La IA está respondiendo",
+        "settingsPanel": {
+            "title": "Prompt y contexto",
+            "subtitle": "El prompt se guarda en el backend. El contexto se guarda localmente.",
+            "resetPrompt": "Reiniciar",
+            "resetPromptTitle": "Reiniciar prompt",
+            "resetContext": "Reiniciar contexto",
+            "applyContext": "Aplicar contexto",
+            "savePrompt": "Guardar prompt"
+        },
+        "draftPanel": {
+            "title": "Borrador de moderación",
+            "usingContext": "Usando ModerationContext (el autocompletado estará listo en el asistente de creación).",
+            "noProvider": "No está envuelto en ModerationProvider — usando localStorage como respaldo.",
+            "goCreate": "Ir a crear",
+            "goCreateTitleReady": "Ir a crear campaña de moderación",
+            "goCreateTitleWaiting": "Esperando que el asistente complete los campos requeridos",
+            "fields": {
+                "name": "Nombre",
+                "goal": "Objetivo",
+                "country": "País",
+                "summary": "Resumen",
+                "leadDefinition": "Definición de lead"
+            },
+            "missing": "Falta: {{items}}",
+            "missingNone": "Nada"
+        }
     }
 }

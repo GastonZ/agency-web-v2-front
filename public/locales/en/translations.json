@@ -533,5 +533,64 @@
         "toast": {
             "uploaded": "Voice uploaded successfully."
         }
+    },
+    "v2Conversational": {
+        "title": "",
+        "profile": "Profile",
+        "status": {
+            "connected": "Connected",
+            "connecting": "Connecting",
+            "disconnected": "Disconnected"
+        },
+        "actions": {
+            "connect": "Connect",
+            "disconnect": "Disconnect",
+            "mic": "Mic",
+            "muted": "Muted",
+            "muteTitle": "Mute mic",
+            "unmuteTitle": "Unmute mic",
+            "settings": "Settings",
+            "settingsTitle": "Prompt / context settings",
+            "clear": "Clear",
+            "clearTitle": "Clear chat",
+            "saveSession": "Save session",
+            "saveSessionTitle": "Save transcript",
+            "send": "Send"
+        },
+        "empty": {
+            "connected": "Say something (voice) or type below.",
+            "disconnected": "Connect to start chatting."
+        },
+        "input": {
+            "placeholder": "Type a message…"
+        },
+        "tip": "Tip: when connected, you can also speak — the session will use your microphone.",
+        "aiTalking": "AI is responding",
+        "settingsPanel": {
+            "title": "Prompt & Context",
+            "subtitle": "Prompt stored in backend. Context stored locally.",
+            "resetPrompt": "Reset",
+            "resetPromptTitle": "Reset prompt",
+            "resetContext": "Reset context",
+            "applyContext": "Apply context",
+            "savePrompt": "Save prompt"
+        },
+        "draftPanel": {
+            "title": "Moderation draft",
+            "usingContext": "Using ModerationContext (autofill will be ready in the creation wizard).",
+            "noProvider": "Not wrapped in ModerationProvider — using localStorage fallback.",
+            "goCreate": "Go create",
+            "goCreateTitleReady": "Go to moderation campaign creation",
+            "goCreateTitleWaiting": "Waiting for the assistant to fill required fields",
+            "fields": {
+                "name": "Name",
+                "goal": "Goal",
+                "country": "Country",
+                "summary": "Summary",
+                "leadDefinition": "Lead definition"
+            },
+            "missing": "Missing: {{items}}",
+            "missingNone": "None"
+        }
     }
 }

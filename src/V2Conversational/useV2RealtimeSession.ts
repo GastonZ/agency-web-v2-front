@@ -105,11 +105,44 @@ type HookOptions = {
 };
 
 function safeJsonParse(raw: string): any {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+
+  // Strict parse first
   try {
-    return JSON.parse(raw);
+    return JSON.parse(s);
   } catch {
-    return null;
+    // continue
   }
+
+  // Recover common failures:
+  // - Wrapped in text/code fences
+  // - Trailing commas
+  // - Extra whitespace/newlines around the JSON
+  const candidates: string[] = [];
+
+  const objStart = s.indexOf("{");
+  const objEnd = s.lastIndexOf("}");
+  if (objStart !== -1 && objEnd !== -1 && objEnd > objStart) {
+    candidates.push(s.slice(objStart, objEnd + 1));
+  }
+
+  const arrStart = s.indexOf("[");
+  const arrEnd = s.lastIndexOf("]");
+  if (arrStart !== -1 && arrEnd !== -1 && arrEnd > arrStart) {
+    candidates.push(s.slice(arrStart, arrEnd + 1));
+  }
+
+  for (const c of candidates) {
+    const cleaned = c.replace(/,\s*([}\]])/g, "$1");
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // try next
+    }
+  }
+
+  return null;
 }
 
 function extractToolBlocks(text: string): { cleanText: string; events: Array<{ type: "update" | "navigate"; payload: any }> } {

@@ -79,13 +79,13 @@ const Dashboard: React.FC = () => {
     return (
         <OnlineLayout>
             <div className="w-full px-2 md:px-4">
-                    {/* <V2ConversationalWidget profile="dashboard"/> */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch pb-2">
+                    <V2ConversationalWidget profile="dashboard" />
+{/*                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch pb-2">
                     <div className="lg:col-span-12 flex">
                         <HeroConversationalAgency />
                     </div>
 
-                </div>
+                </div> */}
             </div>
         </OnlineLayout>
     );

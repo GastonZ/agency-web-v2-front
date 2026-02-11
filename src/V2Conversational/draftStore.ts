@@ -6,6 +6,21 @@ export type CampaignDraftV1 = {
   summary?: string;
   leadDefinition?: string;
   country?: { code?: string; name?: string };
+
+  // Step 2 — Assistant
+  assistant?: { name?: string; greeting?: string; conversationLogic?: string };
+
+  // Step 2 — KnowHow (Q&A)
+  knowHow?: Array<{ id?: string; question: string; answer: string }>;
+
+  // Step 3 — Channels
+  channels?: Array<"instagram" | "facebook" | "whatsapp" | "webchat">;
+  webchatDomain?: string;
+
+  // Escalation
+  escalationItems?: string[];
+  escalationPhone?: string;
+
   missing?: string[];
   updatedAt: number;
 };
@@ -34,6 +49,14 @@ export function mergeDraft(patch: Partial<Omit<CampaignDraftV1, "version" | "upd
     summary: patch.summary ?? prev?.summary,
     leadDefinition: patch.leadDefinition ?? prev?.leadDefinition,
     country: patch.country ?? prev?.country,
+
+    assistant: patch.assistant ?? prev?.assistant,
+    knowHow: patch.knowHow ?? prev?.knowHow,
+    channels: patch.channels ?? prev?.channels,
+    webchatDomain: patch.webchatDomain ?? prev?.webchatDomain,
+    escalationItems: patch.escalationItems ?? prev?.escalationItems,
+    escalationPhone: patch.escalationPhone ?? prev?.escalationPhone,
+
     missing: patch.missing ?? prev?.missing,
     updatedAt: Date.now(),
   };
