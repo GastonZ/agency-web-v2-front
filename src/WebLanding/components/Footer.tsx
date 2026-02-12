@@ -1,163 +1,122 @@
-import { useSmoothScroll } from "../hooks/use-smooth-scroll"
-import { useI18n } from "../lib/i18n";
-import { motion } from "framer-motion";
 
-const Footer = () => {
-  const { scrollToSection } = useSmoothScroll()
-  const { t } = useI18n()
+import React from "react";
+import { motion } from "framer-motion";
+import { useI18n } from "../lib/i18n";
+import { useSmoothScroll } from "../hooks/use-smooth-scroll";
+
+export default function Footer() {
+  const { t } = useI18n();
+  const { scrollToSection } = useSmoothScroll();
 
   return (
-    <>
-      {/* Footer principal con bordes consistentes */}
-      <footer className="relative w-full m-0 p-0 overflow-hidden" role="contentinfo">
-        <div className="mx-auto max-w-7xl border-t border-gray-200">
-          {/* Contenido del footer */}
-          <div className="flex flex-col sm:flex-row lg:flex-row items-center sm:items-start justify-between gap-4 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8">
-            {/* Logo con background abstract */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              viewport={{ once: true, amount: 0.3 }}
-              className="flex-shrink-0 flex-1 py-8"
-            >
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden">
-                <img
-                  src="/datacivis-iso.svg"
-                  alt="Datacivis - Logo de la empresa"
-                  className="absolute inset-0 w-full h-full object-contain p-2 invert"
-                  role="img"
-                />
-              </div>
-            </motion.div>
-            {/* Navegación */}
-            <div className="flex flex-1 py-4 sm:py-8 justify-center items-center border-y sm:border-x border-gray-200">
-              <nav className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4" role="navigation" aria-label="Navegación del footer">
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  onClick={() => scrollToSection('quienes-somos')}
-                  className="text-center sm:text-left text-gray-600 hover:text-gray-900 transition-colors text-xs sm:text-sm lg:text-base"
-                  aria-label={`Navegar a ${t('footer.about')}`}
-                >
-                  {t('footer.about')}
-                </motion.button>
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  onClick={() => scrollToSection('beneficios')}
-                  className="text-center sm:text-left text-gray-600 hover:text-gray-900 transition-colors text-xs sm:text-sm lg:text-base"
-                  aria-label={`Navegar a ${t('footer.benefits')}`}
-                >
-                  {t('footer.benefits')}
-                </motion.button>
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  onClick={() => scrollToSection('caracteristicas')}
-                  className="text-center sm:text-left text-gray-600 hover:text-gray-900 transition-colors text-xs sm:text-sm lg:text-base"
-                  aria-label={`Navegar a ${t('footer.features')}`}
-                >
-                  {t('footer.features')}
-                </motion.button>
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  onClick={() => scrollToSection('casos-de-uso')}
-                  className="text-center sm:text-left text-gray-600 hover:text-gray-900 transition-colors text-xs sm:text-sm lg:text-base"
-                  aria-label={`Navegar a ${t('footer.useCases')}`}
-                >
-                  {t('footer.useCases')}
-                </motion.button>
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  onClick={() => scrollToSection('testimonios')}
-                  className="text-center sm:text-left text-gray-600 hover:text-gray-900 transition-colors text-xs sm:text-sm lg:text-base"
-                  aria-label={`Navegar a ${t('footer.testimonials')}`}
-                >
-                  {t('footer.testimonials')}
-                </motion.button>
-              </nav>
-            </div>
+    <footer className="relative w-full border-t border-white/[0.08] bg-[#090909] pt-24 pb-12 overflow-hidden">
+      {/* Background glow removed for sharpness */}
 
-            {/* Contacto y redes sociales */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 }}
-              viewport={{ once: true, amount: 0.3 }}
-              className="flex flex-col gap-3 sm:gap-4 lg:gap-6 flex-1 py-4 sm:py-8 items-center sm:items-start"
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
-                viewport={{ once: true, amount: 0.3 }}
-                className="text-gray-800 font-medium text-sm sm:text-base text-center sm:text-left"
-              >
-                hola@datacivis.com
-              </motion.div>
+      <div className="mx-auto max-w-7xl px-4 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-12 lg:gap-8 mb-20">
 
-              {/* Redes sociales */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.7 }}
-                viewport={{ once: true, amount: 0.3 }}
-                className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4"
-              >
-                <a href="https://www.facebook.com/datacivis/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Síguenos en Facebook">
-                  <img src="/fb.svg" alt="Facebook" className="w-4 h-4 sm:w-5 sm:h-5 invert" />
-                </a>
-                <a href="https://www.instagram.com/iadatacivis/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Síguenos en Instagram">
-                  <img src="/ig.svg" alt="Instagram" className="w-4 h-4 sm:w-5 sm:h-5 invert" />
-                </a>
-                <a href="https://www.linkedin.com/company/datacivis" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Síguenos en LinkedIn">
-                  <img src="/in.svg" alt="LinkedIn" className="w-4 h-4 sm:w-5 sm:h-5 invert" />
-                </a>
-              </motion.div>
-            </motion.div>
+          {/* Brand block */}
+          <div className="md:col-span-4 lg:col-span-5 space-y-8">
+            <button onClick={() => scrollToSection('home')} className="flex items-center">
+              <img
+                src="/DT_logo.png"
+                alt="Datacivis"
+                className="h-10 w-auto"
+              />
+            </button>
+            <p className="text-white/60 text-base leading-relaxed max-w-sm">
+              Datacivis es el Large Intelligence System Agent diseñado para equipos que prefieren hablar antes que configurar. Automatización de marketing real, hecha en LATAM.
+            </p>
           </div>
 
-          {/* Copyright */}
-          <div className="border-t border-gray-200 py-8 w-full">
+          {/* Links blocks */}
+          <div className="md:col-span-1 lg:col-span-2 space-y-6">
+            <h4 className="text-white font-bold text-sm tracking-widest uppercase opacity-70">Producto</h4>
+            <ul className="space-y-4">
+              <li>
+                <button onClick={() => scrollToSection('beneficios')} className="text-white/50 hover:text-white transition-colors text-sm">
+                  {t('nav.benefits')}
+                </button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('caracteristicas')} className="text-white/50 hover:text-white transition-colors text-sm">
+                  {t('nav.features')}
+                </button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('demo')} className="text-white/50 hover:text-white transition-colors text-sm">
+                  Dashboard
+                </button>
+              </li>
+            </ul>
           </div>
+
+          <div className="md:col-span-1 lg:col-span-2 space-y-6">
+            <h4 className="text-white font-bold text-sm tracking-widest uppercase opacity-70">Compañía</h4>
+            <ul className="space-y-4">
+              <li>
+                <button onClick={() => scrollToSection('casos-de-uso')} className="text-white/50 hover:text-white transition-colors text-sm">
+                  {t('nav.useCases')}
+                </button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('stack')} className="text-white/50 hover:text-white transition-colors text-sm">
+                  Stack de I.A.
+                </button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('comparativa')} className="text-white/50 hover:text-white transition-colors text-sm">
+                  Diferencial
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div className="md:col-span-1 lg:col-span-3 space-y-6">
+            <h4 className="text-white font-bold text-sm tracking-widest uppercase opacity-70">Contacto</h4>
+            <ul className="space-y-4">
+              <li>
+                <a href="mailto:hola@datacivis.com" className="text-white hover:text-white/80 transition-colors text-lg font-bold">
+                  hola@datacivis.com
+                </a>
+              </li>
+              <li className="text-white/50 text-sm">
+                Buenos Aires, Argentina<br />
+                En todo LATAM.
+              </li>
+            </ul>
+          </div>
+
         </div>
 
-        {/* Watermark separado del footer */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.8 }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="relative w-full m-0 p-0"
-        >
-          <div className="text-center max-w-7xl mx-auto m-0 p-0">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut", delay: 0.9 }}
-              viewport={{ once: true, amount: 0.3 }}
-              className="text-[120px] sm:text-[160px] md:text-[200px] lg:text-[250px] xl:text-[300px] font-medium leading-none tracking-tight bg-gradient-to-b from-gray-900/5 from-[1%] to-gray-600 bg-clip-text text-transparent select-none m-0 p-0 "
-            >
-              Datacivis
-            </motion.h2>
+        {/* Bottom bar */}
+        <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
+          <p className="text-white/20 text-xs tracking-wider">
+            © {new Date().getFullYear()} DATACIVIS. TODOS LOS DERECHOS RESERVADOS.
+          </p>
+          <div className="flex gap-8">
+            <a href="#" className="text-white/20 hover:text-white/40 text-[10px] font-bold tracking-widest uppercase transition-colors">Privacidad</a>
+            <a href="#" className="text-white/20 hover:text-white/40 text-[10px] font-bold tracking-widest uppercase transition-colors">Términos</a>
           </div>
-        </motion.div>
-      </footer>
-    </>
-  )
-}
+        </div>
+      </div>
 
-export default Footer
+      {/* Large Watermark */}
+      <div className="mt-12 pointer-events-none select-none overflow-hidden flex justify-center relative top-12">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: .9, y: 0 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+          viewport={{ once: true }}
+          className="w-full max-w-7xl px-4"
+        >
+          <img
+            src="/datacivis-logo-watermark.svg"
+            alt="Datacivis"
+            className="w-full h-auto"
+          />
+        </motion.div>
+      </div>
+    </footer>
+  );
+}

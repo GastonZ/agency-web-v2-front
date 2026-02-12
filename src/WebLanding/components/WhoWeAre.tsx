@@ -1,24 +1,18 @@
-"use client";
 
 import React from "react";
 import { motion } from "framer-motion";
 import { Badge } from "./ui/badge";
 import { useI18n } from "../lib/i18n";
+import ProblemIllustration from "./ProblemIllustration";
 
 function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-    // Borde gradiente blanco→#999 (igual que tus headings) usando wrapper + padding
     return (
-        <span className={`relative inline-flex p-[.5px] py-0 bg-white/5 shadow-[inset_0px_0px_16px_0px_rgba(255,255,255,0.15)] outline outline-1 outline-offset-[-1px] outline-white/10 backdrop-blur-[5px] ${className}`}>
-            <div className="w-1 h-1 sm:w-2 sm:h-2 border-l-2 border-b-2 border-white/50 absolute bottom-0 left-0"></div>
-            <div className="w-1 h-1 sm:w-2 sm:h-2 border-r-2 border-b-2 border-white/50 absolute bottom-0 right-0"></div>
-            <div className="w-1 h-1 sm:w-2 sm:h-2 border-r-2 border-t-2 border-white/50 absolute top-0 right-0"></div>
-            <div className="w-1 h-1 sm:w-2 sm:h-2 border-l-2 border-t-2 border-white/50 absolute top-0 left-0"></div>
-            <span className="inline-flex items-center bg-[#090909]/80 px-2 sm:px-3 py-1 sm:py-1.5 leading-tight tracking-tight bg-gradient-to-b from-white from-[55%] to-[#999] bg-clip-text text-transparent text-xs sm:text-sm">
-                {children}
-            </span>
+        <span className={`inline-flex items-center px-4 py-2 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md text-white/70 text-xs sm:text-sm font-medium tracking-tight transition-colors hover:bg-white/[0.06] hover:text-white ${className}`}>
+            {children}
         </span>
     );
 }
+
 export const StarIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -43,54 +37,8 @@ export const StarIcon = (props: React.SVGProps<SVGSVGElement>) => (
             strokeLinecap="round"
             strokeLinejoin="round"
         />
-        <path d="M22 2.5v6" stroke="url(#paint1_linear)" strokeWidth={1.5} strokeLinecap="round" />
-        <path d="M28 9.5v4" stroke="url(#paint2_linear)" strokeWidth={1.5} strokeLinecap="round" />
-        <path d="M19 5.5h6" stroke="url(#paint3_linear)" strokeWidth={1.5} strokeLinecap="round" />
-        <path d="M26 11.5h4" stroke="url(#paint4_linear)" strokeWidth={1.5} strokeLinecap="round" />
         <defs>
-            <filter
-                id="filter0_i_star"
-                x="2.25"
-                y="6.75"
-                width="23.5"
-                height="23.5"
-                filterUnits="userSpaceOnUse"
-                colorInterpolationFilters="sRGB"
-            >
-                <feFlood floodOpacity="0" result="BackgroundImageFix" />
-                <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                <feColorMatrix
-                    in="SourceAlpha"
-                    type="matrix"
-                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-                    result="hardAlpha"
-                />
-                <feOffset />
-                <feGaussianBlur stdDeviation="5" />
-                <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
-                <feColorMatrix
-                    type="matrix"
-                    values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.2 0"
-                />
-                <feBlend in2="shape" result="effect1_innerShadow" />
-            </filter>
             <linearGradient id="paint0_linear" x1="14" y1="7.5" x2="14" y2="29.5" gradientUnits="userSpaceOnUse">
-                <stop offset="0.55" stopColor="white" />
-                <stop offset="1" stopColor="#999999" />
-            </linearGradient>
-            <linearGradient id="paint1_linear" x1="22.5" y1="2.5" x2="22.5" y2="8.5" gradientUnits="userSpaceOnUse">
-                <stop offset="0.55" stopColor="white" />
-                <stop offset="1" stopColor="#999999" />
-            </linearGradient>
-            <linearGradient id="paint2_linear" x1="28.5" y1="9.5" x2="28.5" y2="13.5" gradientUnits="userSpaceOnUse">
-                <stop offset="0.55" stopColor="white" />
-                <stop offset="1" stopColor="#999999" />
-            </linearGradient>
-            <linearGradient id="paint3_linear" x1="22" y1="5.5" x2="22" y2="6.5" gradientUnits="userSpaceOnUse">
-                <stop offset="0.55" stopColor="white" />
-                <stop offset="1" stopColor="#999999" />
-            </linearGradient>
-            <linearGradient id="paint4_linear" x1="28" y1="11.5" x2="28" y2="12.5" gradientUnits="userSpaceOnUse">
                 <stop offset="0.55" stopColor="white" />
                 <stop offset="1" stopColor="#999999" />
             </linearGradient>
@@ -100,98 +48,160 @@ export const StarIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function WhoWeAre() {
     const { t } = useI18n()
-    
+
     return (
         <section
             id="quienes-somos"
-            aria-labelledby="who-we-are-title"
-            className="relative w-full border-t border-gray-200"
-            itemScope
-            itemType="https://schema.org/Organization"
+            className="relative w-full overflow-hidden"
         >
-            <div className="mx-auto max-w-7xl py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 md:px-6 lg:px-8">
-                {/* Título H2 SEO (el H1 queda en el hero) */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    className="flex justify-center"
-                >
-                        <Badge variant="outline" className="mb-3 sm:mb-4 md:mb-6 bg-white border-gray-200 text-gray-800 rounded-full px-6 py-2 text-sm font-medium shadow-sm">
-                            {t('whoWeAre.badge')}
-                        </Badge>
-                </motion.div>
-                
-                {/* H2 principal para accesibilidad */}
-                <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    id="who-we-are-title"
-                    className="font-heading bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent text-3xl md:text-5xl tracking-tight font-semibold mb-4 text-center"
-                >
-                    {t('whoWeAre.title')}
-                </motion.h2>
-                {/* Frase principal con pills como en tu diseño */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    className="mt-6 sm:mt-8 md:mt-10 lg:mt-12 text-center font-heading"
-                >
-                        <div className="mx-auto max-w-xs sm:max-w-xl md:max-w-2xl text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl tracking-tight text-gray-700 leading-relaxed px-2 sm:px-4">
-                            {t('whoWeAre.mainQuote')}
+            {/* Dark Mask Transition - Softens the entry to the structure background */}
+      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[#0a0a0a] to-transparent z-10 pointer-events-none" />
+            {/* Background elements */}
+            <div className="absolute top-0 left-0 w-full h-[500px] pointer-events-none" />
+
+            <div className="mx-auto max-w-7xl py-24 sm:py-32 px-4 relative z-10">
+                {/* intelligence Intro */}
+                {/* intelligence Intro - Hidden as requested */}
+                {/* 
+                <div className="grid lg:grid-cols-2 gap-20 items-center mb-32 sm:mb-48">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8 }}
+                        viewport={{ once: true }}
+                        className="space-y-12"
+                    >
+                        <div>
+                            <Badge variant="outline" className="mb-6 bg-white/5 border-white/10 text-white/90 rounded-full px-4 py-1.5 text-xs font-bold tracking-[0.2em] uppercase backdrop-blur-md">
+                                {t('whoWeAre.badge')}
+                            </Badge>
+                            <h2 className="text-3xl sm:text-4xl font-heading font-bold text-white leading-[1.3] tracking-tight max-w-4xl">
+                                “{t('whoWeAre.mainQuote')}”
+                            </h2>
                         </div>
+
+                        <div className="space-y-8">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/20">
+                                {t('whoWeAre.operationalText')}
+                            </p>
+                            <div className="flex flex-wrap gap-3">
+                                {t('whoWeAre.automation.options').map((opt: string, i: number) => (
+                                    <Badge key={i} variant="outline" className="bg-white/[0.03] border-white/5 text-white/60 rounded-full px-4 py-2 text-xs font-medium backdrop-blur-md hover:bg-white/5 hover:text-white transition-colors">
+                                        {opt}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
 
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        className="mt-4 sm:mt-6 md:mt-8 flex flex-col items-center gap-2 sm:gap-3 text-gray-600"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1.2 }}
+                        viewport={{ once: true }}
+                        className="relative aspect-square max-w-md mx-auto lg:mx-0 flex items-center justify-center p-8 lg:p-12"
                     >
-                        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-base lg:text-lg flex-wrap justify-center">
-                            <StarIcon />
-                            <span>{t('whoWeAre.operationalText')}</span>
+                        <div className="relative w-full h-full flex items-center justify-center">
+                            <div className="w-40 h-40 sm:w-56 sm:h-56 bg-white/[0.01] border border-white/10 rounded-full flex items-center justify-center relative backdrop-blur-sm group">
+                                <div className="absolute inset-0 bg-white/[0.02] rounded-full animate-pulse" />
+                                <StarIcon className="w-16 h-16 sm:w-24 sm:h-24 text-white relative z-10 drop-shadow-[0_0_25px_rgba(255,255,255,0.4)]" />
 
-                            <Pill className="align-baseline">
-                                {/* Accesibilidad */}
-                                <span className="sr-only">
-                                    {t('whoWeAre.automation.options').join(', ')}
-                                </span>
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                                    className="absolute inset-2 border border-dashed border-white/10 rounded-full"
+                                />
+                            </div>
 
-                                {/* Carril: altura = line-height */}
-                                <span
-                                    aria-hidden="true"
-                                    className="relative block overflow-hidden min-w-[24ch] h-[var(--roller-h)] [--roller-h:1.5rem] sm:[--roller-h:1.5rem]"
+                            {[...Array(4)].map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    animate={{
+                                        rotate: i % 2 === 0 ? 360 : -360,
+                                        scale: [1, 1.05, 1],
+                                    }}
+                                    transition={{
+                                        rotate: { duration: 15 + i * 10, repeat: Infinity, ease: "linear" },
+                                        scale: { duration: 4 + i, repeat: Infinity, ease: "easeInOut" }
+                                    }}
+                                    className="absolute border border-white/[0.05] rounded-full"
+                                    style={{
+                                        width: `${60 + i * 25}%`,
+                                        height: `${60 + i * 25}%`,
+                                        borderWidth: i === 3 ? '2px' : '1px',
+                                        opacity: 1 - i * 0.2
+                                    }}
                                 >
-                                    {/* Fantasma para fijar ancho */}
-                                    <span className="absolute inset-0 opacity-0 pointer-events-none whitespace-nowrap">
-                                        {t('whoWeAre.automation.options')[3]}
-                                    </span>
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white/20 rounded-full blur-[1px] shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                                    {i % 2 === 0 && (
+                                        <div className="absolute bottom-1/4 right-0 w-1 h-1 bg-white/10 rounded-full" />
+                                    )}
+                                </motion.div>
+                            ))}
 
-                                    {/* Pista */}
-                                    <span className="words-roller block bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent">
-                                        {t('whoWeAre.automation.options').map((option: any, index: number) => (
-                                            <span key={index} className="block whitespace-nowrap h-[var(--roller-h)]">{option}</span>
-                                        ))}
-                                        <span className="block whitespace-nowrap h-[var(--roller-h)]">{t('whoWeAre.automation.options')[0]}</span>
-                                    </span>
-                                </span>
-                            </Pill>
-
+                            <div className="absolute -inset-20 bg-gradient-radial from-white/[0.05] to-transparent blur-3xl rounded-full -z-10" />
                         </div>
-                        <p className="mt-4 sm:mt-6 max-w-xs sm:max-w-2xl md:max-w-3xl text-xs sm:text-sm leading-relaxed text-gray-500 px-2 sm:px-4 font-body">
-                            {t('whoWeAre.disclaimer')}
-                        </p>
                     </motion.div>
-                </motion.div>
+                </div>
+                */}
 
+
+                {/* Problem & Solution Section - More Dynamic */}
+                <div className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                        viewport={{ once: true }}
+                        className="order-2 lg:order-1 relative"
+                    >
+                        <ProblemIllustration />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8 }}
+                        viewport={{ once: true }}
+                        className="space-y-12 order-1 lg:order-2"
+                    >
+                        <div className="space-y-8">
+                            <h2 className="text-3xl lg:text-[36px] font-bold text-white leading-tight tracking-tight font-heading">
+                                {t('whoWeAre.description').split('.')[0]}.
+                            </h2>
+                            <p className="text-lg text-white/40 leading-relaxed font-medium">
+                                {t('whoWeAre.description').split('.').slice(1).join('.')}
+                            </p>
+                        </div>
+
+                        <div className="relative p-10 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-md overflow-hidden group/quote">
+
+                            {/* Decorative Quote Icon */}
+                            <div className="absolute -top-4 -left-2 text-white/5 font-serif text-[120px] pointer-events-none group-hover/quote:text-white/[0.08] transition-colors duration-700">“</div>
+
+                            <div className="relative z-10 space-y-4">
+                                <p className="text-white/80 font-medium text-xl leading-relaxed italic pr-4">
+                                    "Datacivis transforma tus indicaciones en resultados: hablar es hacer."
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-px w-8 bg-white/20" />
+                                    <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/30">Misión Datacivis</span>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    className="mt-40 text-center text-[10px] uppercase text-white/10 font-bold"
+                >
+                    {t('whoWeAre.disclaimer')}
+                </motion.p>
             </div>
-
+            
         </section>
     );
 }
+
