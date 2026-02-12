@@ -21,18 +21,17 @@ import { DEFAULT_PROMPT_CONTEXT } from "./promptUtils";
 import type { PromptContext } from "./promptUtils";
 import { apiPromptReset, apiSavePrompt, apiSaveSession } from "./realtimeApi";
 import type { SessionLogItem } from "./realtimeApi";
-import { useV2RealtimeSession, type ToolEvent } from "./useV2RealtimeSession";
+import { useV2RealtimeSession } from "./useV2RealtimeSession";
 
-import { mergeDraft, clearDraft } from "./draftStore";
+import { clearDraft, readDraft } from "./draftStore";
 
 import { useModeration } from "../context/ModerationContext";
 
 const CONTEXT_STORAGE_KEY = "v2conversational:context";
-const MODERATION_DRAFT_KEYS = ["campaign:moderation:draft", "moderationCampaignCtx"];
-
+const USER_BUFFER_KEY = "v2conversational:user_buffer:v1";
+const PENDING_DRAFT_KEY = "v2conversational:pending_draft:v1";
 type ToolCountry = { code?: string; name?: string };
 type ToolAssistant = { name?: string; greeting?: string; conversationLogic?: string };
-type ToolKnowHow = { id?: string; question?: string; answer?: string };
 
 type ToolState = {
   campaign_type?: string;
@@ -63,25 +62,6 @@ function useModerationOptional() {
   }
 }
 
-function normalizeCountry(p: any): ToolCountry | undefined {
-  if (!p) return undefined;
-  if (typeof p === "string") {
-    const s = p.trim();
-    if (!s) return undefined;
-    if (/^[A-Za-z]{2,3}$/.test(s)) return { code: s.toUpperCase() };
-    return { name: s };
-  }
-  if (typeof p === "object") {
-    const code = typeof p.code === "string" ? p.code.trim().toUpperCase() : undefined;
-    const name = typeof p.name === "string" ? p.name.trim() : undefined;
-    return code || name ? { code, name } : undefined;
-  }
-  return undefined;
-}
-
-const TOOL_CHANNELS = ["instagram", "facebook", "whatsapp", "webchat"] as const;
-type ToolChannel = (typeof TOOL_CHANNELS)[number];
-
 function stripToolBlocks(text: string) {
   if (!text) return "";
   return text
@@ -90,94 +70,11 @@ function stripToolBlocks(text: string) {
     // remove stray mentions
     .replace(/\bTOOL_UPDATE\b/g, "")
     .replace(/\bTOOL_NAVIGATE\b/g, "")
+    .replace(/\bTOOL_COMPLETE\b/g, "")
+    .replace(/\btool\s*update\b/gi, "")
+    .replace(/\btool\s*complete\b/gi, "")
+    .replace(/\btool\s*call\b/gi, "")
     .trim();
-}
-
-function normalizeStringArray(v: any): string[] {
-  if (!v) return [];
-  if (Array.isArray(v)) {
-    return v.map((x) => (typeof x === "string" ? x.trim() : "")).filter(Boolean);
-  }
-  if (typeof v === "string") {
-    const s = v.trim();
-    if (!s) return [];
-    return s
-      .split(",")
-      .map((x) => x.trim())
-      .filter(Boolean);
-  }
-  return [];
-}
-
-function normalizeChannels(v: any): ToolChannel[] {
-  const arr = Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : [];
-  const cleaned = (arr as any[])
-    .map((x) => (typeof x === "string" ? x.trim().toLowerCase() : ""))
-    .filter(Boolean)
-    .filter((x): x is ToolChannel => (TOOL_CHANNELS as readonly string[]).includes(x));
-  return Array.from(new Set(cleaned));
-}
-
-function normalizeAssistant(v: any): ToolAssistant | undefined {
-  if (!v || typeof v !== "object") return undefined;
-  const name = typeof v.name === "string" ? v.name.trim() : "";
-  const greeting = typeof v.greeting === "string" ? v.greeting.trim() : "";
-  const conversationLogic =
-    typeof v.conversationLogic === "string"
-      ? v.conversationLogic.trim()
-      : typeof (v as any).logic === "string"
-        ? String((v as any).logic).trim()
-        : "";
-  const out: ToolAssistant = {};
-  if (name) out.name = name;
-  if (greeting) out.greeting = greeting;
-  if (conversationLogic) out.conversationLogic = conversationLogic;
-  return Object.keys(out).length ? out : undefined;
-}
-
-function genId(prefix = "qa"): string {
-  return `${prefix}_${Math.random().toString(36).slice(2, 8)}_${Date.now().toString(36)}`;
-}
-
-function normalizeKnowHow(v: any): Array<{ id: string; question: string; answer: string }> {
-  const arr: ToolKnowHow[] =
-    Array.isArray(v) ? v : Array.isArray(v?.items) ? v.items : Array.isArray(v?.qa) ? v.qa : [];
-  const out: Array<{ id: string; question: string; answer: string }> = [];
-  for (const item of arr) {
-    if (!item || typeof item !== "object") continue;
-    const question = typeof item.question === "string" ? item.question.trim() : "";
-    const answer = typeof item.answer === "string" ? item.answer.trim() : "";
-    if (!question || !answer) continue;
-    const id = typeof item.id === "string" && item.id.trim() ? item.id.trim() : genId("qa");
-    out.push({ id, question, answer });
-  }
-  return out;
-}
-
-function ensureName(name?: string, goal?: string, countryName?: string) {
-  const n = (name || "").trim();
-  if (n) return n;
-  const g = (goal || "Moderation").trim();
-  const c = (countryName || "Global").trim();
-  return `${g.slice(0, 48)} • ${c}`.trim();
-}
-
-function ensureSummary(summary?: string, goal?: string, countryName?: string) {
-  const s = (summary || "").trim();
-  if (s) return s;
-  const g = (goal || "").trim();
-  const c = (countryName || "").trim();
-  if (g && c) return `Moderation campaign in ${c} focused on: ${g}.`;
-  if (g) return `Moderation campaign focused on: ${g}.`;
-  return "";
-}
-
-function ensureLeadDefinition(leadDefinition?: string, goal?: string) {
-  const ld = (leadDefinition || "").trim();
-  if (ld) return ld;
-  const g = (goal || "").trim();
-  if (!g) return "";
-  return `A lead is a person who shows clear interest in: ${g}. They ask for pricing, availability, booking, or next steps.`;
 }
 
 function computeMissing(s: ToolState): string[] {
@@ -205,82 +102,6 @@ function wantsCreationNavigation(t: string): boolean {
     v.includes("vamos a crear") ||
     v.includes("ir a crear")
   );
-}
-
-function readJson(raw: string | null): any {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function persistModerationDraft(patch: {
-  name?: string;
-  goal?: string;
-  summary?: string;
-  leadDefinition?: string;
-  country?: ToolCountry;
-  channels?: ToolChannel[];
-  webchatDomain?: string;
-  assistant?: ToolAssistant;
-  knowHow?: Array<{ id: string; question: string; answer: string }>;
-  escalationItems?: string[];
-  escalationPhone?: string;
-}) {
-  for (const key of MODERATION_DRAFT_KEYS) {
-    const prev = readJson(localStorage.getItem(key)) || {};
-    const prevAssistant =
-      (prev as any)?.assistant && typeof (prev as any).assistant === "object" ? (prev as any).assistant : {};
-
-    const next = {
-      ...prev,
-      name: patch.name ?? prev.name,
-      goal: patch.goal ?? prev.goal,
-      summary: patch.summary ?? prev.summary,
-      leadDefinition: patch.leadDefinition ?? prev.leadDefinition,
-
-      channels: patch.channels ?? prev.channels,
-      webchatDomain: patch.webchatDomain ?? (prev as any).webchatDomain,
-      assistant: patch.assistant ? { ...prevAssistant, ...patch.assistant } : prevAssistant,
-      knowHow: patch.knowHow ?? (prev as any).knowHow,
-      escalationItems: patch.escalationItems ?? (prev as any).escalationItems,
-      escalationPhone: patch.escalationPhone ?? (prev as any).escalationPhone,
-
-      // legacy aliases used in some older flows
-      campaign_name: patch.name ?? (prev as any).campaign_name,
-      objective: patch.goal ?? (prev as any).objective,
-      lead_definition: patch.leadDefinition ?? (prev as any).lead_definition,
-      country_code: patch.country?.code ?? (prev as any).country_code,
-      country_name: patch.country?.name ?? (prev as any).country_name,
-      audience: {
-        ...(prev.audience || {}),
-        geo: {
-          ...((prev.audience && prev.audience.geo) || {}),
-          countryCode:
-            patch.country?.code ?? ((prev.audience && prev.audience.geo && prev.audience.geo.countryCode) || ""),
-          country: patch.country?.name ?? ((prev.audience && prev.audience.geo && prev.audience.geo.country) || ""),
-        },
-      },
-    };
-
-    const code = (patch.country?.code || "").trim();
-    if (code) {
-      const prevIds = Array.isArray(next?.audience?.geo?.countryIds)
-        ? next.audience.geo.countryIds
-        : Array.isArray(prev?.audience?.geo?.countryIds)
-          ? prev.audience.geo.countryIds
-          : [];
-      next.audience.geo.countryIds = Array.from(new Set([...(prevIds || []), code]));
-    }
-
-    try {
-      localStorage.setItem(key, JSON.stringify(next));
-    } catch {
-      // ignore
-    }
-  }
 }
 
 function safeJsonParse<T>(raw: string | null, fallback: T): T {
@@ -519,216 +340,34 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
     return safeJsonParse<PromptContext>(localStorage.getItem(CONTEXT_STORAGE_KEY), DEFAULT_PROMPT_CONTEXT);
   }, []);
 
-  const [toolState, setToolState] = useState<ToolState>({
-    campaign_type: "moderation",
-    missing: ["name", "goal", "country", "summary", "leadDefinition"],
+  const [draftPreview, setDraftPreview] = useState<ToolState>(() => {
+    const prev = readDraft();
+    return {
+      campaign_type: "moderation",
+      name: prev?.name,
+      goal: prev?.goal,
+      summary: prev?.summary,
+      leadDefinition: prev?.leadDefinition,
+      country: prev?.country,
+      assistant: prev?.assistant,
+      knowHow: (prev as any)?.knowHow,
+      channels: (prev as any)?.channels,
+      webchatDomain: (prev as any)?.webchatDomain,
+      escalationItems: (prev as any)?.escalationItems,
+      escalationPhone: (prev as any)?.escalationPhone,
+      missing: prev?.missing,
+    };
   });
+
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [userBuffer, setUserBuffer] = useState<string[]>(
+    () => safeJsonParse<string[]>(localStorage.getItem(USER_BUFFER_KEY), []),
+  );
 
   const [contextEditor, setContextEditor] = useState(() => JSON.stringify(initialContext, null, 2));
   const [contextEditorError, setContextEditorError] = useState<string | null>(null);
 
-  const handleToolEvent = React.useCallback(
-    (evt: ToolEvent) => {
-      if (evt.type === "navigate") {
-        const path = evt.payload?.path;
-        if (typeof path === "string" && path.trim()) {
-          if (path.includes("/campaign_moderation_creation")) {
-            try {
-              localStorage.setItem("v2conversational:apply_draft_once", "1");
-            } catch { }
-          }
-          navigate(path);
-        }
-        return;
-      }
-
-      if (evt.type !== "update") return;
-
-      const p = evt.payload || {};
-
-      const name =
-        typeof p.name === "string" ? p.name : typeof p.campaign_name === "string" ? p.campaign_name : "";
-
-      const goal = typeof p.goal === "string" ? p.goal : typeof p.objective === "string" ? p.objective : "";
-
-      const country =
-        normalizeCountry(p.country) ||
-        normalizeCountry({
-          code: typeof p.country_code === "string" ? p.country_code : undefined,
-          name: typeof p.country_name === "string" ? p.country_name : undefined,
-        });
-
-      const summaryRaw =
-        typeof p.summary === "string" ? p.summary : typeof p.campaign_summary === "string" ? p.campaign_summary : "";
-
-      const leadDefRaw =
-        typeof p.leadDefinition === "string"
-          ? p.leadDefinition
-          : typeof p.lead_definition === "string"
-            ? p.lead_definition
-            : "";
-
-      const fixedName = ensureName(name, goal, country?.name);
-      const fixedSummary = ensureSummary(summaryRaw, goal, country?.name);
-      const fixedLeadDefinition = ensureLeadDefinition(leadDefRaw, goal);
-
-      const channels = normalizeChannels(p.channels ?? p.channel ?? p.communicationChannel ?? p.communication_channel);
-
-      const webchatDomain =
-        typeof p.webchatDomain === "string"
-          ? p.webchatDomain.trim()
-          : typeof p.webchat_domain === "string"
-            ? p.webchat_domain.trim()
-            : typeof p.domain === "string"
-              ? p.domain.trim()
-              : undefined;
-
-      const assistant =
-        normalizeAssistant(p.assistant) ||
-        normalizeAssistant({
-          name:
-            typeof p.assistantName === "string"
-              ? p.assistantName
-              : typeof p.assistant_name === "string"
-                ? p.assistant_name
-                : undefined,
-          greeting:
-            typeof p.assistantGreeting === "string"
-              ? p.assistantGreeting
-              : typeof p.assistant_greeting === "string"
-                ? p.assistant_greeting
-                : typeof p.greeting === "string"
-                  ? p.greeting
-                  : undefined,
-          conversationLogic:
-            typeof p.conversationLogic === "string"
-              ? p.conversationLogic
-              : typeof p.conversation_logic === "string"
-                ? p.conversation_logic
-                : typeof p.assistantLogic === "string"
-                  ? p.assistantLogic
-                  : typeof p.assistant_logic === "string"
-                    ? p.assistant_logic
-                    : undefined,
-        });
-
-      const knowHowRaw = normalizeKnowHow(p.knowHow ?? p.knowhow ?? p.qa ?? p.questionsAndAnswers ?? p.questions_answers);
-      const knowHow = knowHowRaw.length ? knowHowRaw : undefined;
-
-      const escalationItemsRaw = normalizeStringArray(p.escalationItems ?? p.escalation_items);
-      const escalationItems = escalationItemsRaw.length ? escalationItemsRaw : undefined;
-
-      const escalationPhone =
-        typeof p.escalationPhone === "string"
-          ? p.escalationPhone.trim()
-          : typeof p.escalation_phone === "string"
-            ? p.escalation_phone.trim()
-            : undefined;
-
-      const nextState: ToolState = {
-        campaign_type: p.campaign_type || "moderation",
-        name: fixedName || undefined,
-        goal: goal ? String(goal).trim() || undefined : undefined,
-        country,
-        summary: fixedSummary || undefined,
-        leadDefinition: fixedLeadDefinition || undefined,
-
-        assistant,
-        knowHow,
-        escalationItems,
-        escalationPhone,
-
-        channels: channels.length ? channels : undefined,
-        webchatDomain: webchatDomain || undefined,
-      };
-
-      const rawMissing = Array.isArray(p.missing) ? p.missing : null;
-      const mapKey = (k: string) => {
-        const key = String(k || "").trim();
-        if (!key) return "";
-        const table: Record<string, string> = {
-          campaign_name: "name",
-          objective: "goal",
-          country_code: "country",
-          country_name: "country",
-          lead_definition: "leadDefinition",
-        };
-        return table[key] || key;
-      };
-
-      nextState.missing = Array.isArray(rawMissing)
-        ? Array.from(new Set(rawMissing.map(mapKey).filter(Boolean)))
-        : computeMissing(nextState);
-
-      mergeDraft({
-        campaign_type: nextState.campaign_type as any,
-        name: nextState.name,
-        goal: nextState.goal,
-        summary: nextState.summary,
-        leadDefinition: nextState.leadDefinition,
-        country: nextState.country,
-        assistant: nextState.assistant,
-        knowHow: nextState.knowHow,
-        channels: nextState.channels as any,
-        webchatDomain: nextState.webchatDomain,
-        escalationItems: nextState.escalationItems,
-        escalationPhone: nextState.escalationPhone,
-        missing: nextState.missing,
-      });
-
-      setToolState(nextState);
-
-      persistModerationDraft({
-        name: nextState.name,
-        goal: nextState.goal,
-        summary: nextState.summary,
-        leadDefinition: nextState.leadDefinition,
-        country: nextState.country,
-        channels: nextState.channels as any,
-        webchatDomain: nextState.webchatDomain,
-        assistant: nextState.assistant,
-        knowHow: nextState.knowHow,
-        escalationItems: nextState.escalationItems,
-        escalationPhone: nextState.escalationPhone,
-      });
-
-      if (moderation) {
-        const basicsPatch: any = {};
-        if (nextState.name) basicsPatch.name = nextState.name;
-        if (nextState.goal) basicsPatch.goal = nextState.goal;
-        if (nextState.summary) basicsPatch.summary = nextState.summary;
-        if (nextState.leadDefinition) basicsPatch.leadDefinition = nextState.leadDefinition;
-        if (Object.keys(basicsPatch).length) moderation.setBasics(basicsPatch);
-
-        if (nextState.country?.code || nextState.country?.name) {
-          const geoPatch: any = {
-            countryCode: nextState.country?.code || "",
-            country: nextState.country?.name || "",
-          };
-          if (nextState.country?.code) geoPatch.countryIds = [nextState.country.code];
-          moderation.setGeo(geoPatch);
-        }
-
-        if (nextState.channels?.length) moderation.setChannels(nextState.channels as any);
-        if (typeof nextState.webchatDomain === "string") moderation.setWebchatDomain(nextState.webchatDomain);
-        if (nextState.assistant) moderation.setAssistant(nextState.assistant as any);
-        if (nextState.escalationItems) moderation.setEscalationItems(nextState.escalationItems);
-        if (typeof nextState.escalationPhone === "string") moderation.setEscalationPhone(nextState.escalationPhone);
-
-        if (nextState.knowHow && nextState.knowHow.length) {
-          try {
-            moderation.clearQA();
-            nextState.knowHow.forEach((qa) => {
-              moderation.addQA({ question: qa.question, answer: qa.answer });
-            });
-          } catch {
-            // ignore
-          }
-        }
-      }
-    },
-    [moderation, navigate],
-  );
 
   const {
     status,
@@ -750,7 +389,6 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
     defaultPrompt: initialPrompt,
     defaultContext: initialContext,
     ttlSeconds: 600,
-    onToolEvent: handleToolEvent,
   });
 
   const [text, setText] = useState("");
@@ -839,55 +477,123 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
     el.scrollTop = el.scrollHeight;
   }, [messages.length]);
 
+  useEffect(() => {
+    const userMsgs = messages
+      .filter((m) => m.role === "user")
+      .map((m) => (m.text || "").trim())
+      .filter(Boolean);
+
+    setUserBuffer(userMsgs);
+    try {
+      localStorage.setItem(USER_BUFFER_KEY, JSON.stringify(userMsgs.slice(-160)));
+    } catch { }
+  }, [messages]);
+
+
   const previewState: ToolState = useMemo(() => {
     const countryCodeFromCtx = moderation?.data?.audience?.geo?.countryCode;
     const countryNameFromCtx = moderation?.data?.audience?.geo?.country;
     return {
       campaign_type: "moderation",
-      name: (moderation?.data?.name || toolState.name || "").trim() || undefined,
-      goal: (moderation?.data?.goal || toolState.goal || "").trim() || undefined,
-      summary: (moderation?.data?.summary || toolState.summary || "").trim() || undefined,
-      leadDefinition: (moderation?.data?.leadDefinition || toolState.leadDefinition || "").trim() || undefined,
+      name: (moderation?.data?.name || draftPreview.name || "").trim() || undefined,
+      goal: (moderation?.data?.goal || draftPreview.goal || "").trim() || undefined,
+      summary: (moderation?.data?.summary || draftPreview.summary || "").trim() || undefined,
+      leadDefinition: (moderation?.data?.leadDefinition || draftPreview.leadDefinition || "").trim() || undefined,
       country: {
-        code: (countryCodeFromCtx || toolState.country?.code || "").trim() || undefined,
-        name: (countryNameFromCtx || toolState.country?.name || "").trim() || undefined,
+        code: (countryCodeFromCtx || draftPreview.country?.code || "").trim() || undefined,
+        name: (countryNameFromCtx || draftPreview.country?.name || "").trim() || undefined,
       },
     };
-  }, [moderation, toolState]);
+  }, [moderation, draftPreview]);
 
   const previewMissing = useMemo(() => computeMissing(previewState), [previewState]);
-  const readyForCreation = previewMissing.length === 0;
+  const canGenerateDraft = userBuffer.length > 0;
 
   const goToModerationCreation = React.useCallback(() => {
-    try {
-      localStorage.setItem("v2conversational:apply_draft_once", "1");
-    } catch { }
     navigate("/campaign_moderation_creation/");
   }, [navigate]);
 
-  const didAutoNavRef = useRef(false);
-  useEffect(() => {
-    if (didAutoNavRef.current) return;
-    if (!readyForCreation) return;
+  type PendingDraftPayload = {
+    version: 1;
+    profile?: string;
+    campaignType: "moderation";
+    transcript: string;
+    uiLanguage?: string;
+    schemaVersion: number;
+    createdAt: string;
+  };
+
+  function persistPendingDraft(payload: PendingDraftPayload) {
+    try {
+      localStorage.setItem(PENDING_DRAFT_KEY, JSON.stringify(payload));
+    } catch { }
+  }
+
+  const buildTranscript = React.useCallback((extraUserText?: string) => {
+    const lines: string[] = [];
+    for (const m of messages) {
+      const role = m.role === "assistant" ? "Assistant" : "User";
+      const clean = stripToolBlocks(m.text || "");
+      if (clean) lines.push(`${role}: ${clean}`);
+    }
+    if (extraUserText && extraUserText.trim()) {
+      lines.push(`User: ${extraUserText.trim()}`);
+    }
+    return lines.join("\n");
+  }, [messages]);
+
+  const queueDraftAndGo = React.useCallback((extraUserText?: string) => {
+    if (isGeneratingDraft) return;
+
+    setGenerateError(null);
+
+    const transcript = buildTranscript(extraUserText);
+    if (!transcript.trim()) {
+      setGenerateError(t("v2Conversational.generate.empty", "No conversation yet. Tell me about your campaign first."));
+      return;
+    }
+
+    setIsGeneratingDraft(true);
+    try {
+      persistPendingDraft({
+        version: 1,
+        profile,
+        campaignType: "moderation",
+        transcript,
+        uiLanguage: (context as any)?.uiLanguage,
+        schemaVersion: 1,
+        createdAt: new Date().toISOString(),
+      });
+      goToModerationCreation();
+    } finally {
+      // If navigation is blocked for some reason, unlock the button.
+      setTimeout(() => setIsGeneratingDraft(false), 250);
+    }
+  }, [buildTranscript, context, goToModerationCreation, isGeneratingDraft, t]);
+
+  // Auto-trigger: if the user (voice or text) says "vamos a crear la campaña", we navigate immediately.
+  const lastAutoCreateMsgIdRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     if (!lastUser) return;
-    if (!wantsCreationNavigation(lastUser.text)) return;
+    const txt = (lastUser.text || "").trim();
+    if (!txt) return;
+    if (!wantsCreationNavigation(txt)) return;
+    const marker = String((lastUser as any).id || lastUser.createdAt || txt);
+    if (lastAutoCreateMsgIdRef.current === marker) return;
+    lastAutoCreateMsgIdRef.current = marker;
+    queueDraftAndGo();
+  }, [messages, queueDraftAndGo]);
 
-    didAutoNavRef.current = true;
-    goToModerationCreation();
-  }, [messages, readyForCreation, goToModerationCreation]);
 
-  useEffect(() => {
-    if (!readyForCreation) didAutoNavRef.current = false;
-  }, [readyForCreation]);
 
   const onSend = () => {
     const msg = text.trim();
     if (!msg) return;
 
-    if (wantsCreationNavigation(msg) && readyForCreation) {
-      goToModerationCreation();
+    if (wantsCreationNavigation(msg)) {
       setText("");
+      queueDraftAndGo(msg);
       return;
     }
 
@@ -1056,6 +762,9 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               onClick={() => {
                 clearMessages();
                 clearDraft();
+	                setDraftPreview({ campaign_type: "moderation" });
+                try { localStorage.removeItem(USER_BUFFER_KEY); } catch { }
+                setUserBuffer([]);
               }}
               className="px-3 py-2 rounded-xl border border-neutral-200/70 dark:border-neutral-700/60 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800"
               title={t("v2Conversational.actions.clearTitle", "Clear chat")}
@@ -1291,19 +1000,23 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
                   </div>
 
                   <button
-                    onClick={() => goToModerationCreation()}
-                    disabled={!readyForCreation}
+                    onClick={() => queueDraftAndGo()}
+                    disabled={!canGenerateDraft || isGeneratingDraft}
                     className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
-                      readyForCreation
-                        ? t("v2Conversational.draftPanel.goCreateTitleReady", "Go to moderation campaign creation")
-                        : t(
-                          "v2Conversational.draftPanel.goCreateTitleWaiting",
-                          "Waiting for the assistant to fill required fields",
-                        )
+                      isGeneratingDraft
+                        ? t("v2Conversational.draftPanel.generatingTitle", "Preparing…")
+                        : !canGenerateDraft
+                          ? t("v2Conversational.draftPanel.goCreateTitleNoChat", "Start chatting first so I can prepare the draft")
+                          : t("v2Conversational.draftPanel.goCreateTitleReady", "Go to moderation campaign creation (the draft will be generated on the next screen)")
                     }
                   >
-                    {t("v2Conversational.draftPanel.goCreate", "Go create")}
+                    <span className="inline-flex items-center gap-2">
+                      {isGeneratingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {isGeneratingDraft
+                        ? t("v2Conversational.draftPanel.generating", "Preparing…")
+                        : t("v2Conversational.draftPanel.goCreate", "Go create")}
+                    </span>
                   </button>
                 </div>
 
@@ -1316,6 +1029,17 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
                     label={t("v2Conversational.draftPanel.fields.leadDefinition", "Lead definition")}
                     value={previewState.leadDefinition}
                   />
+
+                {generateError ? (
+                  <div className="mt-3 rounded-xl border border-rose-200/60 dark:border-rose-800/40 bg-rose-50/60 dark:bg-rose-950/25 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
+                    {generateError}
+                  </div>
+                ) : null}
+
+                <div className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+                  {t("v2Conversational.draftPanel.captured", "Captured user messages: {{n}}", { n: userBuffer.length })}
+                </div>
+
                 </div>
 
                 <div className="mt-4 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-950/30 px-3 py-2">

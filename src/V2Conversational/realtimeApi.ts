@@ -116,6 +116,31 @@ export async function apiSaveSession(
   });
 }
 
+
+export type GenerateDraftRequest = {
+  profile?: string;
+  campaignType: "moderation" | "marketing" | "social_listening";
+  transcript: string;
+  uiLanguage?: "es" | "en" | string;
+  schemaVersion?: number;
+};
+
+export async function apiGenerateDraft(req: GenerateDraftRequest): Promise<AnyJson> {
+  const base = getApiBase();
+  const url = `${base}/realtime/generate-draft`;
+  return fetchJson(url, {
+    method: "POST",
+    headers: buildHeaders(),
+    body: JSON.stringify({
+      profile: req.profile,
+      campaignType: req.campaignType,
+      transcript: req.transcript,
+      uiLanguage: req.uiLanguage,
+      schemaVersion: req.schemaVersion ?? 1,
+    }),
+  });
+}
+
 export async function apiClientSecret(ttlSeconds = 600): Promise<string> {
   const base = getApiBase();
   const url = `${base}/realtime/client-secret?ttlSeconds=${encodeURIComponent(

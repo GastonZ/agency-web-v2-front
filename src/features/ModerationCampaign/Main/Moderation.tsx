@@ -10,7 +10,7 @@ import StepReview from "../steps/StepReview";
 import { useModeration } from "../../../context/ModerationContext";
 import { toast } from "react-toastify";
 import { createModerationCampaignFromStepOne, updateModerationCampaignFromStepOne, mapAssistantSettingsFromContext, updateAssistantSettings, updateCampaignChannels, updateModerationCampaignStatus, updateWebchatConfig, getModerationCampaignVoiceStatus } from "../../../services/campaigns";
-import { buildTranscriptFromHistory, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep, getUserId } from "../../../utils/helper";
+import { buildTranscriptFromHistory, extractPlaybookForStep, formatStepName, resolveStepFromTopic, saveLastLaunchedModeration, toIndexStep, getUserId, getToken } from "../../../utils/helper";
 import { useNavigate } from "react-router-dom";
 import { getModerationCampaignById } from "../../../services/campaigns";
 import { fillContextFromApi } from "../utils/fillContextFromApi";
@@ -36,6 +36,8 @@ import { loadBotSnapshot } from "../../../AIconversational/voice/session/persist
 import { MODERATION_PLAYBOOK, MODERATION_PLAYBOOK_ES } from "../utils/campaignsInstructions";
 import ModerationSkeleton from "../components/ModerationSkeleton";
 import { useTranslation } from "react-i18next";
+
+const PENDING_DRAFT_KEY = "v2conversational:pending_draft:v1";
 
 const Moderation: React.FC = () => {
 
@@ -102,7 +104,7 @@ const Moderation: React.FC = () => {
     const [toolsReady, setToolsReady] = React.useState(false);
     const [showUI, setShowUI] = React.useState(false);
 
-    const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone } = useModeration();
+    const { data, setCampaignId, resetAll, setBasics, setChannels, setAssistant, clearQA, addQA, setAllowedTopics, setCalendarsEnabled, setCalendars, setEscalationItems, setEscalationPhone, setGeo, setWebchatDomain } = useModeration();
 
     // --- Wizard steps (Voice step is only shown if WhatsApp is selected) ---
     type WizardStepKey = "basics" | "rules" | "channels" | "voice" | "review";
@@ -239,10 +241,174 @@ const Moderation: React.FC = () => {
 
     React.useEffect(() => {
         setToolsReady(true)/* temporal hasta traer de vuelta el chatbot */
-        if (bootReady && toolsReady) {
-            const timeout = setTimeout(() => setShowUI(true), 4000);
-            return () => clearTimeout(timeout);
-        }
+    }, []);
+
+    const prefillRanRef = React.useRef(false);
+
+    React.useEffect(() => {
+        if (!bootReady || !toolsReady) return;
+        if (prefillRanRef.current) return;
+        prefillRanRef.current = true;
+
+        let cancelled = false;
+
+        type PendingDraftPayload = {
+            version?: number;
+            profile?: string;
+            campaignType?: string;
+            transcript: string;
+            uiLanguage?: "es" | "en";
+            schemaVersion?: number;
+            createdAt?: string;
+        };
+
+        const run = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const fromId = params.get("fromId");
+            if (fromId) {
+                if (!cancelled) setShowUI(true);
+                return;
+            }
+
+            const pendingRaw = (() => {
+                try {
+                    return localStorage.getItem(PENDING_DRAFT_KEY);
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!pendingRaw) {
+                if (!cancelled) setShowUI(true);
+                return;
+            }
+
+            let pending: PendingDraftPayload | null = null;
+            try {
+                pending = JSON.parse(pendingRaw) as PendingDraftPayload;
+            } catch {
+                pending = null;
+            }
+
+            if (!pending || typeof pending.transcript !== "string" || !pending.transcript.trim()) {
+                try { localStorage.removeItem(PENDING_DRAFT_KEY); } catch { }
+                if (!cancelled) setShowUI(true);
+                return;
+            }
+
+            // Ensure we don't re-run on refresh after successful apply.
+            try { localStorage.removeItem(PENDING_DRAFT_KEY); } catch { }
+
+            const apiBase =
+                (import.meta as any).env?.VITE_API_CONVERSATION ||
+                (import.meta as any).env?.VITE_API_URL ||
+                (import.meta as any).env?.VITE_API_BASE_URL;
+
+            if (!apiBase) {
+                if (!cancelled) {
+                    toast.error("Falta configurar VITE_API_CONVERSATION para generar el borrador");
+                    setShowUI(true);
+                }
+                return;
+            }
+
+            try {
+                const token = (getToken as any)?.() as string | undefined;
+                const res = await fetch(`${apiBase}/realtime/generate-draft`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify({
+                        profile: pending.profile,
+                        campaignType: pending.campaignType || "moderation",
+                        transcript: pending.transcript,
+                        uiLanguage: pending.uiLanguage,
+                        schemaVersion: pending.schemaVersion ?? 1,
+                    }),
+                });
+
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error((json as any)?.message || (json as any)?.error || `HTTP ${res.status}`);
+                }
+
+                const draft = (json as any)?.draft || json;
+                if (!draft || typeof draft !== "object") throw new Error("Draft inválido");
+
+                if (cancelled) return;
+
+                // Step 1
+                const basicsPatch: any = {};
+                if (typeof (draft as any).name === "string" && (draft as any).name.trim()) basicsPatch.name = (draft as any).name.trim();
+                if (typeof (draft as any).goal === "string" && (draft as any).goal.trim()) basicsPatch.goal = (draft as any).goal.trim();
+                if (typeof (draft as any).summary === "string" && (draft as any).summary.trim()) basicsPatch.summary = (draft as any).summary.trim();
+                if (typeof (draft as any).leadDefinition === "string" && (draft as any).leadDefinition.trim()) basicsPatch.leadDefinition = (draft as any).leadDefinition.trim();
+                if (Object.keys(basicsPatch).length) setBasics(basicsPatch);
+
+                const c = (draft as any).country;
+                const code = typeof c?.code === "string" ? c.code.trim().toUpperCase() : "";
+                const name = typeof c?.name === "string" ? c.name.trim() : "";
+                if (code || name) {
+                    setGeo({
+                        countryId: code || "",
+                        countryIds: code ? [code] : undefined,
+                        countryCode: code || undefined,
+                        country: name || undefined,
+                    } as any);
+                }
+
+                // Step 3
+                if (Array.isArray((draft as any).channels)) {
+                    setChannels((draft as any).channels);
+                }
+                if (typeof (draft as any).webchatDomain === "string") {
+                    setWebchatDomain((draft as any).webchatDomain);
+                }
+
+                // Step 2
+                const a = (draft as any).assistant;
+                if (a && typeof a === "object") {
+                    setAssistant({
+                        name: typeof a.name === "string" ? a.name.trim() : undefined,
+                        greeting: typeof a.greeting === "string" ? a.greeting.trim() : undefined,
+                        conversationLogic:
+                            typeof a.conversationLogic === "string" ? a.conversationLogic.trim() : undefined,
+                    } as any);
+                }
+
+                if (Array.isArray((draft as any).knowHow)) {
+                    clearQA();
+                    (draft as any).knowHow.forEach((row: any) => {
+                        const q = typeof row?.question === "string" ? row.question.trim() : "";
+                        const ans = typeof row?.answer === "string" ? row.answer.trim() : "";
+                        if (!q || !ans) return;
+                        addQA({ question: q, answer: ans } as any);
+                    });
+                }
+
+                if (Array.isArray((draft as any).escalationItems)) {
+                    setEscalationItems((draft as any).escalationItems);
+                }
+                if (typeof (draft as any).escalationPhone === "string") {
+                    setEscalationPhone((draft as any).escalationPhone);
+                }
+            } catch (e: any) {
+                if (!cancelled) {
+                    console.warn("[Moderation][prefill] draft generation failed:", e);
+                    toast.error(e?.message || "No se pudo generar el borrador de campaña");
+                }
+            } finally {
+                if (!cancelled) setShowUI(true);
+            }
+        };
+
+        run();
+
+        return () => {
+            cancelled = true;
+        };
     }, [bootReady, toolsReady]);
 
     // --- helpers de validación (Paso 1 y Paso 2) ---

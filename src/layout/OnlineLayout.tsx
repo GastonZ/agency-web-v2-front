@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 import LenguageBtn from "../components/features/LenguageBtn";
 import LogoutBtn from "../components/features/LogoutBtn";
 import ThemeToggle from "../components/features/ThemeToggle";
-import { SidebarNav, defaultNavItems } from "../components/main/SidebarNav";
-import { Menu, X } from "lucide-react";
+import { SidebarNav, type NavItem } from "../components/main/SidebarNav";
+import { Factory, Folder, Home,  Menu, MessageSquare, Settings, X } from "lucide-react";
 import { isSubAccountSession } from "../utils/helper";
+import { useTranslation } from "react-i18next";
 
 interface OnlineLayoutProps {
   children: ReactNode;
@@ -16,6 +17,16 @@ const SIDE_WIDTH = "w-64";
 
 const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { t } = useTranslation('translations');
+
+  const defaultNavItems: NavItem[] = [
+    { id: "home", label: t("dashboard_title"), href: "/", icon: Home },
+    { id: "campaign", label: t("campaign_title"), href: "/campaign_selection", icon: Folder },
+    { id: "myCampaigns", label: t("my_campaigns_title"), href: "/my_campaigns", icon: Factory },
+    { id: "inbox", label: t("inbox_title"), href: "/inbox", icon: MessageSquare },
+    { id: "settings", label: t("settings_title"), href: "/settings", icon: Settings },
+  ];
 
   const isSub = isSubAccountSession();
   const navItems = React.useMemo(() => {

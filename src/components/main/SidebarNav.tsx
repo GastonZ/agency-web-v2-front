@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "../features/ThemeToggle";
+import { useTranslation } from "react-i18next";
 
 type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
@@ -40,6 +41,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
   const location = useLocation();
   const path = currentPath ?? location.pathname;
+
+  const { t } = useTranslation('translations');
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
 
