@@ -563,7 +563,7 @@
         },
         "empty": {
             "connected": "Say something (voice) or type below.",
-            "disconnected": "Connect to start chatting."
+            "disconnected": "Connect to start talking."
         },
         "input": {
             "placeholder": "Type a message…"

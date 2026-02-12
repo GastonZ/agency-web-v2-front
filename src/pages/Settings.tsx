@@ -991,19 +991,6 @@ export default function Settings() {
                                             <span className="font-semibold text-neutral-900 dark:text-neutral-50">{subs.length}</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between rounded-xl bg-neutral-900/5 dark:bg-white/5 px-4 py-3 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70">
-                                            <span className="text-neutral-600 dark:text-neutral-300">Sistema listo</span>
-                                            <span
-                                                className={cn(
-                                                    "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1",
-                                                    hasAreas
-                                                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-emerald-500/20"
-                                                        : "bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-amber-500/20"
-                                                )}
-                                            >
-                                                {hasAreas ? "Sí" : "No"}
-                                            </span>
-                                        </div>
                                     </div>
                                 </GlassPanel>
                             </div>

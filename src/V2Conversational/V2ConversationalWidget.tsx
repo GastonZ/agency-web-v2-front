@@ -733,10 +733,6 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               {t("v2Conversational.title", "Conversational Builder")}
             </h2>
 
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              {t("v2Conversational.profile", "Profile")}: <span className="font-medium">{profile}</span>
-            </span>
-
             <StatusBadge status={status} t={t} />
           </div>
 

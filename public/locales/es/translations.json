@@ -561,7 +561,7 @@
         },
         "empty": {
             "connected": "Decí algo (voz) o escribí abajo.",
-            "disconnected": "Conectate para empezar a chatear."
+            "disconnected": "Conectate para empezar a conversar."
         },
         "input": {
             "placeholder": "Escribí un mensaje…"
