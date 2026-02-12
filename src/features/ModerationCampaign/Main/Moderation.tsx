@@ -511,7 +511,6 @@ const Moderation: React.FC = () => {
         if (key === "basics") return missingFromStep0(data).length === 0;
         if (key === "rules") return missingFromStep2(data).length === 0;
         if (key === "channels") return missingFromStep1(data).length === 0;
-        if (key === "voice") return missingFromVoiceStep(data).length === 0;
         return true;
     }, [data, hasWhatsapp, wizardSteps]);
 
