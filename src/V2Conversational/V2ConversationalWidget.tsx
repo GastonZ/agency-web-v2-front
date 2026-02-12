@@ -29,7 +29,10 @@ import { useModeration } from "../context/ModerationContext";
 
 const CONTEXT_STORAGE_KEY = "v2conversational:context";
 const USER_BUFFER_KEY = "v2conversational:user_buffer:v1";
+const HISTORY_BUFFER_KEY = "v2conversational:history_buffer:v1";
 const PENDING_DRAFT_KEY = "v2conversational:pending_draft:v1";
+
+type HistoryMsg = { role: "user" | "assistant"; text: string };
 type ToolCountry = { code?: string; name?: string };
 type ToolAssistant = { name?: string; greeting?: string; conversationLogic?: string };
 
@@ -365,6 +368,10 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
     () => safeJsonParse<string[]>(localStorage.getItem(USER_BUFFER_KEY), []),
   );
 
+  const [historyBuffer, setHistoryBuffer] = useState<HistoryMsg[]>(
+    () => safeJsonParse<HistoryMsg[]>(localStorage.getItem(HISTORY_BUFFER_KEY), []),
+  );
+
   const [contextEditor, setContextEditor] = useState(() => JSON.stringify(initialContext, null, 2));
   const [contextEditorError, setContextEditorError] = useState<string | null>(null);
 
@@ -487,6 +494,18 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
     try {
       localStorage.setItem(USER_BUFFER_KEY, JSON.stringify(userMsgs.slice(-160)));
     } catch { }
+
+    // Persist full history (user + assistant) so the draft generator can use all context.
+    try {
+      const hist: HistoryMsg[] = messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({ role: m.role as any, text: stripToolBlocks(m.text || "") }))
+        .filter((m) => (m.text || "").trim().length > 0)
+        .slice(-320);
+
+      setHistoryBuffer(hist);
+      localStorage.setItem(HISTORY_BUFFER_KEY, JSON.stringify(hist));
+    } catch { }
   }, [messages]);
 
 
@@ -531,7 +550,18 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
 
   const buildTranscript = React.useCallback((extraUserText?: string) => {
     const lines: string[] = [];
-    for (const m of messages) {
+
+    const source = (messages && messages.length > 0)
+      ? messages
+      : (historyBuffer || []).map((m, idx) => ({
+        id: `history_${idx}`,
+        role: m.role,
+        text: m.text,
+        createdAt: 0,
+      } as any));
+
+    for (const m of source) {
+      if (m.role !== "assistant" && m.role !== "user") continue;
       const role = m.role === "assistant" ? "Assistant" : "User";
       const clean = stripToolBlocks(m.text || "");
       if (clean) lines.push(`${role}: ${clean}`);
@@ -540,7 +570,7 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
       lines.push(`User: ${extraUserText.trim()}`);
     }
     return lines.join("\n");
-  }, [messages]);
+  }, [messages, historyBuffer]);
 
   const queueDraftAndGo = React.useCallback((extraUserText?: string) => {
     if (isGeneratingDraft) return;
@@ -703,6 +733,10 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               {t("v2Conversational.title", "Conversational Builder")}
             </h2>
 
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {t("v2Conversational.profile", "Profile")}: <span className="font-medium">{profile}</span>
+            </span>
+
             <StatusBadge status={status} t={t} />
           </div>
 
@@ -743,8 +777,8 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
                 </span>
               )}
             </button>
-
-{/*             <button
+{/* 
+            <button
               onClick={() => setShowSettings((v) => !v)}
               className="px-3 py-2 rounded-xl border border-neutral-200/70 dark:border-neutral-700/60 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800"
               title={t("v2Conversational.actions.settingsTitle", "Prompt / context settings")}
@@ -752,9 +786,9 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               <span className="inline-flex items-center gap-2">
                 <Settings className="h-4 w-4" /> {t("v2Conversational.actions.settings", "Settings")}
               </span>
-            </button> */}
+            </button>
 
-{/*             <button
+            <button
               onClick={() => {
                 clearMessages();
                 clearDraft();
@@ -768,9 +802,9 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               <span className="inline-flex items-center gap-2">
                 <Trash2 className="h-4 w-4" /> {t("v2Conversational.actions.clear", "Clear")}
               </span>
-            </button> */}
+            </button>
 
-{/*             <button
+            <button
               onClick={saveSession}
               disabled={isSavingSession || messages.length === 0}
               className="px-3 py-2 rounded-xl border border-neutral-200/70 dark:border-neutral-700/60 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -901,7 +935,6 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
             </div>
           </div>
 
-          {/* Right panel */}
 
         </div>
       </div>
@@ -910,7 +943,7 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
 }
 
 
-/* 
+/*          
           <div className="lg:col-span-5">
             {showSettings ? (
               <div className="rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white/40 dark:bg-neutral-950/30 p-4">
@@ -950,7 +983,7 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
                 </div>
 
                 <div className="mt-3">
-
+                  
                   <textarea
                     value={contextEditor}
                     onChange={(e) => setContextEditor(e.target.value)}
@@ -1052,6 +1085,4 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
                 </div>
               </div>
             )}
-          </div>
-
-*/
+          </div> */
