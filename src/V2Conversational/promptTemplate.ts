@@ -106,6 +106,7 @@ Schema (version 1):
   "summary": string,
   "leadDefinition": string,
   "country": { "code": string, "name": string },
+  "province": { "code": string, "name": string },
 
   "assistant": { "name": string, "greeting": string, "conversationLogic": string },
   "knowHow": [ { "question": string, "answer": string } ],

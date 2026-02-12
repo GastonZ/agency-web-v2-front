@@ -347,16 +347,34 @@ const Moderation: React.FC = () => {
                 if (typeof (draft as any).leadDefinition === "string" && (draft as any).leadDefinition.trim()) basicsPatch.leadDefinition = (draft as any).leadDefinition.trim();
                 if (Object.keys(basicsPatch).length) setBasics(basicsPatch);
 
+                // GEO (país + provincia/estado)
+                const geoPatch: any = {};
+
                 const c = (draft as any).country;
                 const code = typeof c?.code === "string" ? c.code.trim().toUpperCase() : "";
                 const name = typeof c?.name === "string" ? c.name.trim() : "";
                 if (code || name) {
-                    setGeo({
-                        countryId: code || "",
-                        countryIds: code ? [code] : undefined,
-                        countryCode: code || undefined,
-                        country: name || undefined,
-                    } as any);
+                    geoPatch.countryId = code || "";
+                    geoPatch.countryIds = code ? [code] : undefined;
+                    geoPatch.countryCode = code || undefined;
+                    geoPatch.country = name || undefined;
+                }
+
+                const p = (draft as any).province;
+                const pRaw = typeof p === "string" ? p.trim() : "";
+                const pCode = typeof p?.code === "string" ? p.code.trim() : "";
+                const pName = typeof p?.name === "string" ? p.name.trim() : "";
+                const provinceValue = (pCode || pName || pRaw).trim();
+
+                // LocationSelection suele leer stateId / regionCode / region (según la pantalla)
+                if (provinceValue) {
+                    geoPatch.stateId = provinceValue;
+                    geoPatch.regionCode = pCode || provinceValue;
+                    geoPatch.region = pName || provinceValue;
+                }
+
+                if (Object.keys(geoPatch).length) {
+                    setGeo(geoPatch);
                 }
 
                 // Step 3
