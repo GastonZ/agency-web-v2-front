@@ -703,10 +703,6 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               {t("v2Conversational.title", "Conversational Builder")}
             </h2>
 
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              {t("v2Conversational.profile", "Profile")}: <span className="font-medium">{profile}</span>
-            </span>
-
             <StatusBadge status={status} t={t} />
           </div>
 
@@ -748,7 +744,7 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               )}
             </button>
 
-            <button
+{/*             <button
               onClick={() => setShowSettings((v) => !v)}
               className="px-3 py-2 rounded-xl border border-neutral-200/70 dark:border-neutral-700/60 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800"
               title={t("v2Conversational.actions.settingsTitle", "Prompt / context settings")}
@@ -756,9 +752,9 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               <span className="inline-flex items-center gap-2">
                 <Settings className="h-4 w-4" /> {t("v2Conversational.actions.settings", "Settings")}
               </span>
-            </button>
+            </button> */}
 
-            <button
+{/*             <button
               onClick={() => {
                 clearMessages();
                 clearDraft();
@@ -772,9 +768,9 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               <span className="inline-flex items-center gap-2">
                 <Trash2 className="h-4 w-4" /> {t("v2Conversational.actions.clear", "Clear")}
               </span>
-            </button>
+            </button> */}
 
-            <button
+{/*             <button
               onClick={saveSession}
               disabled={isSavingSession || messages.length === 0}
               className="px-3 py-2 rounded-xl border border-neutral-200/70 dark:border-neutral-700/60 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -784,7 +780,7 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
                 {isSavingSession ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 {t("v2Conversational.actions.saveSession", "Save session")}
               </span>
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -800,7 +796,7 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
           </div>
         ) : null}
 
-        <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="mt-5 grid grid-cols-1 lg:grid-cols-1 gap-4">
           {/* Chat */}
           <div className="lg:col-span-7">
             <div className="relative h-[420px] rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white/40 dark:bg-neutral-950/30 overflow-hidden">
@@ -906,6 +902,15 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
           </div>
 
           {/* Right panel */}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* 
           <div className="lg:col-span-5">
             {showSettings ? (
               <div className="rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white/40 dark:bg-neutral-950/30 p-4">
@@ -945,7 +950,7 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
                 </div>
 
                 <div className="mt-3">
-                  {/* no extra i18n keys needed; keep it minimal */}
+
                   <textarea
                     value={contextEditor}
                     onChange={(e) => setContextEditor(e.target.value)}
@@ -1048,8 +1053,5 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
               </div>
             )}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+
+*/
