@@ -573,10 +573,6 @@ export default function Settings() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
-                            <PunkButton variant="ghost" onClick={reload} disabled={loading}>
-                                <RefreshCcw className="h-4 w-4 mr-2" />
-                                {t("common.refresh", { defaultValue: "Actualizar" })}
-                            </PunkButton>
 
                             <PunkButton onClick={() => { setTab("areas"); openCreateArea(); }}>
                                 <Plus className="h-4 w-4 mr-2" />
@@ -821,10 +817,6 @@ export default function Settings() {
                                                     })}
                                                 </p>
                                                 <div className="mt-5 flex flex-wrap gap-2">
-                                                    <PunkButton onClick={() => setTab("areas")}>
-                                                        <Building2 className="h-4 w-4 mr-2" />
-                                                        {t("settings.sub.go_areas", { defaultValue: "Ir a Áreas" })}
-                                                    </PunkButton>
                                                     <PunkButton variant="ghost" onClick={() => { setTab("areas"); openCreateArea(); }}>
                                                         <Plus className="h-4 w-4 mr-2" />
                                                         {t("settings.areas.create", { defaultValue: "Crear Área" })}
