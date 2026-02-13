@@ -35,10 +35,12 @@ import {
   markThreadRead,
   sendMessage,
   takeoverThread,
+  startThread,
   type InboxThread,
   type InboxMessage,
   type ThreadMessagesResponse,
   type SendMessageBody,
+  type StartThreadBody,
 } from "../services/inbox";
 
 function normalizeBotId(input: string): string {
@@ -727,6 +729,295 @@ function LeadActionsModal({
   );
 }
 
+function StartThreadModal({
+  open,
+  onClose,
+  agentId,
+  onStarted,
+}: {
+  open: boolean;
+  onClose: () => void;
+  agentId: string;
+  onStarted: (thread: InboxThread, contactId: string) => void;
+}) {
+  const { t } = useTranslation("translations");
+  const [phoneNumber, setPhoneNumber] = React.useState("");
+  const [name, setName] = React.useState("");
+  const [text, setText] = React.useState("");
+  const [force, setForce] = React.useState(false);
+
+  const [loading, setLoading] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const [conflict, setConflict] = React.useState(false);
+
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+
+  const resizeTextarea = React.useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const max = 220;
+    const next = Math.min(el.scrollHeight, max);
+    el.style.height = `${next}px`;
+    el.style.overflowY = el.scrollHeight > max ? "auto" : "hidden";
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    setErr(null);
+    setConflict(false);
+    setLoading(false);
+    setPhoneNumber("");
+    setName("");
+    setText("");
+    setForce(false);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, onClose]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    resizeTextarea();
+  }, [open, text, resizeTextarea]);
+
+  const doSubmit = React.useCallback(
+    async (overrideForce?: boolean) => {
+      if (!agentId) {
+        setErr("Seleccioná una campaña primero.");
+        return;
+      }
+
+      const pn = (phoneNumber || "").trim();
+      const msg = (text || "").trim();
+      const nm = (name || "").trim();
+
+      if (!pn) {
+        setErr("Ingresá un número de teléfono.");
+        return;
+      }
+      if (!msg) {
+        setErr("Escribí el primer mensaje.");
+        return;
+      }
+
+      setErr(null);
+      setConflict(false);
+      setLoading(true);
+
+      const body: StartThreadBody = {
+        phoneNumber: pn,
+        text: msg,
+        ...(nm ? { name: nm } : {}),
+        force: overrideForce ?? force,
+      };
+
+      try {
+        const res: any = await startThread(agentId, body);
+
+        const rawThread: any = res?.thread ?? res;
+        const normalizedContactId = normalizeContactId(
+          rawThread?.contactId ?? res?.contactId ?? res?.jid ?? "",
+        );
+
+        const thread: InboxThread = rawThread?.agentId
+          ? ({
+              ...rawThread,
+              agentId: rawThread.agentId || agentId,
+              channel: (rawThread.channel || "whatsapp") as any,
+              contactId: normalizeContactId(rawThread.contactId ?? normalizedContactId),
+              metadata: rawThread.metadata || {
+                takeoverMode: "HUMAN",
+                lockedByUserId: null,
+                lockedAt: null,
+                unreadCount: 0,
+                lastMessagePreview: msg,
+                lastMessageDirection: "out",
+              },
+              lastMessageDate: rawThread.lastMessageDate || new Date().toISOString(),
+            } as InboxThread)
+          : ({
+              agentId,
+              channel: "whatsapp",
+              contactId: normalizedContactId,
+              name: nm || null,
+              lastMessageDate: new Date().toISOString(),
+              metadata: {
+                takeoverMode: "HUMAN",
+                lockedByUserId: null,
+                lockedAt: null,
+                unreadCount: 0,
+                lastMessagePreview: msg,
+                lastMessageDirection: "out",
+              },
+            } as InboxThread);
+
+        if (!isValidContactId(thread.contactId)) {
+          throw new Error("No se pudo obtener el contactId del thread");
+        }
+
+        onStarted(thread, thread.contactId);
+        onClose();
+        // Keep fields for the next open, but clear message for safety.
+        setText("");
+      } catch (e: any) {
+        const status = e?.status;
+        const message = e?.data?.message || e?.data?.error || e?.message || "No se pudo iniciar la conversación";
+        setErr(message);
+        setConflict(status === 409);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [agentId, force, name, onClose, onStarted, phoneNumber, text],
+  );
+
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="w-full max-w-xl rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-950/35 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">Nuevo mensaje</div>
+            <div className="mt-1 text-xs opacity-70">
+              Enviá el primer mensaje y se creará la conversación en Inbox (modo humano).
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="text-xs px-3 py-1 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70"
+            onClick={onClose}
+            disabled={loading}
+          >
+            {t("close")}
+          </button>
+        </div>
+
+        <div className="p-5 grid grid-cols-1 gap-4">
+          {err && (
+            <div className="rounded-xl bg-red-500/10 ring-1 ring-red-400/25 px-4 py-3 text-sm text-red-700 dark:text-red-200">
+              {err}
+              {conflict ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => doSubmit(true)}
+                    disabled={loading}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white hover:bg-red-500 disabled:opacity-60"
+                  >
+                    Forzar takeover y enviar
+                  </button>
+                  <span className="text-xs opacity-80">(solo si necesitás tomar control)</span>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4 grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="grid gap-1">
+                <span className="text-xs opacity-70">Teléfono *</span>
+                <input
+                  autoFocus
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+54 9 11 1234-5678"
+                  className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                />
+              </label>
+              <label className="grid gap-1">
+                <span className="text-xs opacity-70">Nombre (opcional)</span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Juan Perez"
+                  className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                />
+              </label>
+            </div>
+
+            <label className="grid gap-1">
+              <span className="text-xs opacity-70">Mensaje *</span>
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={3}
+                placeholder="Hola! Te escribo por…"
+                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 resize-none"
+              />
+            </label>
+
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={force}
+                onChange={(e) => setForce(e.target.checked)}
+                className="mt-1"
+              />
+              <span>
+                Forzar takeover si la conversación está tomada por otro usuario.
+                <span className="block text-xs opacity-70">Si no, el backend puede responder 409.</span>
+              </span>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="px-4 py-2 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => doSubmit()}
+              disabled={loading}
+              className="px-4 py-2 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 inline-flex items-center gap-2"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Enviar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function ChevronHint() {
   return <span className="text-[11px] opacity-70">…</span>;
 }
@@ -806,6 +1097,7 @@ export default function Inbox() {
 
   // Lead actions (status/area/next-action) directly from Inbox.
   const [leadModalOpen, setLeadModalOpen] = React.useState(false);
+  const [startThreadModalOpen, setStartThreadModalOpen] = React.useState(false);
   const [areas, setAreas] = React.useState<UserArea[]>([]);
   const [areasLoading, setAreasLoading] = React.useState(false);
 
@@ -1130,6 +1422,43 @@ export default function Inbox() {
       }
     },
     [agentKey],
+  );
+
+  const onThreadStarted = React.useCallback(
+    (thread: InboxThread, contactId: string) => {
+      if (!agentKey) return;
+
+      const cid = normalizeContactId(contactId);
+      if (!isValidContactId(cid)) return;
+
+      const t: InboxThread = {
+        ...thread,
+        agentId: agentKey,
+        channel: (thread.channel || "whatsapp") as any,
+        contactId: cid,
+      };
+
+      // Pre-mark auto-open to avoid duplicate open from URL effect.
+      autoOpenedRef.current = `${agentKey}|${cid}`;
+
+      setThreads((prev) => {
+        const key = threadKey(t.channel, t.contactId);
+        const existing = prev.find((x) => threadKey(x.channel, x.contactId) === key);
+        const merged = existing ? mergeThread(existing, t) : t;
+
+        const others = prev.filter((x) => threadKey(x.channel, x.contactId) !== key);
+        const next = [merged, ...others];
+        next.sort((a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime());
+        return next;
+      });
+
+      // Persist deep-link for refresh/back.
+      navigate(`/inbox/${encodeURIComponent(agentKey)}?contactId=${encodeURIComponent(cid)}`, { replace: true });
+
+      // Open chat immediately.
+      openThread(t);
+    },
+    [agentKey, navigate, openThread],
   );
 
   const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "auto") => {
@@ -1689,9 +2018,21 @@ export default function Inbox() {
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4 h-[calc(100dvh-260px)] min-h-[520px]">
           {/* Threads list */}
           <div className="rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-hidden flex flex-col h-full min-h-0">
-            <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 flex items-center justify-between">
+            <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 flex items-center justify-between gap-2">
               <div className="text-sm font-medium">Conversaciones</div>
-              {threadsLoading && <div className="text-xs text-neutral-500">Cargando…</div>}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setStartThreadModalOpen(true)}
+                  disabled={!agentKey}
+                  className="px-2.5 py-1.5 rounded-lg text-xs bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 inline-flex items-center gap-2"
+                  title={agentKey ? "Enviar un mensaje a un nuevo contacto" : "Seleccioná una campaña"}
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nuevo mensaje</span>
+                  <span className="sm:hidden">Nuevo</span>
+                </button>
+                {threadsLoading && <div className="text-xs text-neutral-500">Cargando…</div>}
+              </div>
             </div>
             <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 space-y-2">
               <div className="flex items-center justify-between">
@@ -2042,6 +2383,13 @@ export default function Inbox() {
         conversationId={leadConversationId}
         areas={areas}
         areasLoading={areasLoading}
+      />
+
+      <StartThreadModal
+        open={startThreadModalOpen}
+        onClose={() => setStartThreadModalOpen(false)}
+        agentId={agentKey}
+        onStarted={onThreadStarted}
       />
     </OnlineLayout>
   );

@@ -45,6 +45,25 @@ export type ThreadMessagesResponse = {
   messages: InboxMessage[];
 };
 
+export type StartThreadBody = {
+  phoneNumber: string;
+  text: string;
+  name?: string;
+  force?: boolean;
+};
+
+// Backend may return a few different shapes depending on implementation.
+// We keep it flexible and normalize on the caller.
+export type StartThreadResponse =
+  | {
+      contactId?: string;
+      jid?: string;
+      thread?: InboxThread;
+      contact?: any;
+      ok?: boolean;
+    }
+  | InboxThread;
+
 export async function listThreads(agentId: string, opts?: { limit?: number; channel?: InboxChannel }) {
   const channel = opts?.channel ?? "whatsapp";
   const limit = opts?.limit ?? 100;
@@ -53,6 +72,12 @@ export async function listThreads(agentId: string, opts?: { limit?: number; chan
   const { data } = await api.get<InboxThread[]>(`inbox/${safeAgentId}/threads`, {
     params: { channel, limit },
   });
+  return data;
+}
+
+export async function startThread(agentId: string, body: StartThreadBody) {
+  const safeAgentId = encodeURIComponent(agentId);
+  const { data } = await api.post<StartThreadResponse>(`inbox/${safeAgentId}/threads/start`, body);
   return data;
 }
 
