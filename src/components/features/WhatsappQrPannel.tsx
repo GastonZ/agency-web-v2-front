@@ -307,15 +307,15 @@ const WhatsappQrPanel: React.FC<Props> = ({
                 )}
             </div>
 
-            <div className="rounded-xl border border-emerald-500/20 bg-white h-[400px] w-[400px] p-4 flex items-center justify-center">
+            <div className="rounded-xl border border-emerald-500/20 bg-white w-full max-w-[400px] aspect-square p-4 flex items-center justify-center">
                 {!rawValue ? (
                     <span className="text-sm opacity-60 text-center">
                         {info || "Esperando solicitud..."}
                     </span>
                 ) : isImageDataUrl ? (
-                    <img src={rawValue} alt="QR" className="h-[400px] w-[400px]" />
+                    <img src={rawValue} alt="QR" className="w-full h-full object-contain" />
                 ) : (
-                    <QRCode value={rawValue} size={208} />
+                    <QRCode value={rawValue} style={{ width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%" }} />
                 )}
             </div>
             {showConfirmNewQr && (

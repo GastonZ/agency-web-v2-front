@@ -295,7 +295,7 @@ export function LeadsTablePanel({
 
   return (
     <div>
-      <div className="mb-3 rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl px-4 py-3">
+      <div className="mb-3 rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl px-3 sm:px-4 py-3">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="min-w-0">
@@ -344,8 +344,8 @@ export function LeadsTablePanel({
           ) : null}
 
           {filtersOpen ? (
-            <div className="rounded-2xl bg-neutral-50/70 dark:bg-neutral-950/30 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-neutral-50/70 dark:bg-neutral-950/30 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <div>
                   <div className="text-xs font-semibold opacity-80 mb-2">{t("stats_filter_channels")}</div>
                   <div className="flex flex-wrap gap-2">

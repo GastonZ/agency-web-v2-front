@@ -194,7 +194,7 @@ export default function ConnectedAccountsPanel({
                 : "Todavía no hay ningún canal conectado, pero cuando vincules WhatsApp / Instagram / Facebook los vas a ver acá."}
             </p>
           ) : (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {/* WHATSAPP */}
               {showWhatsCard && (
                 <motion.div
@@ -204,11 +204,11 @@ export default function ConnectedAccountsPanel({
                 >
                   <div className="flex items-start gap-3">
                     <motion.div
-                      className="inline-flex items-center justify-center rounded-md h-9 w-9 bg-emerald-600/15 ring-1 ring-emerald-400/40"
+                      className="inline-flex items-center justify-center rounded-md h-12 w-12 bg-emerald-600/15 ring-1 ring-emerald-400/40 shrink-0"
                       animate={{ rotate: [0, -4, 0, 4, 0] }}
                       transition={{ duration: 6, repeat: Infinity }}
                     >
-                      <MessageSquare className="h-4 w-4" />
+                      <MessageSquare className="h-5 w-5" />
                     </motion.div>
 
                     <div className="flex-1">
@@ -279,13 +279,13 @@ export default function ConnectedAccountsPanel({
                 >
                   <div className="flex items-start gap-3">
                     <motion.div
-                      className="inline-flex items-center justify-center rounded-md h-16 w-16 bg-emerald-600/15 ring-1 ring-emerald-400/40"
+                      className="inline-flex items-center justify-center rounded-md h-12 w-12 bg-emerald-600/15 ring-1 ring-emerald-400/40 shrink-0"
                       animate={{ y: [0, -2, 0] }}
                       transition={{ duration: 3, repeat: Infinity }}
                     >
                       {ig.profilePicture ? (
                         <img
-                          className="h-10 w-10 rounded-full object-cover"
+                          className="h-9 w-9 rounded-full object-cover"
                           src={ig.profilePicture}
                           alt="Instagram profile picture"
                         />
@@ -294,7 +294,7 @@ export default function ConnectedAccountsPanel({
                       )}
                     </motion.div>
                     <div className="flex-1">
-                      <div className="text-[18px]">
+                      <div className="text-[13px] font-semibold">
                         Instagram{" "}
                         <span className="font-medium">{ig.username || ig.name || "Cuenta"}</span>{" "}
                         {t("connected")}
@@ -341,13 +341,13 @@ export default function ConnectedAccountsPanel({
                 >
                   <div className="flex items-start gap-3">
                     <motion.div
-                      className="inline-flex items-center justify-center rounded-md h-20 w-20 bg-emerald-600/15 ring-1 ring-emerald-400/40"
+                      className="inline-flex items-center justify-center rounded-md h-12 w-12 bg-emerald-600/15 ring-1 ring-emerald-400/40 shrink-0"
                       animate={{ y: [0, -2, 0] }}
                       transition={{ duration: 3, repeat: Infinity }}
                     >
                       {fb.profilePicture ? (
                         <img
-                          className="h-14 w-14 rounded-full object-cover"
+                          className="h-9 w-9 rounded-full object-cover"
                           src={fb.profilePicture}
                           alt="Facebook profile picture"
                         />

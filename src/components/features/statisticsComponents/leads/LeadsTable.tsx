@@ -135,21 +135,21 @@ function ContactCell({ lead }: { lead: Lead }) {
         const secondary = username && (lead as any).name ? (lead as any).name : null;
 
         return (
-            <div className="flex items-center gap-3 min-w-0 md:min-w-[220px]">
+            <div className="flex items-center gap-3 min-w-0">
                 {profilePic ? (
                     <img
                         src={profilePic}
                         alt={primary}
-                        className="h-9 w-9 rounded-full object-cover ring-1 ring-emerald-400/20"
+                        className="h-9 w-9 rounded-full object-cover ring-1 ring-emerald-400/20 shrink-0"
                         referrerPolicy="no-referrer"
                     />
                 ) : (
                     <ChannelBadge channel="instagram" />
                 )}
 
-                <div className="leading-tight">
-                    <div className="flex items-center gap-2">
-                        <div className="font-medium">{primary}</div>
+                <div className="leading-tight min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="font-medium truncate max-w-[160px] sm:max-w-none">{primary}</div>
                         {requiresAction ? (
                             <span
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
@@ -171,11 +171,11 @@ function ContactCell({ lead }: { lead: Lead }) {
         const primary = wspName !== 'WhatsApp Bot' ? wspName : 'Whatsapp';
 
         return (
-            <div className="flex items-center gap-3 min-w-0 md:min-w-[220px]">
+            <div className="flex items-center gap-3 min-w-0">
                 <ChannelBadge channel="whatsapp" />
-                <div className="leading-tight">
-                    <div className="flex items-center gap-2">
-                        <div className="font-medium">{primary}</div>
+                <div className="leading-tight min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="font-medium truncate max-w-[160px] sm:max-w-none">{primary}</div>
                         {requiresAction ? (
                             <span
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
@@ -196,11 +196,11 @@ function ContactCell({ lead }: { lead: Lead }) {
         const primary = (lead as any).name || tr("facebook", "Facebook");
 
         return (
-            <div className="flex items-center gap-3 min-w-0 md:min-w-[220px]">
+            <div className="flex items-center gap-3 min-w-0">
                 <ChannelBadge channel="facebook" />
-                <div className="leading-tight">
-                    <div className="flex items-center gap-2">
-                        <div className="font-medium">{primary}</div>
+                <div className="leading-tight min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="font-medium truncate max-w-[160px] sm:max-w-none">{primary}</div>
                         {requiresAction ? (
                             <span
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
@@ -951,7 +951,7 @@ function LeadSummaryModal({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[11000] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
             onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -966,11 +966,11 @@ function LeadSummaryModal({
             role="dialog"
         >
             <div
-                className="w-full max-w-3xl rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+                className="w-full max-w-3xl rounded-t-2xl sm:rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-950/35 flex items-start justify-between gap-4">
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-950/35 flex items-start justify-between gap-4">
                     <div className="min-w-0">
                         <div className="flex items-center gap-3">
                             <div className="min-w-0">
@@ -1047,8 +1047,8 @@ function LeadSummaryModal({
                     </button>
                 </div>
 
-                <div className="px-5 py-4">
-                    <div className="max-h-[60vh] overflow-auto rounded-xl bg-neutral-50 dark:bg-neutral-900/40 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-4">
+                <div className="px-4 sm:px-5 py-4">
+                    <div className="max-h-[50vh] sm:max-h-[60vh] overflow-auto rounded-xl bg-neutral-50 dark:bg-neutral-900/40 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-4">
                         {summary ? (
                             <p className="whitespace-pre-wrap text-sm leading-7 text-neutral-800 dark:text-neutral-100/90">
                                 {summary}
@@ -1059,7 +1059,7 @@ function LeadSummaryModal({
                     </div>
                 </div>
 
-                <div className="px-5 py-4 border-t border-neutral-200/70 dark:border-neutral-800/70 flex justify-end">
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-neutral-200/70 dark:border-neutral-800/70 flex justify-end">
                     <button
                         type="button"
                         className="text-sm px-4 py-2 rounded-xl bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-200 dark:hover:bg-neutral-800"
@@ -1500,7 +1500,7 @@ export function LeadsTable({
                                     data-stop-row
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    <div className="min-w-[150px]">
+                                    <div className="min-w-0">
                                         <StatusCell
                                             lead={l}
                                             campaignId={campaignId}
@@ -1512,7 +1512,7 @@ export function LeadsTable({
                                         />
                                     </div>
 
-                                    <div className="min-w-[150px]">
+                                    <div className="min-w-0">
                                         <AreaCell
                                             lead={l}
                                             campaignId={campaignId}
@@ -1574,17 +1574,26 @@ export function LeadsTable({
             </div>
 
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
-                <table className="min-w-full text-sm">
+            <div className="hidden md:block overflow-x-auto overscroll-x-contain">
+                <table className="min-w-full text-sm table-fixed">
+                    <colgroup>
+                        <col className="w-[200px] lg:w-[240px]" />
+                        <col className="hidden lg:table-column w-auto" />
+                        <col className="w-[80px]" />
+                        <col className="w-[130px]" />
+                        <col className="w-[130px]" />
+                        <col className="hidden lg:table-column w-[100px]" />
+                        <col className="w-[90px]" />
+                    </colgroup>
                     <thead className="text-left bg-neutral-50/70 dark:bg-neutral-950/30 text-neutral-600 dark:text-neutral-300">
                         <tr className="border-b border-neutral-200/60 dark:border-neutral-800/70">
-                            <th className="px-4 py-2 font-semibold">{t("stats_name")}</th>
-                            <th className="hidden lg:table-cell px-4 py-2 font-semibold">{t("stats_summary")}</th>
-                            <th className="px-4 py-2 font-semibold">{t("stats_score")}</th>
-                            <th className="px-4 py-2 font-semibold">{t("stats_status")}</th>
-                            <th className="px-4 py-2 font-semibold">{t("stats_area")}</th>
-                            <th className="hidden lg:table-cell px-4 py-2 font-semibold">{t("stats_next_action")}</th>
-                            <th className="px-4 py-2 font-semibold">{t("stats_conversation")}</th>
+                            <th className="px-3 lg:px-4 py-2.5 font-semibold text-[12px]">{t("stats_name")}</th>
+                            <th className="hidden lg:table-cell px-3 lg:px-4 py-2.5 font-semibold text-[12px]">{t("stats_summary")}</th>
+                            <th className="px-3 lg:px-4 py-2.5 font-semibold text-[12px]">{t("stats_score")}</th>
+                            <th className="px-3 lg:px-4 py-2.5 font-semibold text-[12px]">{t("stats_status")}</th>
+                            <th className="px-3 lg:px-4 py-2.5 font-semibold text-[12px]">{t("stats_area")}</th>
+                            <th className="hidden lg:table-cell px-3 lg:px-4 py-2.5 font-semibold text-[12px]">{t("stats_next_action")}</th>
+                            <th className="px-3 lg:px-4 py-2.5 font-semibold text-[12px]">{t("stats_conversation")}</th>
                         </tr>
                     </thead>
 
@@ -1620,13 +1629,13 @@ export function LeadsTable({
                                     }}
                                     title={tr("stats.view_full_summary", "Ver resumen completo")}
                                 >
-                                    <td className="px-4 py-2 whitespace-nowrap">
+                                    <td className="px-3 lg:px-4 py-2 whitespace-nowrap">
                                         <ContactCell lead={l} />
                                     </td>
 
-                                    <td className="hidden lg:table-cell px-4 py-2 max-w-[420px]">
+                                    <td className="hidden lg:table-cell px-3 lg:px-4 py-2 max-w-[380px]">
                                         <div className="relative pr-10">
-                                            <p className="line-clamp-2 text-neutral-700 dark:text-neutral-200/80">
+                                            <p className="line-clamp-2 text-neutral-700 dark:text-neutral-200/80 text-[13px]">
                                                 {(l as any).summary}
                                             </p>
 
@@ -1646,7 +1655,7 @@ export function LeadsTable({
                                         </div>
                                     </td>
 
-                                    <td className="px-4 py-2">
+                                    <td className="px-3 lg:px-4 py-2">
                                         <span
                                             className={
                                                 "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] ring-1 " +
@@ -1657,7 +1666,7 @@ export function LeadsTable({
                                         </span>
                                     </td>
 
-                                    <td className="px-4 py-2 whitespace-nowrap">
+                                    <td className="px-3 lg:px-4 py-2 whitespace-nowrap">
                                         <StatusCell
                                             lead={l}
                                             campaignId={campaignId}
@@ -1672,7 +1681,7 @@ export function LeadsTable({
                                         />
                                     </td>
 
-                                    <td className="px-4 py-2 whitespace-nowrap">
+                                    <td className="px-3 lg:px-4 py-2 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <AreaCell
                                                 lead={l}
@@ -1700,7 +1709,7 @@ export function LeadsTable({
                                         </div>
                                     </td>
 
-                                    <td className="hidden lg:table-cell px-4 py-2 whitespace-nowrap" data-stop-row>
+                                    <td className="hidden lg:table-cell px-3 lg:px-4 py-2 whitespace-nowrap" data-stop-row>
                                         <button
                                             type="button"
                                             className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
@@ -1718,7 +1727,7 @@ export function LeadsTable({
                                         </button>
                                     </td>
 
-                                    <td className="px-4 py-2" data-stop-row>
+                                    <td className="px-3 lg:px-4 py-2" data-stop-row>
                                         {inboxAgentId && inboxContactId ? (
                                             <button
                                                 type="button"

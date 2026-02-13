@@ -348,9 +348,9 @@ export default function StatisticsView() {
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                        <h2 className="text-2xl font-semibold tracking-tight">{campaign.name}</h2>
+                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">{campaign.name}</h2>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ring-1 ${(() => {
+                    <span className={`self-start sm:self-auto text-xs px-2.5 py-1 rounded-full ring-1 ${(() => {
                         const v = (campaign.status || "").toLowerCase();
                         if (v === "active") return "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 ring-emerald-400/30";
                         if (v === "paused") return "text-amber-700 dark:text-amber-300 bg-amber-500/10 ring-amber-400/30";
@@ -360,14 +360,14 @@ export default function StatisticsView() {
                     </span>
                 </div>
 
-                <div className={`grid grid-cols-1 ${twoCols ? "md:grid-cols-2 gap-4" : ""}`}>
+                <div className={`grid grid-cols-1 gap-4 ${twoCols ? "md:grid-cols-2" : ""}`}>
                     {showPendingPanel && (
                         <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20">
                             <div className="flex items-start gap-3">
-                                <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
+                                <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10 shrink-0">
                                     <MessageSquare className="h-4 w-4" />
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                     <h3 className="text-[15px] font-semibold leading-tight">
                                         {t("pending_account_setup")}
                                     </h3>
@@ -387,32 +387,32 @@ export default function StatisticsView() {
                                         ))}
                                     </div>
 
-                                    {needsWhatsSetup && (
-                                        <div className="mt-4 flex gap-2">
+                                    <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2">
+                                        {needsWhatsSetup && (
                                             <button
-                                                className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px]"
+                                                className="rounded-xl px-5 h-11 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[15px] w-full sm:w-auto"
                                                 onClick={() => setOpenWhatsAppSetup(true)}
                                             >
                                                 {t("setup_whatsapp")}
                                             </button>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {needsInstagramSetup && (
-                                        <div className="mt-3">
-                                            <InstagramConnectButton
-                                                clientId={import.meta.env.VITE_IG_APP_ID!}
-                                                redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
-                                                campaignId={campaign.id}
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="ghost_div"></div>
-                                    {needsFacebookSetup && (
-                                        <div className="mt-3">
-                                            <FacebookConnectPanel state={campaign.id} />
-                                        </div>
-                                    )}
+                                        {needsInstagramSetup && (
+                                            <div className="w-full sm:w-auto">
+                                                <InstagramConnectButton
+                                                    clientId={import.meta.env.VITE_IG_APP_ID!}
+                                                    redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
+                                                    campaignId={campaign.id}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {needsFacebookSetup && (
+                                            <div className="w-full sm:w-auto">
+                                                <FacebookConnectPanel state={campaign.id} />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -474,16 +474,16 @@ export default function StatisticsView() {
                     )}
                 </div>
                 {hasWhatsApp && openWhatsAppSetup && (
-                    <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20 mt-6">
+                    <div className="rounded-xl p-4 md:p-6 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl ring-1 ring-emerald-400/20 mt-4">
                         <div className="flex items-start gap-3 mb-3">
-                            <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
+                            <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10 shrink-0">
                                 <MessageSquare className="h-4 w-4" />
                             </div>
-                            <div className="flex-1">
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2">
                                     <h3 className="text-[15px] font-semibold leading-tight">{t("setup_whatsapp")}</h3>
                                     <button
-                                        className="text-xs px-3 py-1 rounded bg-neutral-200/70 dark:bg-neutral-800/70"
+                                        className="self-start xs:self-auto text-xs px-3 py-1.5 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300/70 dark:hover:bg-neutral-700/70 transition"
                                         onClick={() => setOpenWhatsAppSetup(false)}
                                     >
                                         {t("close")}
@@ -495,7 +495,7 @@ export default function StatisticsView() {
                                         {t("inbox.no_aiaUserId", { defaultValue: "No se encontró aiaUserId. Iniciá sesión para continuar." })}
                                     </div>
                                 ) : (
-                                    <div className="mt-4">
+                                    <div className="mt-4 max-w-sm">
                                         <WhatsappQrPanel
                                             userId={userId}
                                             campaignId={id!}
@@ -605,7 +605,7 @@ export default function StatisticsView() {
                             </div>
                             <h4 className="text-[15px] font-semibold leading-tight">{t("summary")}</h4>
                         </div>
-                        <dl className="grid md:grid-cols-2 gap-3 text-[15px] leading-6">
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[15px] leading-6">
                             <div><dt className="opacity-70">{t("objective")}</dt><dd>{campaign.objective || "—"}</dd></div>
                             <div><dt className="opacity-70">{t("lead")}</dt><dd>{campaign.leadDefinition || "—"}</dd></div>
                             <div><dt className="opacity-70">{t("channels")}</dt><dd>{(campaign.channels || []).join(", ") || "—"}</dd></div>
