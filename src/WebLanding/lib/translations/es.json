@@ -1,276 +1,222 @@
 {
   "header": {
-    "contact": "Contactar"
+    "contact": "Hablar con LISA"
   },
   "nav": {
-    "home": "Inicio",
-    "features": "Características",
-    "benefits": "Beneficios",
-    "testimonials": "Testimonios",
-    "faq": "Preguntas"
+    "home": "Datacivis",
+    "about": "¿Por qué conversacional?",
+    "benefits": "Cómo funciona",
+    "features": "Módulos",
+    "useCases": "Casos de éxito",
+    "tech": "Stack de I.A.",
+    "faq": "Preguntas frecuentes",
+    "demo": "Ver demo"
   },
   "hero": {
-    "badge": "Desde 2020 ofreciendo la mejor estabilidad",
-    "stability": "Estabilidad comprobada",
-    "title": "La I.A. que te entiende y construye con vos",
-    "subtitle": "Conversá con la plataforma, definí tus objetivos y dejá que la inteligencia artificial configure el resto: encuestas, asistentes virtuales y estrategias listas para lanzar.",
-    "description": "Conectá mejor con tu audiencia y automatizá procesos en semanas, no meses.",
-    "cta": "Explorar la interfaz conversacional",
-    "trust": "Confían en nosotros",
-    "clients": {
-      "municipalities": "Municipios",
-      "companies": "Empresas",
-      "cooperatives": "Cooperativas",
-      "organizations": "Organizaciones"
-    }
+    "badge": "LA FORMA MÁS SIMPLE DE EJECUTAR MARKETING CON I.A.",
+    "title": "Decí lo que querés lograr,\nla I.A. hace el resto.",
+    "subtitle": "A diferencia de las herramientas con formularios, Datacivis te permite lanzar campañas, gestionar mensajes y hacer escucha social charlando. Todo desde una conversación.",
+    "cta": "Hablar con LISA",
+    "secondary_cta": "Conocé a LISA"
   },
   "whoWeAre": {
-    "badge": "Quienes somos",
-    "title": "Transformamos datos en decisiones inteligentes",
-    "mainQuote": "\"Aprovechamos los datos públicos y sociales para comprender mejor a tu audiencia y utilizamos IA estratégica para transformar cómo gobiernos, empresas y organizaciones se comunican\"",
-    "operationalText": "Reducimos la carga operativa a través de",
-    "quote": "Aprovechamos los datos públicos y sociales para comprender mejor a tu audiencia y utilizamos IA estratégica para transformar cómo gobiernos, empresas y organizaciones se comunican",
+    "badge": "LISA — tu Large Intelligence System Agent",
+    "mainQuote": "“Contame tu objetivo y yo orquesto los agentes I.A.: contenido, pauta, chatbots, monitoreo de redes y reportes. Paso a paso.”",
+    "operationalText": "Sin formularios ni builders. Vos hablás → el sistema entrega.",
     "automation": {
-      "prefix": "Reducimos la carga operativa a través de",
       "options": [
-        "automatización inteligente",
-        "procesos optimizados", 
-        "flujos automatizados",
-        "sistemas inteligentes"
+        "AGI Aplicada al Marketing",
+        "Orquestación de Agentes",
+        "Flujos Conversacionales",
+        "Leads y Resultados"
       ]
     },
+    "description": "El problema: muchas IAs. Nada integrado. Demasiada complejidad. Porque los equipos no quieren otra herramienta para configurar: quieren resultados. Datacivis transforma tus indicaciones en resultados: hablar es hacer.",
     "disclaimer": "* Trabajamos únicamente con datos públicos, agregados y anonimizados, en cumplimiento de la Ley 25.326 de Protección de Datos Personales."
   },
   "benefits": {
-    "badge": "Beneficios",
-    "title": "Impacto real en tu organización",
-    "description": "Transformamos la forma en que gobiernos, empresas y organizaciones se comunican con sus audiencias. Resultados medibles desde el primer día.",
+    "badge": "Cómo funciona",
+    "title": "En tres pasos simples",
+    "description": "De una idea hablada a una operación omnicanal en producción, sin formularios interminables.",
     "features": [
       {
-        "title": "Interfaz conversacional 360° para crear y gestionar campañas",
-        "description": "Diseñá tus campañas, asistentes virtuales e influencers de IA conversando con la plataforma. En lugar de formularios y paneles complicados, Datacivis te guía paso a paso mediante una interfaz conversacional que entiende tu lenguaje y configura todo por vos. Podés crear en minutos:",
+        "title": "1. Conversá",
+        "description": "Contá objetivo y contexto. Detallás qué querés lograr, a quién apuntás y qué canales usás.",
         "benefits": [
-          "Estrategias completas de campaña (objetivos, público, mensaje, fechas)",
-          "Influencers virtuales personalizados con estilo, tono y personalidad",
-          "Canales y flujos automatizados (WhatsApp, Facebook, Instagram, X, Email)",
-          "Configuración de pauta, segmentación y fuentes de contacto"
+          "Definición de objetivos",
+          "Contexto de marca",
+          "Selección de canales",
+          "Sin configuración técnica"
         ]
       },
       {
-        "title": "Decisiones más rápidas con datos confiables",
-        "description": "Tomá decisiones estratégicas con datos públicos y sociales procesados en tiempo real.",
+        "title": "2. Orquestamos",
+        "description": "Los agentes coordinan campañas, creatividades y flujos automáticamente. Vos solo revisás y aprobás.",
         "benefits": [
-          "Análisis en tiempo real",
-          "Métricas trazables y confiables",
-          "Dashboards personalizados",
-          "Alertas automáticas"
+          "Generación de contenido",
+          "Configuración de pauta",
+          "Creación de flujos",
+          "Control total de aprobación"
         ]
       },
       {
-        "title": "Automatizamos tareas repetitivas",
-        "description": "Reducimos la carga operativa eliminando tareas repetitivas. Más tiempo para la estrategia, menos para lo manual.",
+        "title": "3. Analizá",
+        "description": "Monitoreá sentimiento, estado del inbox y leads. El sistema ajusta mensajes y presupuesto según lo que aprende.",
         "benefits": [
-          "Reducción del 70% en tareas manuales",
-          "Flujos automatizados 24/7",
-          "Integración con sistemas existentes",
-          "Liberación de recursos humanos"
-        ]
-      },
-      {
-        "title": "Marketing basado en datos, no en suposiciones",
-        "description": "Convertí la información en campañas más efectivas. Segmentá audiencias, medí impacto y optimizá tu comunicación en tiempo real.",
-        "benefits": [
-          "Segmentación de audiencias",
-          "Optimización en tiempo real",
-          "Métricas de impacto claras",
-          "Comunicación personalizada"
+          "Dashboards en tiempo real",
+          "Lead scoring automático",
+          "Ajustes proactivos",
+          "Reportes listos para compartir"
         ]
       }
     ]
   },
   "features": {
-    "badge": "Características",
+    "badge": "Módulos",
+    "title": "Infraestructura Conversacional",
+    "description": "Orquestación modular diseñada para escalar operaciones complejas sin fricción técnica.",
     "items": [
       {
-        "title": "Encuestas en tiempo real",
-        "description": "Automatizá encuestas y obtené información pública y confiable para tomar decisiones sin demoras. Podés generarlas directamente desde la interfaz conversacional o reutilizar datos históricos."
+        "title": "Social Intelligence",
+        "description": "Detección de temas, crisis y sentimiento en tiempo real. Insights que activan acciones automáticas y reportes listos para compartir."
       },
       {
-        "title": "Asistentes virtuales en todos los canales",
-        "description": "Atendé a tu comunidad en WhatsApp, Facebook, Instagram y Web con asistentes inteligentes 24/7, creados automáticamente según las reglas que definís en la conversación de configuración."
+        "title": "Marketing Engine",
+        "description": "Generación de piezas, sugerencias de pauta y sincronización con tu CRM. De tu Objetivo → Plan → Leads automatizados."
       },
       {
-        "title": "Escucha social inteligente",
-        "description": "Analizamos la conversación pública en redes y medios para que comprendas a tu audiencia y detectes oportunidades a tiempo."
+        "title": "Conversational Core",
+        "description": "Bandeja unificada con asistente de voz y texto. Reglas con humano en el circuito cuando hace falta escalamiento."
+      }
+    ]
+  },
+  "useCases": {
+    "badge": "Casos de éxito",
+    "title": "Resultados reales en producción",
+    "description": "Equipos reales usando Datacivis para vender más, responder mejor y automatizar sus operaciones.",
+    "items": [
+      {
+        "id": "politica",
+        "title": "Campaña Política • 2025",
+        "subtitle": "Cómo un candidato local multiplicó x6 su alcance orgánico",
+        "problem": "Equipo con poco tiempo, bajo presupuesto y conversación pública fragmentada.",
+        "solution": "Campaña conversacional: generación de contenido diario, escucha social y respuestas coordinadas.",
+        "result": "Alcance x6, reducción de respuesta de 14h a 1min, detección temprana de crisis.",
+        "metric": "x6",
+        "metricLabel": "Alcance orgánico"
       },
       {
-        "title": "Marketing estratégico con I.A.",
-        "description": "Transformamos datos públicos en campañas efectivas: la plataforma genera contenido, pauta y distribución basándose en lo que configuraste con tu voz o texto. Impacto real, sin curva técnica."
+        "id": "atencion",
+        "title": "Atención al Cliente • 2025",
+        "subtitle": "Reducción del 70% en carga operativa de soporte",
+        "problem": "Bandejas desbordadas. Respuestas entre 10 y 18 horas después, perdiendo casos clave.",
+        "solution": "Asistente centralizado (voz y texto) para FAQs, turnos y escalamiento inteligente.",
+        "result": "Tiempo de respuesta de 40s. Aumento de 2.1x en tasa de conversión.",
+        "metric": "70%",
+        "metricLabel": "Menos carga operativa"
+      },
+      {
+        "id": "ecommerce",
+        "title": "Ecommerce & Retail • 2024",
+        "subtitle": "Duplicó ventas sin aumentar presupuesto en anuncios",
+        "problem": "Dependencia 100% de anuncios manuales repetitivos sin seguimiento conversacional.",
+        "solution": "Influencer virtual (Claire) + contenidos automáticos + remarketing conversacional.",
+        "result": "+112% ventas en 60 días, +39% CTR y -27% CPA.",
+        "metric": "+112%",
+        "metricLabel": "Ventas en 60 días"
+      }
+    ]
+  },
+  "tech": {
+    "title": "Todas tus I.A. y canales trabajando juntos",
+    "description": "Datacivis se apoya en los principales modelos para crear, entender y accionar, sin que tengas que pelearte con la tecnología.",
+    "categories": [
+      {
+        "title": "Modelos de Lenguaje",
+        "items": [
+          "OpenAI",
+          "Qwen",
+          "LLaMA"
+        ]
+      },
+      {
+        "title": "Voz, Imagen y Video",
+        "items": [
+          "Google Veo-3",
+          "Kling",
+          "ElevenLabs"
+        ]
+      },
+      {
+        "title": "Canales y Anuncios",
+        "items": [
+          "WhatsApp",
+          "Meta Ads",
+          "Instagram"
+        ]
+      }
+    ]
+  },
+  "faq": {
+    "badge": "Preguntas frecuentes",
+    "title": "Resolvemos tus dudas",
+    "description": "Todo lo que necesitás saber sobre Datacivis y LISA.",
+    "items": [
+      {
+        "question": "¿Esto es “solo” un chatbot?",
+        "answer": "No. Datacivis es una plataforma de orquestación de agentes. LISA no solo chatea, sino que crea contenido, configura pauta en Facebook/Instagram y hace escucha social en tiempo real."
+      },
+      {
+        "question": "¿Cuánto tardo en tener algo funcionando?",
+        "answer": "La implementación base se realiza en semanas. Al ser conversacional, la configuración de tu tono de voz y objetivos es casi instantánea."
+      },
+      {
+        "question": "¿Necesito saber programar o tocar APIs?",
+        "answer": "Absolutamente no. Toda la interacción con la plataforma es en lenguaje natural. Si sabés chatear, sabés usar Datacivis."
+      },
+      {
+        "question": "¿En qué canales puede operar Datacivis?",
+        "answer": "Instagram, Facebook, WhatsApp, Email y más. Próximamente integración directa con CRMs populares."
+      },
+      {
+        "question": "¿Puede tomar la conversación un humano?",
+        "answer": "Sí. El sistema tiene 'Human-in-the-loop'. Cuando la IA detecta una consulta compleja o el usuario lo solicita, escala el caso a tu equipo humano."
       }
     ]
   },
   "comparison": {
-    "badge": "Comparativa",
-    "title": "Por qué elegir Datacivis vs la competencia",
-    "description": "Descubrí las ventajas que nos hacen únicos en el mercado de soluciones de IA para organizaciones.",
+    "badge": "Diferencial",
+    "title": "Hablar es Hacer",
+    "description": "La diferencia fundamental entre configurar una herramienta y obtener resultados.",
     "features": {
-      "realtime_data": "Datos en tiempo real",
-      "full_automation": "Automatización completa",
-      "multichannel": "Integración multicanal",
-      "compliance": "Cumplimiento Ley 25.326",
-      "support": "Soporte 24/7",
-      "implementation": "Implementación en 2-4 semanas",
-      "pricing": "Pricing transparente",
-      "training": "Capacitación incluida"
-    },
-    "competitor": "Competencia",
-    "competitor_details": {
-      "partial": "Parcial",
-      "business_hours": "Horario comercial",
-      "months": "3-6 meses",
-      "additional_cost": "Costo adicional"
-    },
-    "cta": "¿Todavía tenés dudas? Compará por vos mismo.",
-    "demo": "Ver demo personalizada"
-  },
-  "tech": {
-    "title": "Tecnologías que impulsan nuestra plataforma"
+      "realtime_data": "Marketing Conversacional",
+      "full_automation": "Orquestación de Agentes",
+      "multichannel": "Omnicanalidad Real",
+      "compliance": "Privacidad Ley 25.326",
+      "support": "LISA (Soporte IA)",
+      "implementation": "Time-to-market Veloz",
+      "pricing": "ROI Medible",
+      "training": "Sin Curva de Aprendizaje"
+    }
   },
   "footer": {
-    "navigation": {
-      "about": "Quiénes somos",
-      "benefits": "Beneficios",
-      "features": "Características",
-      "use_cases": "Casos de uso",
-      "testimonials": "Testimonios"
-    },
-    "contact": "hola@datacivis.com"
-  },
-  "language_selector": {
-    "label": "Seleccionar idioma"
-  },
-  "useCases": {
-    "badge": "Casos de uso",
-    "title": "Soluciones para cada sector",
-    "description": "Descubrí cómo organizaciones como la tuya están transformando su comunicación con Datacivis.",
-    "items": [
-      {
-        "title": "Municipios",
-        "description": "Automatización de consultas ciudadanas y gestión de servicios públicos",
-        "metric": "70%",
-        "metricLabel": "menos consultas telefónicas"
-      },
-      {
-        "title": "Empresas",
-        "description": "Atención al cliente automatizada y análisis de mercado",
-        "metric": "40%",
-        "metricLabel": "más conversiones"
-      },
-      {
-        "title": "Cooperativas",
-        "description": "Gestión de socios y servicios financieros personalizados",
-        "metric": "24/7",
-        "metricLabel": "disponibilidad"
-      },
-      {
-        "title": "Organizaciones",
-        "description": "Asistentes especializados para instituciones del sector",
-        "metric": "100%",
-        "metricLabel": "cumplimiento legal"
-      }
-    ]
-  },
-  "testimonials": {
-    "badge": "Testimonios",
-    "title": "Lo que dicen nuestros clientes",
-    "description": "Conocé las experiencias reales de organizaciones que ya transformaron su comunicación con Datacivis.",
-    "items": [
-      {
-        "name": "María González",
-        "role": "Directora de Comunicación",
-        "company": "Municipio de San Martín",
-        "content": "Implementamos Datacivis y en 30 días ya teníamos respuestas automáticas funcionando 24/7. La ciudadanía está más satisfecha y nuestro equipo puede enfocarse en tareas estratégicas."
-      },
-      {
-        "name": "Carlos Rodríguez",
-        "role": "Gerente de Operaciones",
-        "company": "Cooperativa El Progreso",
-        "content": "La automatización de encuestas nos permitió reducir el tiempo de procesamiento de 3 días a 2 horas. Los datos llegan limpios y listos para tomar decisiones."
-      },
-      {
-        "name": "Ana Martínez",
-        "role": "Jefa de Atención al Cliente",
-        "company": "Empresa de Servicios Públicos",
-        "content": "El chatbot maneja el 80% de las consultas sin intervención humana. La calidad de las respuestas es excelente y los usuarios no notan la diferencia."
-      },
-      {
-        "name": "Roberto Silva",
-        "role": "Director de Tecnología",
-        "company": "Organización No Gubernamental",
-        "content": "La escucha social nos ayuda a entender mejor las necesidades de nuestra comunidad. Los reportes son claros y accionables."
-      },
-      {
-        "name": "Laura Fernández",
-        "role": "Coordinadora de Proyectos",
-        "company": "Fundación Social",
-        "content": "La segmentación de audiencias nos permitió personalizar nuestros mensajes. Ahora nuestras campañas tienen un 60% más de engagement."
-      }
-    ]
+    "about": "¿Por qué conversacional?",
+    "benefits": "Cómo funciona",
+    "features": "Módulos",
+    "useCases": "Casos de éxito",
+    "testimonials": "Stack de I.A."
   },
   "cta": {
-    "badge": "Comenzá ahora",
-    "title": "Transformá tu organización con IA estratégica",
-    "description": "Conectá mejor con tu audiencia y automatizá procesos en semanas, no meses.",
-    "button": "Probar demo interactiva",
-    "limitedOffer": "Oferta limitada: Implementación sin costo + 3 meses de soporte premium para los primeros 10 clientes del mes."
+    "badge": "Hablar con LISA",
+    "title": "LISA configurando una campaña conversando",
+    "subtitle": "La forma más simple de lograr resultados",
+    "description": "Unite a los equipos que prefieren hablar antes que configurar.",
+    "button": "Agenda una llamada",
+    "limitedOffer": "Hecho en LATAM para equipos que prefieren hablar antes que configurar."
   },
-  "faq": {
-    "badge": "Preguntas frecuentes",
-    "title": "Despejamos las dudas que frenan tu decisión",
-    "description": "Resolvemos las preguntas más comunes para que puedas tomar la mejor decisión para tu organización.",
-    "items": [
-      {
-        "question": "¿Cómo protegemos la privacidad de los datos?",
-        "answer": "Trabajamos con datos públicos, agregados y/o anonimizados. Cumplimos la Ley 25.326 y nunca tratamos información personal identificable sin consentimiento. Contamos con controles de acceso, cifrado en tránsito y registros de auditoría."
-      },
-      {
-        "question": "¿Cuánto tarda la implementación?",
-        "answer": "Entre 2 y 4 semanas según el alcance. Incluye relevamiento, configuración, entrenamiento de modelos y capacitaciones cortas para tu equipo."
-      },
-      {
-        "question": "¿Se integra con nuestros sistemas actuales?",
-        "answer": "Sí. Integramos vía API/Webhooks con CRMs, ERPs, contact centers, formularios y canales (web/WhatsApp/email). Si necesitás un conector específico, lo evaluamos en el kickoff."
-      },
-      {
-        "question": "¿Qué resultados puedo esperar?",
-        "answer": "Depende del caso, pero nuestros clientes típicamente logran: −70% de consultas telefónicas repetitivas, +40% en conversiones cualificadas, y disponibilidad 24/7 en atención. Te compartimos métricas esperadas en la demo según tu sector."
-      },
-      {
-        "question": "¿Qué incluye el soporte?",
-        "answer": "Soporte técnico 24/7, monitoreo, mejoras continuas y un éxito del cliente asignado durante los primeros 3 meses (sin costo). Luego, planes de soporte según el uso."
-      },
-      {
-        "question": "¿Cómo se entrena la IA con nuestro contexto?",
-        "answer": "Subimos guías, FAQs, documentos y flujos. La IA aprende patrones (no memoriza datos sensibles) y se actualiza sin fricción cuando cambian procesos o políticas."
-      },
-      {
-        "question": "¿Dónde se alojan los datos?",
-        "answer": "Cloud segura con cifrado y backups. Si tu política lo requiere, evaluamos opciones on-premise o regiones específicas."
-      },
-      {
-        "question": "¿Tiene costo oculto?",
-        "answer": "No. El presupuesto incluye implementación, capacitación, soporte inicial y funcionalidades acordadas. Cualquier extra se cotiza por escrito antes de avanzar."
-      },
-      {
-        "question": "¿Qué pasa si mi equipo no es técnico?",
-        "answer": "No hace falta. Hacemos la configuración end-to-end y dejamos tableros simples para que tu equipo vea métricas y haga ajustes básicos."
-      },
-      {
-        "question": "¿Podemos hacer una prueba piloto?",
-        "answer": "Sí. Ofrecemos pilotos acotados con objetivos claros y criterios de éxito medibles. Lo definimos en una llamada y avanzamos rápido."
-      }
-    ]
+  "conversational": {
+    "badge": "Probá LISA ahora",
+    "title": "Hablá con LISA y creá tu primera campaña",
+    "description": "Decile qué necesitás y ella te guía paso a paso."
   }
 }
-
-

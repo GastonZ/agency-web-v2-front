@@ -12,7 +12,11 @@ const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
   bindSystemThemeListener()
 
   if (checking) return <div style={{ padding: 24 }}>{t("loading")}</div>;
-  if (isAuth) return <Navigate to="/" replace />;
+  if (isAuth) {
+    const redirect = sessionStorage.getItem("post-login-redirect") || "/";
+    sessionStorage.removeItem("post-login-redirect");
+    return <Navigate to={redirect} replace />;
+  }
   return <>{children}</>;
 };
 

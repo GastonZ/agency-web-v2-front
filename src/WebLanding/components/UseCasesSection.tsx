@@ -1,168 +1,159 @@
-"use client";
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Badge } from "../components/ui/badge";
+import { Badge } from "./ui/badge";
 import {
-  Building,
-  Briefcase,
-  Users,
-  ShieldLock
-} from "tabler-icons-react";
+  IconUserCheck,
+  IconMessageCircle,
+  IconTrendingUp,
+  IconAlertTriangle,
+  IconCheck
+} from "@tabler/icons-react";
+import { useI18n } from "../lib/i18n";
+import { RatingBadge } from "./foundations/rating-badge";
 
-const useCases = [
-  {
-    id: "municipios",
-    title: "Municipios",
-    description: "Automatización de consultas ciudadanas y gestión de servicios públicos",
-    icon: <Building size={24} className="text-white/80" />,
-    metric: "70%",
-    metricLabel: "menos consultas telefónicas",
-    color: "border-blue-500/30"
-  },
-  {
-    id: "empresas",
-    title: "Empresas",
-    description: "Atención al cliente automatizada y análisis de mercado",
-    icon: <Briefcase size={24} className="text-white/80" />,
-    metric: "40%",
-    metricLabel: "más conversiones",
-    color: "border-green-500/30"
-  },
-  {
-    id: "cooperativas",
-    title: "Cooperativas",
-    description: "Gestión de socios y servicios financieros personalizados",
-    icon: <Users size={24} className="text-white/80" />,
-    metric: "24/7",
-    metricLabel: "disponibilidad",
-    color: "border-purple-500/30"
-  },
-  {
-    id: "organizaciones",
-    title: "Organizaciones",
-    description: "Asistentes especializados para instituciones del sector",
-    icon: <ShieldLock size={24} className="text-white/80" />,
-    metric: "100%",
-    metricLabel: "cumplimiento legal",
-    color: "border-orange-500/30"
-  }
-];
+const SECTION_BADGE_STYLE = "mb-6 bg-[#141414] border-white/5 text-white/40 rounded-full px-4 py-1.5 text-[10px] font-black tracking-[0.3em] uppercase transition-colors hover:text-white/60";
 
 export default function UseCasesSection() {
+  const { t } = useI18n();
+  const cases = t('useCases.items') || [];
+
+  const getCaseImage = (id: string) => {
+    switch (id) {
+      case 'politica': return '/case-politica.jpg';
+      case 'atencion': return '/case-chatbot.jpg';
+      case 'ecommerce': return '/claire.jpg';
+      default: return '/placeholder.jpg';
+    }
+  };
+
+  const getCaseIcon = (index: number) => {
+    switch (index) {
+      case 0: return <IconUserCheck size={40} className="text-white" />;
+      case 1: return <IconMessageCircle size={40} className="text-white" />;
+      default: return <IconTrendingUp size={40} className="text-white" />;
+    }
+  };
+
   return (
     <section
       id="casos-de-uso"
-      aria-labelledby="use-cases-title"
-      className="relative w-full border-t border-gray-200"
+      className="relative w-full overflow-hidden"
     >
-      <div className="mx-auto max-w-7xl py-8 md:py-12 lg:py-16">
-        {/* Header */}
+      <div className="mx-auto max-w-7xl py-20 sm:py-28 px-4 relative z-10">
         <motion.header
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="text-center mb-8 md:mb-12 lg:mb-16"
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-16 sm:mb-24"
         >
-          <Badge variant="outline" className="mb-4 md:mb-6 bg-white border-gray-200 text-gray-800 rounded-full px-6 py-2 text-sm font-medium shadow-sm">
-            Casos de uso
-          </Badge>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            viewport={{ once: true, amount: 0.3 }}
-            id="use-cases-title"
-            className="font-heading bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent text-3xl md:text-5xl tracking-tight font-semibold mb-4"
-          >
-            Soluciones adaptadas a cada sector
-          </motion.h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-sm sm:text-base md:text-lg leading-relaxed">
-            Desde gobiernos municipales hasta empresas privadas, nuestras soluciones de IA
-            se adaptan a las necesidades específicas de cada industria.
+          <div className="flex justify-center">
+            <Badge variant="outline" className={SECTION_BADGE_STYLE}>
+              {t('useCases.badge')}
+            </Badge>
+          </div>
+          <h2 className="text-3xl lg:text-[36px] font-heading font-bold text-white tracking-tight mb-5 max-w-2xl mx-auto">
+            {t('useCases.title')}
+          </h2>
+          <p className="text-white/50 max-w-xl mx-auto text-base leading-relaxed">
+            {t('useCases.description')}
           </p>
         </motion.header>
 
-        {/* Use Cases Grid - Diseño minimalista */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-gray-200">
-          {useCases.map((useCase, index) => (
+        <div className="space-y-12">
+          {cases.map((useCase: any, index: number) => (
             <motion.div
-              key={useCase.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
-              viewport={{ once: true, amount: 0.3 }}
-              className={`relative border-b border-gray-200 bg-gray-50 backdrop-blur-sm hover:bg-white transition-colors group ${useCase.color} ${index % 2 === 0 ? 'sm:border-r border-gray-200' : ''
-                } ${index % 4 !== 3 ? 'lg:border-r border-gray-200' : ''
+              key={useCase.id || index}
+              className={`relative border rounded-3xl overflow-hidden group transition-all duration-500 ${index === 0
+                ? "bg-gradient-to-br from-[#121212] via-[#0D0D0D] to-[#080808] border-yellow-500/20 shadow-[0_0_50px_rgba(234,179,8,0.05)]"
+                : "bg-[#090909]/40 border-white/10"
                 }`}
             >
-              <div>
-                <div className="p-4 sm:p-6 md:p-8">
-
-                  {/* Icono */}
-                  <div className="mb-6">
-                    <div className="opacity-80 group-hover:opacity-100 transition-opacity">
-                      {useCase.icon}
-                    </div>
-                  </div>
-
-                  {/* Título */}
-                  <motion.h3
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    className="text-xl sm:text-2xl font-bold mb-3 tracking-tight font-heading bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent">
-                    {useCase.title}
-                  </motion.h3>
-
-                  {/* Descripción */}
-                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
-                    {useCase.description}
-                  </p>
+              {index === 0 && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+                  <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-yellow-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
                 </div>
-                <div className="border-t border-gray-200 pt-3 sm:pt-4">
-                  <div className="p-4 sm:p-6 md:p-8">
+              )}
 
-                    {/* Métrica destacada */}
-                    <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                      {useCase.metric}
-                    </div>
-                    <div className="text-gray-500 text-xs uppercase tracking-wide">
-                      {useCase.metricLabel}
+              <div className="grid md:grid-cols-12 gap-0 relative z-10">
+                {/* Visual Side */}
+                <div className="md:col-span-5 relative min-h-[300px] md:min-h-full overflow-hidden border-b md:border-b-0 md:border-r border-white/10">
+                  <img
+                    src={getCaseImage(useCase.id)}
+                    alt={useCase.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090909] via-transparent to-transparent md:bg-gradient-to-r" />
+
+                  {/* Floating Metric Badge - Enhanced */}
+                  <div className="absolute bottom-6 left-6 right-6 p-4 sm:p-6 bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
+                        {getCaseIcon(index)}
+                      </div>
+                      <div>
+                        <div className="text-3xl font-bold text-white tracking-tighter leading-none mb-1">{useCase.metric}</div>
+                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/30">{useCase.metricLabel}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Content Side */}
+                <div className={`md:col-span-7 p-8 md:p-10 lg:p-12 bg-gradient-to-br from-white/[0.01] to-transparent ${index === 0 ? "lg:py-10" : ""}`}>
+                  <div className="flex flex-col h-full">
+                    <div className="mb-8">
+                      <Badge variant="outline" className={SECTION_BADGE_STYLE}>
+                        {useCase.title}
+                      </Badge>
+                      <h3 className={`font-bold mb-4 leading-[1.2] tracking-tight max-w-lg ${index === 0 ? "text-2xl sm:text-4xl text-white" : "text-2xl sm:text-4xl text-white"}`}>{useCase.subtitle}</h3>
+                      {index === 0 && (
+                        <RatingBadge
+                          rating={5}
+                          title="Top Global AI Solution"
+                          subtitle="2025 TECH EXCELLENCE"
+                          className="mt-4"
+                          variant="gold"
+                        />
+                      )}
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-12">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-red-500/10 bg-red-500/5 text-red-400/90 font-bold text-[9px] uppercase tracking-[0.2em] w-fit">
+                          <IconAlertTriangle size={12} />
+                          El Problema
+                        </div>
+                        <p className="text-white/50 text-sm leading-relaxed pl-1">{useCase.problem}</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/10 bg-emerald-500/5 text-emerald-400/90 font-bold text-[9px] uppercase tracking-[0.2em] w-fit">
+                          <IconTrendingUp size={12} />
+                          La Solución
+                        </div>
+                        <p className="text-white/50 text-sm leading-relaxed pl-1">{useCase.solution}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-12 p-6 rounded-2xl bg-white/[0.02] border border-white/5 relative group/quote">
+                      <div className="flex items-center gap-2 text-green-400 font-bold text-[9px] uppercase tracking-[0.4em] mb-4 opacity-70">
+                        <IconCheck size={14} />
+                        Impacto Generado
+                      </div>
+                      <p className="text-white/80 text-lg font-medium leading-relaxed italic relative z-10">
+                        "{useCase.result}"
+                      </p>
+                      <div className="absolute top-4 right-6 text-white/5 font-serif text-6xl pointer-events-none select-none">“</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              {/* Efecto hover sutil */}
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             </motion.div>
           ))}
         </div>
-
-        {/* CTA minimalista */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="text-center mt-16"
-        >
-          <p className="text-gray-600 mb-6 text-sm">
-            ¿No ves tu sector? Contamos con experiencia en múltiples industrias.
-          </p>
-          <div className="inline-flex items-center gap-2 text-gray-500 text-sm hover:text-gray-900 transition-colors cursor-pointer">
-            <span>Consultar implementación</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </motion.div>
       </div>
-
     </section>
   );
 }

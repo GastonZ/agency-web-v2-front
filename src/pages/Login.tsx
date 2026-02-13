@@ -41,7 +41,9 @@ const Login: React.FC = () => {
         userId: res.userId,
         email: res.email,
       });
-      navigate("/");
+      const from = sessionStorage.getItem("post-login-redirect") || "/";
+      sessionStorage.removeItem("post-login-redirect");
+      navigate(from);
     } catch (err: any) {
       const msg = err?.message;
 

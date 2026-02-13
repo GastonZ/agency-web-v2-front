@@ -1,7 +1,11 @@
+
+import React from "react";
 import { motion } from "framer-motion";
 import { Badge } from "./ui/badge";
-import { Check, X } from "lucide-react";
 import { useI18n } from "../lib/i18n";
+import { IconCircleCheckFilled, IconCircleXFilled, IconChevronRight } from "@tabler/icons-react";
+
+const SECTION_BADGE_STYLE = "mb-6 bg-[#141414] border-white/5 text-white/40 rounded-full px-4 py-1.5 text-[10px] font-black tracking-[0.3em] uppercase transition-all hover:text-white/60 select-none cursor-default mx-auto";
 
 export default function ComparativaSection() {
   const { t } = useI18n()
@@ -15,7 +19,7 @@ export default function ComparativaSection() {
     {
       feature: t('comparison.features.full_automation'),
       datacivis: true,
-      competencia: t('comparison.competitor_details.partial')
+      competencia: false
     },
     {
       feature: t('comparison.features.multichannel'),
@@ -30,153 +34,100 @@ export default function ComparativaSection() {
     {
       feature: t('comparison.features.support'),
       datacivis: true,
-      competencia: t('comparison.competitor.business_hours')
+      competencia: false
     },
     {
       feature: t('comparison.features.implementation'),
       datacivis: true,
-      competencia: t('comparison.competitor.months')
-    },
-    {
-      feature: t('comparison.features.pricing'),
-      datacivis: true,
       competencia: false
-    },
-    {
-      feature: t('comparison.features.training'),
-      datacivis: true,
-      competencia: t('comparison.competitor.additional_cost')
     }
   ];
+
   return (
     <section
       id="comparativa"
       aria-labelledby="comparativa-title"
-      className="relative w-full border-t border-gray-200"
+      className="relative w-full overflow-hidden"
     >
-      <div className="mx-auto max-w-6xl py-16 sm:py-20 md:py-24 px-3 sm:px-4 md:px-6 lg:px-8">
+
+      <div className="mx-auto max-w-5xl py-24 sm:py-32 px-4 relative z-10">
         <motion.header
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="text-center mb-12 sm:mb-16"
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-20"
         >
-          <Badge variant="outline" className="mb-4 sm:mb-6 bg-white border-gray-200 text-gray-800 rounded-full px-6 py-2 text-sm font-medium shadow-sm">
-            {t('comparison.badge')}
-          </Badge>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            viewport={{ once: true, amount: 0.3 }}
-            id="comparativa-title"
-            className="font-heading bg-gradient-to-b from-gray-900 from-[55%] to-gray-600 bg-clip-text text-transparent text-3xl md:text-5xl tracking-tight font-semibold mb-4"
-          >
+          <div className="flex justify-center">
+            <Badge variant="outline" className={SECTION_BADGE_STYLE}>
+              {t('comparison.badge')}
+            </Badge>
+          </div>
+          <h2 className="text-3xl lg:text-[36px] font-heading font-bold text-white tracking-tight mb-8 max-w-3xl mx-auto leading-[1.2]">
             {t('comparison.title')}
-          </motion.h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base md:text-lg leading-relaxed">
+          </h2>
+          <p className="text-white/40 max-w-2xl mx-auto text-lg leading-relaxed">
             {t('comparison.description')}
           </p>
         </motion.header>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="bg-gray-50 backdrop-blur-sm border-2 border-gray-300 overflow-hidden"
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="relative bg-white/[0.02] border border-white/10 rounded-[2.5rem] overflow-hidden backdrop-blur-sm"
         >
-          {/* Header de la tabla - Textos más grandes y centrados */}
-          <div className="grid grid-cols-3 gap-0 border-b border-gray-200">
-            <div className="p-4 sm:p-6 border-r border-gray-200">
-              <motion.h3
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                viewport={{ once: true, amount: 0.3 }}
-                className="text-sm sm:text-base md:text-lg font-medium uppercase tracking-wide text-center bg-gradient-to-b from-gray-600 from-[55%] to-gray-400 bg-clip-text text-transparent">
-                {t('comparison.features.realtime_data').split(' ')[0]}
-              </motion.h3>
+          {/* Header Row */}
+          <div className="grid grid-cols-12 gap-0 border-b border-white/10 bg-white/[0.01]">
+            <div className="col-span-6 p-8 border-r border-white/10 flex items-center">
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/20">Capacidad</span>
             </div>
-            <div className="p-4 sm:p-6 border-r border-gray-200 bg-gradient-to-br from-gray-900/5 to-transparent">
-              <motion.h3
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                viewport={{ once: true, amount: 0.3 }}
-                className="text-gray-900 text-base sm:text-lg md:text-xl font-medium text-center">
-                Datacivis
-              </motion.h3>
+            <div className="col-span-3 p-8 border-r border-white/10 bg-white/[0.03] flex items-center justify-center">
+              <div className="flex flex-col items-center">
+                <span className="text-lg font-bold text-white mb-0.5">Datacivis</span>
+                <div className="w-8 h-1 bg-white rounded-full opacity-40" />
+              </div>
             </div>
-            <div className="p-4 sm:p-6">
-              <motion.h3
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                viewport={{ once: true, amount: 0.3 }}
-                className="text-gray-600 text-base sm:text-lg md:text-xl font-medium text-center">
-                {t('comparison.competitor')}
-              </motion.h3>
+            <div className="col-span-3 p-8 flex items-center justify-center bg-[#0a0a0a]">
+              <span className="text-sm font-medium text-white/40 uppercase tracking-widest text-center">Otros</span>
             </div>
           </div>
 
-          {/* Filas de comparación - Textos más grandes y centrados */}
+          {/* Feature Rows */}
           {comparativa.map((item, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.05, ease: "easeOut" }}
-              viewport={{ once: true, amount: 0.3 }}
-              className={`grid grid-cols-3 gap-0 border-b border-gray-200 hover:bg-white transition-colors ${index % 2 === 0 ? 'bg-gray-100' : ''
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: index * 0.1 }}
+              viewport={{ once: true }}
+              className={`grid grid-cols-12 gap-0 border-b border-white/[0.05] group/row ${index === comparativa.length - 1 ? 'border-b-0' : ''
                 }`}
             >
-              <div className="p-4 sm:p-6 border-r border-gray-200">
-                <p className="text-gray-900 text-base sm:text-lg md:text-xl font-medium text-center">
+              <div className="col-span-6 p-6 sm:p-8 border-r border-white/10 flex items-center group-hover/row:bg-white/[0.03] transition-colors">
+                <p className="text-white/80 text-sm sm:text-base font-medium transition-colors group-hover/row:text-white">
                   {item.feature}
                 </p>
               </div>
-              <div className="p-4 sm:p-6 border-r border-gray-200 flex items-center justify-center">
-                {item.datacivis === true ? (
-                  <Check className="w-6 h-6 sm:w-7 sm:h-7 text-green-500" />
-                ) : (
-                  <span className="text-green-500 text-base sm:text-lg md:text-xl font-medium text-center">
-                    {item.datacivis}
-                  </span>
-                )}
+
+              <div className="col-span-3 p-6 sm:p-8 border-r border-white/10 bg-white/[0.02] flex items-center justify-center relative">
+                {/* Highlight glow for winner column */}
+                <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover/row:opacity-100 transition-opacity" />
+                <div className="relative z-10 flex items-center justify-center">
+                  <IconCircleCheckFilled className="w-6 h-6 sm:w-8 sm:h-8 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
+                </div>
               </div>
-              <div className="p-4 sm:p-6 flex items-center justify-center">
+
+              <div className="col-span-3 p-6 sm:p-8 flex items-center justify-center bg-[#0a0a0a]/50">
                 {item.competencia === true ? (
-                  <Check className="w-6 h-6 sm:w-7 sm:h-7 text-green-500" />
-                ) : item.competencia === false ? (
-                  <X className="w-6 h-6 sm:w-7 sm:h-7 text-red-500" />
+                  <IconCircleCheckFilled className="w-5 h-5 text-white/20" />
                 ) : (
-                  <span className="text-gray-500 text-base sm:text-lg md:text-xl font-medium text-center">
-                    {item.competencia}
-                  </span>
+                  <IconCircleXFilled className="w-5 h-5 text-red-500/20" />
                 )}
               </div>
             </motion.div>
           ))}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="text-center mt-8 sm:mt-12"
-        >
-          <p className="text-gray-600 text-sm sm:text-base mb-6">
-            {t('comparison.cta')}
-          </p>
-          <div className="inline-flex items-center gap-2 text-gray-500 text-sm hover:text-gray-900 transition-colors cursor-pointer">
-            <span>{t('comparison.demo')}</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
         </motion.div>
       </div>
     </section>

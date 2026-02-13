@@ -321,7 +321,11 @@ function useRemoteAssistantVolume() {
   return currentVolume;
 }
 
-export default function V2ConversationalWidget(props: { profile?: string; autoConnect?: boolean }) {
+export default function V2ConversationalWidget(props: {
+  profile?: string;
+  autoConnect?: boolean;
+  onNavigateToCreation?: () => void;
+}) {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -529,8 +533,12 @@ export default function V2ConversationalWidget(props: { profile?: string; autoCo
   const canGenerateDraft = userBuffer.length > 0;
 
   const goToModerationCreation = React.useCallback(() => {
-    navigate("/campaign_moderation_creation/");
-  }, [navigate]);
+    if (props.onNavigateToCreation) {
+      props.onNavigateToCreation();
+    } else {
+      navigate("/campaign_moderation_creation/");
+    }
+  }, [navigate, props.onNavigateToCreation]);
 
   type PendingDraftPayload = {
     version: 1;

@@ -1,9 +1,10 @@
-import { motion } from "framer-motion";
+
+import { motion } from "framer-motion"
 import { useI18n } from "../lib/i18n"
 
 const TechCarousel = () => {
   const { t } = useI18n()
-
+  
   // Fallback si las traducciones no están disponibles
   const getTranslation = (key: string, fallback: string) => {
     try {
@@ -13,26 +14,26 @@ const TechCarousel = () => {
       return fallback
     }
   }
-
+  
   const technologies = [
     // Modelos de Lenguaje y Conversación
     "OpenAI GPT-4", "Qwen", "LLaMA", "LangChain",
-
+    
     // Voz y Audio
     "ElevenLabs", "FFmpeg",
-
+    
     // Imagen y Video
     "Stable Diffusion", "DALL·E", "Google Vision", "AWS Rekognition",
-
+    
     // Mensajería y Canales
     "WhatsApp API", "Twilio", "Meta Cloud API", "Facebook API", "Instagram API", "X/Twitter API",
-
+    
     // Social Listening
     "Google Custom Search", "RapidAPI", "NewsAPI", "GNews",
-
+    
     // Datos y Análisis
     "Pandas", "NumPy", "Matplotlib", "Plotly", "NetworkX", "Scikit-learn", "SpaCy", "Transformers",
-
+    
     // Infraestructura
     "PostgreSQL", "MongoDB", "FastAPI", "Flask", "Docker", "PM2", "NGINX", "Redis"
   ]
@@ -44,7 +45,7 @@ const TechCarousel = () => {
         <div className="relative py-8 sm:py-12">
           {/* Título */}
           <div className="text-center mb-8 sm:mb-12">
-            <motion.h3
+            <motion.h3 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
@@ -59,7 +60,7 @@ const TechCarousel = () => {
             {/* Gradientes suaves en los bordes para efecto fade natural */}
             <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-r from-[#090909] to-transparent pointer-events-none z-10"></div>
             <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-l from-[#090909] to-transparent pointer-events-none z-10"></div>
-
+            
             <motion.div
               className="flex gap-6 sm:gap-8 md:gap-12"
               animate={{
@@ -94,7 +95,7 @@ const TechCarousel = () => {
                   </div>
                 </motion.div>
               ))}
-
+              
               {/* Segunda pasada para continuidad */}
               {technologies.map((tech, index) => (
                 <div

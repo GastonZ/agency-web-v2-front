@@ -14,7 +14,7 @@ interface Particle {
 const FloatingParticles = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
-  const animationRef = useRef<number>(null);
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,25 +33,25 @@ const FloatingParticles = () => {
     // Inicializar partículas SOLO alrededor del rayo de luz
     const initParticles = () => {
       particlesRef.current = [];
-      const particleCount = 120; // Mucho más volumen
-      
+      const particleCount = 60; // Optimizado para rendimiento
+
       // Área del rayo de luz (diagonal desde top-left)
       const lightStartX = 0;
       const lightStartY = 0;
       const lightEndX = canvas.width;
       const lightEndY = canvas.height;
-      
+
       for (let i = 0; i < particleCount; i++) {
         // Generar partículas en el área del rayo de luz
         const t = Math.random(); // Posición a lo largo del rayo
         const baseX = lightStartX + (lightEndX - lightStartX) * t;
         const baseY = lightStartY + (lightEndY - lightStartY) * t;
-        
+
         // Añadir variación perpendicular al rayo - concentrado en los bordes
         const edgeBias = Math.random() < 0.7 ? 1 : -1; // 70% de probabilidad de estar en los bordes
         const perpendicularOffset = (Math.random() * 0.8 + 0.2) * 120 * edgeBias; // Concentrado en los bordes
         const angle = Math.atan2(lightEndY - lightStartY, lightEndX - lightStartX) + Math.PI / 2;
-        
+
         particlesRef.current.push({
           x: baseX + Math.cos(angle) * perpendicularOffset,
           y: baseY + Math.sin(angle) * perpendicularOffset,
@@ -68,13 +68,13 @@ const FloatingParticles = () => {
     // Función de animación
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       particlesRef.current.forEach((particle, index) => {
         // Actualizar posición
         particle.x += particle.vx;
         particle.y += particle.vy;
         particle.life += 0.5;
-        
+
         // Rebotar en los bordes suavemente
         if (particle.x < 0 || particle.x > canvas.width) {
           particle.vx *= -0.8;
@@ -84,7 +84,7 @@ const FloatingParticles = () => {
           particle.vy *= -0.8;
           particle.y = Math.max(0, Math.min(canvas.height, particle.y));
         }
-        
+
         // Renovar partículas que se salen del área del rayo
         if (particle.life > particle.maxLife) {
           const t = Math.random();
@@ -93,26 +93,26 @@ const FloatingParticles = () => {
           const edgeBias = Math.random() < 0.7 ? 1 : -1; // 70% de probabilidad de estar en los bordes
           const perpendicularOffset = (Math.random() * 0.8 + 0.2) * 120 * edgeBias; // Concentrado en los bordes
           const angle = Math.atan2(canvas.height - 0, canvas.width - 0) + Math.PI / 2;
-          
+
           particle.x = baseX + Math.cos(angle) * perpendicularOffset;
           particle.y = baseY + Math.sin(angle) * perpendicularOffset;
           particle.life = 0;
         }
-        
+
         // Dibujar partícula con gradiente sutil
         const gradient = ctx.createRadialGradient(
           particle.x, particle.y, 0,
           particle.x, particle.y, particle.size * 2
         );
-        gradient.addColorStop(0, `rgba(255, 255, 255, ${particle.opacity})`);
-        gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
-        
+        gradient.addColorStop(0, `rgba(16, 185, 129, ${particle.opacity})`);
+        gradient.addColorStop(1, `rgba(16, 185, 129, 0)`);
+
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
         ctx.fill();
       });
-      
+
       animationRef.current = requestAnimationFrame(animate);
     };
 

@@ -1,0 +1,339 @@
+/* ===== Landing Datacivis – Scoped Styles ===== */
+
+/* --- CSS Variables (scoped) --- */
+.landing-datacivis {
+  --theme-bg: #090909;
+  --theme-card-bg: rgba(255, 255, 255, 0.02);
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-hover: rgba(255, 255, 255, 0.15);
+  --theme-accent: #ffffff;
+  --theme-dot-opacity: 0.03;
+  --card-radius: 1.5rem;
+
+  --font-heading-landing: 'Plus Jakarta Sans', 'Inter', sans-serif;
+
+  /* HSL variables for sub-components */
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 0 0% 14.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 14.9%;
+  --muted-foreground: 0 0% 63.9%;
+  --accent: 0 0% 14.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 14.9%;
+  --input: 0 0% 14.9%;
+  --ring: 0 0% 83.1%;
+  --radius: 0.5rem;
+
+  /* Electric border — emerald brand */
+  --electric-border-color: rgba(16, 185, 129, 0.5);
+  --electric-light-color: rgba(16, 185, 129, 0.6);
+  --gradient-color: rgba(16, 185, 129, 0.1);
+}
+
+/* --- Font scoping --- */
+.landing-datacivis .font-heading {
+  font-family: var(--font-heading-landing);
+}
+
+/* --- Premium Glass Card --- */
+.landing-datacivis .premium-glass-card {
+  position: relative;
+  background: var(--theme-card-bg);
+  border: 1px solid var(--theme-border);
+  backdrop-filter: blur(16px);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.landing-datacivis .premium-glass-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--theme-border-hover);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Datacivis Watermark SVG --- */
+.landing-datacivis .datacivis-watermark-svg {
+  width: 100%;
+  max-width: 1282.537px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-datacivis .datacivis-watermark-svg img {
+  width: 100%;
+  max-width: 1282.537px;
+  height: auto;
+  max-height: 230.54px;
+  filter: drop-shadow(0 1px 32px rgba(255, 255, 255, 0.10));
+  object-fit: contain;
+}
+
+@media (max-width: 1280px) {
+  .landing-datacivis .datacivis-watermark-svg { max-width: 90%; }
+  .landing-datacivis .datacivis-watermark-svg img { max-width: 100%; max-height: 200px; }
+}
+@media (max-width: 1024px) {
+  .landing-datacivis .datacivis-watermark-svg { max-width: 85%; }
+  .landing-datacivis .datacivis-watermark-svg img { max-width: 100%; max-height: 170px; }
+}
+@media (max-width: 768px) {
+  .landing-datacivis .datacivis-watermark-svg { max-width: 80%; }
+  .landing-datacivis .datacivis-watermark-svg img { max-width: 100%; max-height: 140px; }
+}
+@media (max-width: 640px) {
+  .landing-datacivis .datacivis-watermark-svg { max-width: 75%; }
+  .landing-datacivis .datacivis-watermark-svg img { max-width: 100%; max-height: 110px; }
+}
+
+/* --- Electric Border Effect --- */
+.landing-datacivis .electric-border-container { padding: 2px; }
+.landing-datacivis .electric-card-wrapper {
+  position: relative;
+  border-radius: 2.5rem;
+  background: linear-gradient(-30deg, var(--gradient-color), transparent, var(--gradient-color)),
+    linear-gradient(to bottom, #090909, #090909);
+}
+.landing-datacivis .electric-inner-container { position: relative; }
+.landing-datacivis .electric-border-outer {
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-radius: 2.5rem;
+  padding-right: 4px;
+  padding-bottom: 4px;
+}
+.landing-datacivis .electric-main-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 2.5rem;
+  margin-top: -4px;
+  margin-left: -4px;
+}
+.landing-datacivis .electric-distorted-border {
+  position: absolute;
+  inset: 0;
+  border-radius: 2.5rem;
+  border: 2px solid var(--electric-border-color);
+  filter: url(#turbulent-displace);
+  background: #0a0a0a;
+  z-index: 0;
+}
+.landing-datacivis .electric-clean-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 2.5rem;
+  overflow: hidden;
+  z-index: 10;
+}
+.landing-datacivis .electric-glow-layer-1 {
+  border: 2px solid rgba(16, 185, 129, 0.35);
+  border-radius: 2.5rem;
+  width: 100%; height: 100%;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  filter: blur(1px);
+  pointer-events: none;
+}
+.landing-datacivis .electric-glow-layer-2 {
+  border: 2px solid var(--electric-light-color);
+  border-radius: 2.5rem;
+  width: 100%; height: 100%;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  filter: blur(4px);
+  pointer-events: none;
+}
+.landing-datacivis .electric-overlay-1 {
+  position: absolute;
+  width: 100%; height: 100%;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 2.5rem;
+  opacity: 0.8;
+  mix-blend-mode: overlay;
+  transform: scale(1.1);
+  filter: blur(16px);
+  background: linear-gradient(-30deg, rgba(16,185,129,0.6), transparent 30%, transparent 70%, rgba(16,185,129,0.6));
+  pointer-events: none;
+}
+.landing-datacivis .electric-overlay-2 {
+  position: absolute;
+  width: 100%; height: 100%;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 2.5rem;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  transform: scale(1.1);
+  filter: blur(16px);
+  background: linear-gradient(-30deg, rgba(16,185,129,0.5), transparent 30%, transparent 70%, rgba(16,185,129,0.5));
+  pointer-events: none;
+}
+.landing-datacivis .electric-background-glow {
+  position: absolute;
+  width: 100%; height: 100%;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 2.5rem;
+  filter: blur(32px);
+  transform: scale(1.1);
+  opacity: 0.3;
+  z-index: -1;
+  background: linear-gradient(-30deg, var(--electric-light-color), transparent, var(--electric-border-color));
+  pointer-events: none;
+}
+
+/* --- Lightning/Thunder effect --- */
+.landing-datacivis .electric-lightning {
+  position: absolute;
+  width: 3px; height: 40px;
+  background: linear-gradient(to bottom, transparent, rgba(16,185,129,0.9), rgba(16,185,129,1), rgba(16,185,129,0.9), transparent);
+  box-shadow: 0 0 10px rgba(16,185,129,0.8), 0 0 20px rgba(16,185,129,0.6), 0 0 30px rgba(16,185,129,0.4);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 15;
+  transform-origin: center;
+}
+.landing-datacivis .electric-lightning::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px; height: 8px;
+  background: rgba(16,185,129,1);
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(16,185,129,1), 0 0 30px rgba(16,185,129,0.8), 0 0 45px rgba(16,185,129,0.6);
+}
+.landing-datacivis .electric-lightning::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px; height: 60px;
+  background: linear-gradient(to bottom, transparent, rgba(16,185,129,0.6), rgba(16,185,129,0.8), rgba(16,185,129,0.6), transparent);
+  filter: blur(2px);
+}
+
+/* --- Light rays (emerald-tinted, properly ordered gradient stops) --- */
+.landing-datacivis .light-ray {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(35deg,
+    transparent 0%, transparent 46%,
+    rgba(16,185,129,0.05) 47%,
+    rgba(16,185,129,0.12) 49%,
+    rgba(16,185,129,0.18) 50%,
+    rgba(16,185,129,0.12) 51%,
+    rgba(16,185,129,0.05) 53%,
+    transparent 54%, transparent 100%
+  );
+  transform: translateX(-35%) translateY(-20%);
+  opacity: 0.6;
+  filter: blur(2.5rem);
+}
+.landing-datacivis .light-ray-2 {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg,
+    transparent 0%, transparent 44%,
+    rgba(16,185,129,0.04) 46%,
+    rgba(16,185,129,0.10) 48%,
+    rgba(16,185,129,0.14) 50%,
+    rgba(16,185,129,0.10) 52%,
+    rgba(16,185,129,0.04) 54%,
+    transparent 56%, transparent 100%
+  );
+  transform: translateX(10%) translateY(-5%);
+  opacity: 0.4;
+  filter: blur(2rem);
+}
+.landing-datacivis .light-ray-3 {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(25deg,
+    transparent 0%, transparent 48%,
+    rgba(16,185,129,0.03) 50%,
+    rgba(16,185,129,0.08) 52%,
+    rgba(16,185,129,0.12) 54%,
+    rgba(16,185,129,0.08) 56%,
+    rgba(16,185,129,0.03) 58%,
+    transparent 60%, transparent 100%
+  );
+  transform: translateX(-60%) translateY(20%);
+  opacity: 0.3;
+  filter: blur(1.8rem);
+}
+.landing-datacivis .light-ray-4 {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(50deg,
+    transparent 0%, transparent 44%,
+    rgba(16,185,129,0.03) 46%,
+    rgba(16,185,129,0.06) 48%,
+    rgba(16,185,129,0.10) 50%,
+    rgba(16,185,129,0.06) 52%,
+    rgba(16,185,129,0.03) 54%,
+    transparent 56%, transparent 100%
+  );
+  transform: translateX(45%) translateY(-10%);
+  opacity: 0.25;
+  filter: blur(1.5rem);
+}
+
+/* --- Words Roller Keyframes --- */
+@keyframes slideWordsVar {
+  0%, 16% { transform: translateY(0); }
+  20%, 36% { transform: translateY(calc(-1 * var(--roller-h))); }
+  40%, 56% { transform: translateY(calc(-2 * var(--roller-h))); }
+  60%, 76% { transform: translateY(calc(-3 * var(--roller-h))); }
+  80%, 100% { transform: translateY(calc(-4 * var(--roller-h))); }
+}
+
+.landing-datacivis .words-roller {
+  animation: slideWordsVar 12s cubic-bezier(.2, .7, .2, 1) infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* --- Scrollbar hide --- */
+.landing-datacivis .scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.landing-datacivis .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Hero section scrollbar hide --- */
+.landing-datacivis .hero-section {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.landing-datacivis .hero-section::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Marquee Animations --- */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap))); }
+}
+@keyframes marquee-vertical {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% - var(--gap))); }
+}
+
+/* Tailwind v4 @utility definitions */
+@utility animate-marquee {
+  animation: marquee var(--duration) linear infinite;
+}
+@utility animate-marquee-vertical {
+  animation: marquee-vertical var(--duration) linear infinite;
+}
