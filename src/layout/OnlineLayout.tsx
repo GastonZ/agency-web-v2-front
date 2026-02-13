@@ -38,7 +38,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
   }, [isSub]);
 
   return (
-    <div className="min-h-screen bg-gray-200 text-black dark:bg-neutral-950 dark:text-white flex">
+    <div className="h-[100dvh] overflow-hidden bg-gray-200 text-black dark:bg-neutral-950 dark:text-white flex">
       <div className="hidden lg:block">
         <SidebarNav
           items={navItems}
@@ -72,8 +72,8 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
         </div>
       )}
 
-      <div className="flex-1 flex flex-col">
-        <header className="h-14 flex items-center justify-between px-4 lg:justify-end border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <header className="h-14 shrink-0 flex items-center justify-between px-4 lg:justify-end border-b border-neutral-200 dark:border-neutral-800">
           <button
             className="lg:hidden p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
             onClick={() => setMobileOpen((v) => !v)}
@@ -91,8 +91,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
         </header>
 
         <main
-          className={`flex-1 px-4 pb-8 pt-4 lg:pt-6 ${SIDE_WIDTH ? "lg:pl-64" : "lg:pl-[72px]"
-            }`}
+          className={`flex-1 min-h-0 overflow-y-auto px-4 pb-8 pt-4 lg:pt-6 ${SIDE_WIDTH ? "lg:pl-64" : "lg:pl-[72px]"}`}
         >
           {children}
         </main>

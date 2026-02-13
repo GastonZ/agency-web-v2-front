@@ -307,6 +307,10 @@ function LeadActionsModal({
   areasLoading: boolean;
 }) {
   const { t } = useTranslation("translations");
+  const tr = React.useCallback(
+    (key: string, fallback: string) => t(key, { defaultValue: fallback }),
+    [t],
+  );
 
   const [statusLoading, setStatusLoading] = React.useState<LeadStatus | null>(null);
   const [areaLoading, setAreaLoading] = React.useState<string | null>(null);
@@ -741,6 +745,10 @@ function StartThreadModal({
   onStarted: (thread: InboxThread, contactId: string) => void;
 }) {
   const { t } = useTranslation("translations");
+  const tr = React.useCallback(
+    (key: string, fallback: string) => t(key, { defaultValue: fallback }),
+    [t],
+  );
   const [phoneNumber, setPhoneNumber] = React.useState("");
   const [name, setName] = React.useState("");
   const [text, setText] = React.useState("");
@@ -794,7 +802,7 @@ function StartThreadModal({
   const doSubmit = React.useCallback(
     async (overrideForce?: boolean) => {
       if (!agentId) {
-        setErr("Seleccioná una campaña primero.");
+        setErr(tr("inbox.start_thread.select_campaign_first", "Seleccioná una campaña primero."));
         return;
       }
 
@@ -803,11 +811,11 @@ function StartThreadModal({
       const nm = (name || "").trim();
 
       if (!pn) {
-        setErr("Ingresá un número de teléfono.");
+        setErr(tr("inbox.start_thread.enter_phone", "Ingresá un número de teléfono."));
         return;
       }
       if (!msg) {
-        setErr("Escribí el primer mensaje.");
+        setErr(tr("inbox.start_thread.enter_message", "Escribí el primer mensaje."));
         return;
       }
 
@@ -863,7 +871,7 @@ function StartThreadModal({
             } as InboxThread);
 
         if (!isValidContactId(thread.contactId)) {
-          throw new Error("No se pudo obtener el contactId del thread");
+          throw new Error(tr("inbox.start_thread.no_contact_id", "No se pudo obtener el contactId del thread"));
         }
 
         onStarted(thread, thread.contactId);
@@ -872,14 +880,18 @@ function StartThreadModal({
         setText("");
       } catch (e: any) {
         const status = e?.status;
-        const message = e?.data?.message || e?.data?.error || e?.message || "No se pudo iniciar la conversación";
+        const message =
+          e?.data?.message ||
+          e?.data?.error ||
+          e?.message ||
+          tr("inbox.start_thread.cannot_start", "No se pudo iniciar la conversación");
         setErr(message);
         setConflict(status === 409);
       } finally {
         setLoading(false);
       }
     },
-    [agentId, force, name, onClose, onStarted, phoneNumber, text],
+    [agentId, force, name, onClose, onStarted, phoneNumber, text, tr],
   );
 
   if (!open) return null;
@@ -907,9 +919,12 @@ function StartThreadModal({
       >
         <div className="px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-950/35 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-sm font-semibold">Nuevo mensaje</div>
+            <div className="text-sm font-semibold">{tr("inbox.start_thread.title", "Nuevo mensaje")}</div>
             <div className="mt-1 text-xs opacity-70">
-              Enviá el primer mensaje y se creará la conversación en Inbox (modo humano).
+              {tr(
+                "inbox.start_thread.description",
+                "Enviá el primer mensaje y se creará la conversación en Inbox (modo humano).",
+              )}
             </div>
           </div>
 
@@ -935,9 +950,11 @@ function StartThreadModal({
                     disabled={loading}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white hover:bg-red-500 disabled:opacity-60"
                   >
-                    Forzar takeover y enviar
+                    {tr("inbox.start_thread.force_send", "Forzar takeover y enviar")}
                   </button>
-                  <span className="text-xs opacity-80">(solo si necesitás tomar control)</span>
+                  <span className="text-xs opacity-80">
+                    {tr("inbox.start_thread.force_hint", "(solo si necesitás tomar control)")}
+                  </span>
                 </div>
               ) : null}
             </div>
@@ -946,7 +963,7 @@ function StartThreadModal({
           <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4 grid grid-cols-1 gap-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="grid gap-1">
-                <span className="text-xs opacity-70">Teléfono *</span>
+                <span className="text-xs opacity-70">{tr("inbox.start_thread.phone", "Teléfono *")}</span>
                 <input
                   autoFocus
                   value={phoneNumber}
@@ -956,7 +973,7 @@ function StartThreadModal({
                 />
               </label>
               <label className="grid gap-1">
-                <span className="text-xs opacity-70">Nombre (opcional)</span>
+                <span className="text-xs opacity-70">{tr("inbox.start_thread.name", "Nombre (opcional)")}</span>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -967,7 +984,7 @@ function StartThreadModal({
             </div>
 
             <label className="grid gap-1">
-              <span className="text-xs opacity-70">Mensaje *</span>
+              <span className="text-xs opacity-70">{tr("inbox.start_thread.message", "Mensaje *")}</span>
               <textarea
                 ref={textareaRef}
                 value={text}
@@ -986,8 +1003,13 @@ function StartThreadModal({
                 className="mt-1"
               />
               <span>
-                Forzar takeover si la conversación está tomada por otro usuario.
-                <span className="block text-xs opacity-70">Si no, el backend puede responder 409.</span>
+                {tr(
+                  "inbox.start_thread.force_label",
+                  "Forzar takeover si la conversación está tomada por otro usuario.",
+                )}
+                <span className="block text-xs opacity-70">
+                  {tr("inbox.start_thread.force_409", "Si no, el backend puede responder 409.")}
+                </span>
               </span>
             </label>
           </div>
@@ -999,7 +1021,7 @@ function StartThreadModal({
               disabled={loading}
               className="px-4 py-2 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-60"
             >
-              Cancelar
+              {tr("cancel", "Cancelar")}
             </button>
             <button
               type="button"
@@ -1008,7 +1030,7 @@ function StartThreadModal({
               className="px-4 py-2 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 inline-flex items-center gap-2"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enviar
+              {tr("send", "Enviar")}
             </button>
           </div>
         </div>
@@ -1028,6 +1050,10 @@ export default function Inbox() {
   const location = useLocation();
 
   const { t } = useTranslation("translations");
+  const tr = React.useCallback(
+    (key: string, fallback: string) => t(key, { defaultValue: fallback }),
+    [t],
+  );
   const executingUserId = getUserId() || "";
   const token = getToken() || "";
 
@@ -1094,6 +1120,19 @@ export default function Inbox() {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   const [pending, setPending] = React.useState<PendingAttachment | null>(null);
+
+  const closeMobileChat = React.useCallback(() => {
+    setActiveThread(null);
+    setActiveContactId(null);
+    setMessages([]);
+    setChatError(null);
+    setChatLoading(false);
+    setDraft("");
+    setPending(null);
+
+    const base = agentKey ? `/inbox/${encodeURIComponent(agentKey)}` : "/inbox";
+    navigate(base, { replace: true });
+  }, [agentKey, navigate]);
 
   // Lead actions (status/area/next-action) directly from Inbox.
   const [leadModalOpen, setLeadModalOpen] = React.useState(false);
@@ -1323,13 +1362,12 @@ export default function Inbox() {
       });
 
       setThreads(ordered);
-      (ordered);
     } catch (e: any) {
-      setThreadsError(e?.data?.message || e?.message || "No se pudo cargar la bandeja");
+      setThreadsError(e?.data?.message || e?.message || tr("inbox.error_load_threads", "No se pudo cargar la bandeja"));
     } finally {
       setThreadsLoading(false);
     }
-  }, [agentKey]);
+  }, [agentKey, tr]);
 
   // Load threads when agent changes.
   React.useEffect(() => {
@@ -1350,7 +1388,7 @@ export default function Inbox() {
 
       const cid = normalizeContactId(t.contactId);
       if (!isValidContactId(cid)) {
-        setChatError("Thread inválido (contactId vacío/undefined).");
+        setChatError(tr("inbox.invalid_thread", "Thread inválido (contactId vacío/undefined)."));
         return;
       }
 
@@ -1416,12 +1454,12 @@ export default function Inbox() {
           );
         }
       } catch (e: any) {
-        setChatError(e?.data?.message || e?.message || "No se pudo cargar el chat");
+        setChatError(e?.data?.message || e?.message || tr("inbox.error_load_chat", "No se pudo cargar el chat"));
       } finally {
         setChatLoading(false);
       }
     },
-    [agentKey],
+    [agentKey, tr],
   );
 
   const onThreadStarted = React.useCallback(
@@ -1601,15 +1639,20 @@ export default function Inbox() {
         return prev.map((x) => (threadKey(x.channel, x.contactId) === key ? mergeThread(x, nextThread) : x));
       });
     } catch (e: any) {
-      const msg = e?.data?.message || e?.message || "No se pudo cambiar el takeover";
+      const msg = e?.data?.message || e?.message || tr("inbox.error_takeover", "No se pudo cambiar el takeover");
       alert(msg);
     }
-  }, [activeThread, agentKey]);
+  }, [activeThread, agentKey, tr]);
 
   const onSend = React.useCallback(async () => {
     if (!agentKey || !activeThread || !activeContactId) return;
     if (!canSend) {
-      alert("Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.");
+      alert(
+        tr(
+          "inbox.must_be_human",
+          "Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.",
+        ),
+      );
       return;
     }
 
@@ -1640,7 +1683,7 @@ export default function Inbox() {
         setDraft("");
         scrollToBottom("smooth");
       } catch (e: any) {
-        alert(e?.data?.message || e?.message || "No se pudo enviar el archivo");
+        alert(e?.data?.message || e?.message || tr("inbox.error_send_file", "No se pudo enviar el archivo"));
       }
       return;
     }
@@ -1667,7 +1710,7 @@ export default function Inbox() {
       await sendMessage(agentKey, normalizeContactId(activeContactId), body, { channel: "whatsapp" });
       scrollToBottom("smooth");
     } catch (e: any) {
-      const msg = e?.data?.message || e?.message || "No se pudo enviar el mensaje";
+      const msg = e?.data?.message || e?.message || tr("inbox.error_send_message", "No se pudo enviar el mensaje");
       alert(msg);
     }
   }, [draft, activeThread, activeContactId, canSend, agentKey, agentId, executingUserId, pending, scrollToBottom]);
@@ -1682,7 +1725,12 @@ export default function Inbox() {
       e.target.value = "";
       if (!file || !activeThread || !activeContactId) return;
       if (!canSend) {
-        alert("Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.");
+        alert(
+          tr(
+            "inbox.must_be_human",
+            "Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.",
+          ),
+        );
         return;
       }
 
@@ -1691,24 +1739,24 @@ export default function Inbox() {
 
         // Restricción de imágenes (solo png/jpg/jpeg)
         if (isImageMime(mimeType) && !isAllowedImageMime(mimeType)) {
-          alert("Solo se permiten imágenes PNG, JPG o JPEG.");
+          alert(tr("inbox.allowed_images", "Solo se permiten imágenes PNG, JPG o JPEG."));
           return;
         }
 
         const ext = (file.name.split(".").pop() || "").toLowerCase();
 
         if (mimeType === "application/pdf" || ext === "pdf") {
-          alert("Por ahora no se permite enviar PDF.");
+          alert(tr("inbox.pdf_not_allowed", "Por ahora no se permite enviar PDF."));
           return;
         }
 
         if (isVideoMime(mimeType)) {
-          alert("Por ahora no se permite enviar videos.");
+          alert(tr("inbox.video_not_allowed", "Por ahora no se permite enviar videos."));
           return;
         }
 
         if (isAudioMime(mimeType)) {
-          alert("Por ahora no se permite enviar audios.");
+          alert(tr("inbox.audio_not_allowed", "Por ahora no se permite enviar audios."));
           return;
         }
 
@@ -1722,7 +1770,12 @@ export default function Inbox() {
 
         // Si no es imagen, solo dejamos pasar docs soportados
         if (!isImageMime(mimeType) && !isAllowedDoc) {
-          alert("Solo se permiten archivos Word (.doc/.docx), Excel (.xls/.xlsx) o TXT (.txt).");
+          alert(
+            tr(
+              "inbox.allowed_documents",
+              "Solo se permiten archivos Word (.doc/.docx), Excel (.xls/.xlsx) o TXT (.txt).",
+            ),
+          );
           return;
         }
 
@@ -1751,10 +1804,10 @@ export default function Inbox() {
         // Default: document
         setPending({ kind: "document", mimeType, base64, fileName: file.name });
       } catch (err: any) {
-        alert(err?.message || "No se pudo leer el archivo");
+        alert(err?.message || tr("inbox.error_read_file", "No se pudo leer el archivo"));
       }
     },
-    [activeThread, activeContactId, canSend, pending]
+    [activeThread, activeContactId, canSend, pending, tr]
   );
 
   const stopRecording = React.useCallback(() => {
@@ -1768,12 +1821,17 @@ export default function Inbox() {
   const startRecording = React.useCallback(async () => {
     if (!activeThread || !activeContactId) return;
     if (!canSend) {
-      alert("Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.");
+      alert(
+        tr(
+          "inbox.must_be_human",
+          "Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.",
+        ),
+      );
       return;
     }
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      alert("Tu navegador no soporta grabación de audio.");
+      alert(tr("inbox.no_audio_recording_support", "Tu navegador no soporta grabación de audio."));
       return;
     }
 
@@ -1813,9 +1871,9 @@ export default function Inbox() {
       rec.start();
     } catch (e: any) {
       setIsRecording(false);
-      alert(e?.message || "No se pudo iniciar la grabación");
+      alert(e?.message || tr("inbox.error_start_recording", "No se pudo iniciar la grabación"));
     }
-  }, [activeThread, activeContactId, canSend, pending]);
+  }, [activeThread, activeContactId, canSend, pending, tr]);
 
 
   // Realtime: inbox-thread-updated + inbox-message
@@ -1951,23 +2009,64 @@ export default function Inbox() {
       });
       setMessages((prev) => mergeUniqueMessages(res.messages || [], prev));
     } catch (e: any) {
-      alert(e?.data?.message || e?.message || "No se pudieron cargar mensajes anteriores");
+      alert(
+        e?.data?.message ||
+          e?.message ||
+          tr("inbox.error_load_older", "No se pudieron cargar mensajes anteriores"),
+      );
     }
-  }, [activeThread, activeContactId, messages, agentKey]);
+  }, [activeThread, activeContactId, messages, agentKey, tr]);
 
   return (
     <OnlineLayout>
-      <div className="flex flex-col gap-4">
-        <div className="rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 p-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
+      {/* Ocupa todo el espacio disponible dentro del main del layout */}
+      <div className="flex pt-4 flex-col h-full -mx-4 -mt-4 lg:mx-0 lg:-mt-6 lg:h-[calc(100vh-56px-1.5rem)] lg:gap-4">
+
+        {/* ── Barra superior (header) ── visible en desktop y en mobile SOLO cuando no hay chat abierto */}
+        <div
+          className={[
+            "shrink-0 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow ring-1 ring-emerald-400/20",
+            "lg:rounded-2xl lg:p-4 lg:mx-0",
+            // En mobile: ocultar si hay un chat abierto para ganar espacio
+            activeThread ? "hidden lg:block" : "block",
+            "p-3",
+          ].join(" ")}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="hidden sm:block">
+              <h1 className="text-2xl font-semibold tracking-tight">{tr("inbox.title", "Inbox")}</h1>
               <p className="text-sm text-neutral-600 dark:text-neutral-300">
-                Seleccioná una campaña para ver la bandeja.
+                {tr("inbox.subtitle", "Seleccioná una campaña para ver la bandeja.")}
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Mobile: título compacto + controles en una fila */}
+            <div className="sm:hidden flex items-center justify-between gap-2">
+              <h1 className="text-lg font-semibold tracking-tight">{tr("inbox.title", "Inbox")}</h1>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    if (!selectedCampaign?.id) return;
+                    navigate(`/my_moderation_campaign/${selectedCampaign.id}/statistics`);
+                  }}
+                  disabled={!selectedCampaign?.id}
+                  className="p-2 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-60 inline-flex items-center"
+                  title={tr("inbox.back_to_stats", "Volver a estadísticas")}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={refreshThreads}
+                  disabled={!agentId || threadsLoading}
+                  className="px-2.5 py-2 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 text-xs font-medium"
+                >
+                  {tr("reload", "Recargar")}
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop controls */}
+            <div className="hidden sm:flex items-center gap-2 flex-wrap">
               <select
                 value={agentId}
                 onChange={(e) => {
@@ -1975,9 +2074,9 @@ export default function Inbox() {
                   setAgentId(v);
                   if (v) navigate(`/inbox/${encodeURIComponent(v)}`);
                 }}
-                className="min-w-[260px] rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                className="min-w-[200px] lg:min-w-[260px] rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               >
-                <option value="">Seleccionar campaña…</option>
+                <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaña…")}</option>
                 {campaigns.map((c) => (
                   <option key={c.id} value={normalizeBotId(c.name)}>
                     {c.name}
@@ -1992,10 +2091,14 @@ export default function Inbox() {
                 }}
                 disabled={!selectedCampaign?.id}
                 className="px-3 py-2 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-60 inline-flex items-center gap-2"
-                title={selectedCampaign?.id ? "Volver a estadísticas" : "Seleccioná una campaña"}
+                title={
+                  selectedCampaign?.id
+                    ? tr("inbox.back_to_stats", "Volver a estadísticas")
+                    : tr("inbox.select_campaign", "Seleccioná una campaña")
+                }
               >
                 <ArrowLeft className="h-4 w-4" />
-                Volver a estadísticas
+                {tr("inbox.back_to_stats", "Volver a estadísticas")}
               </button>
 
               <button
@@ -2003,8 +2106,28 @@ export default function Inbox() {
                 disabled={!agentId || threadsLoading}
                 className="px-3 py-2 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
               >
-                Recargar
+                {tr("reload", "Recargar")}
               </button>
+            </div>
+
+            {/* Mobile: selector de campaña debajo */}
+            <div className="sm:hidden">
+              <select
+                value={agentId}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setAgentId(v);
+                  if (v) navigate(`/inbox/${encodeURIComponent(v)}`);
+                }}
+                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+              >
+                <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaña…")}</option>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={normalizeBotId(c.name)}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -2015,44 +2138,59 @@ export default function Inbox() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4 h-[calc(100dvh-260px)] min-h-[520px]">
+        {/* ── Contenedor principal: lista + chat ── */}
+        <div className="flex flex-col lg:flex-row lg:gap-4 flex-1 min-h-0 overflow-hidden lg:px-0">
           {/* Threads list */}
-          <div className="rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-hidden flex flex-col h-full min-h-0">
-            <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 flex items-center justify-between gap-2">
-              <div className="text-sm font-medium">Conversaciones</div>
+          <div
+            className={[
+              "bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 flex flex-col overflow-hidden",
+              "lg:rounded-2xl lg:w-[380px] lg:shrink-0 lg:flex",
+              // Mobile: ocupa toda la altura disponible cuando no hay chat. Se oculta cuando hay chat abierto.
+              activeThread ? "hidden lg:flex" : "flex w-full h-full",
+            ].join(" ")}
+          >
+            {/* Cabecera de la lista */}
+            <div className="px-3 py-3 border-b border-neutral-200/40 dark:border-neutral-800/60 flex items-center justify-between gap-2 bg-[#075E54] dark:bg-[#1a2a27]">
+              <div className="text-sm font-semibold text-white">{tr("inbox.conversations", "Conversaciones")}</div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setStartThreadModalOpen(true)}
                   disabled={!agentKey}
-                  className="px-2.5 py-1.5 rounded-lg text-xs bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 inline-flex items-center gap-2"
-                  title={agentKey ? "Enviar un mensaje a un nuevo contacto" : "Seleccioná una campaña"}
+                  className="px-2.5 py-1.5 rounded-lg text-xs bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 inline-flex items-center gap-1.5"
+                  title={
+                    agentKey
+                      ? tr("inbox.new_message_tooltip", "Enviar un mensaje a un nuevo contacto")
+                      : tr("inbox.select_campaign", "Seleccioná una campaña")
+                  }
                 >
                   <Send className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nuevo mensaje</span>
-                  <span className="sm:hidden">Nuevo</span>
+                  <span className="hidden sm:inline">{tr("inbox.new_message", "Nuevo mensaje")}</span>
+                  <span className="sm:hidden">{tr("inbox.new", "Nuevo")}</span>
                 </button>
-                {threadsLoading && <div className="text-xs text-neutral-500">Cargando…</div>}
+                {threadsLoading && <div className="text-xs text-white/70">{tr("loading", "Cargando…")}</div>}
               </div>
             </div>
-            <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 space-y-2">
-              <div className="flex items-center justify-between">
-                {leadMiniLoading ? <div className="text-xs text-neutral-500">Cargando status…</div> : null}
-              </div>
+
+            {/* Búsqueda y filtros */}
+            <div className="px-3 py-2 border-b border-neutral-200/40 dark:border-neutral-800/60 space-y-2 bg-neutral-50/80 dark:bg-neutral-900/80">
+              {leadMiniLoading ? (
+                <div className="text-xs text-neutral-500">{tr("inbox.loading_status", "Cargando status…")}</div>
+              ) : null}
 
               <input
                 value={threadQuery}
                 onChange={(e) => setThreadQuery(e.target.value)}
-                placeholder="Buscar por nombre o teléfono…"
-                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                placeholder={tr("inbox.search_placeholder", "Buscar por nombre o teléfono…")}
+                className="w-full rounded-full border border-neutral-300/60 dark:border-neutral-700/60 bg-white/90 dark:bg-neutral-950/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               />
 
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               >
-                <option value="all">Todos los estados</option>
-                <option value="untracked">Sin análisis</option>
+                <option value="all">{tr("inbox.all_statuses", "Todos los estados")}</option>
+                <option value="untracked">{tr("inbox.untracked", "Sin análisis")}</option>
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
                     {t("lead_status" + '.' + s)}
@@ -2060,10 +2198,12 @@ export default function Inbox() {
                 ))}
               </select>
             </div>
+
+            {/* Lista de threads */}
             <div className="flex-1 overflow-y-auto">
               {threads.length === 0 && !threadsLoading ? (
                 <div className="p-4 text-sm text-neutral-600 dark:text-neutral-300">
-                  {agentId ? "No hay conversaciones." : "Seleccioná una campaña."}
+                  {agentId ? tr("inbox.no_conversations", "No hay conversaciones.") : tr("inbox.select_campaign", "Seleccioná una campaña.")}
                 </div>
               ) : (
                 <ul className="divide-y divide-neutral-200/40 dark:divide-neutral-800/60">
@@ -2073,44 +2213,67 @@ export default function Inbox() {
                     const takeover = t.metadata?.takeoverMode;
                     const lockedBy = t.metadata?.lockedByUserId;
 
+                    const initials = threadDisplayName(t)
+                      .split(" ")
+                      .slice(0, 2)
+                      .map((w: string) => w[0] || "")
+                      .join("")
+                      .toUpperCase();
+
                     return (
                       <li key={threadKey(t.channel, t.contactId)}>
                         <button
                           onClick={() => openThread(t)}
                           className={[
-                            "w-full text-left p-3 hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50 transition-colors",
-                            isActive ? "bg-neutral-100/70 dark:bg-neutral-800/50" : "",
+                            "w-full text-left px-4 py-3 flex items-center gap-3 transition-colors",
+                            "hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50",
+                            isActive ? "bg-neutral-100/80 dark:bg-neutral-800/60" : "",
                           ].join(" ")}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className="font-medium truncate">{threadDisplayName(t)}</div>
-                                {takeover === "HUMAN" && (
-                                  <span className="text-[11px] rounded-full px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30">
-                                    HUMAN
-                                  </span>
-                                )}
-                                {takeover === "HUMAN" && lockedBy && lockedBy !== executingUserId && (
-                                  <span className="text-[11px] rounded-full px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-300 ring-1 ring-red-400/30">
-                                    Solo lectura
-                                  </span>
-                                )}
+                          {/* Avatar circular */}
+                          <div
+                            className={[
+                              "w-12 h-12 shrink-0 rounded-full flex items-center justify-center text-sm font-bold text-white select-none",
+                              takeover === "HUMAN" ? "bg-emerald-600" : "bg-neutral-400 dark:bg-neutral-600",
+                            ].join(" ")}
+                          >
+                            {initials || "?"}
+                          </div>
+
+                          {/* Contenido */}
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                              <div className="font-medium text-[15px] truncate text-neutral-900 dark:text-neutral-100 min-w-0 flex-1">
+                                {threadDisplayName(t)}
                               </div>
-                              <div className="text-xs text-neutral-600 dark:text-neutral-300 truncate">
-                                {t.metadata?.lastMessagePreview || "—"}
+                              <div className="text-[11px] text-neutral-500 shrink-0">
+                                {t.lastMessageDate
+                                  ? new Date(t.lastMessageDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                                  : ""}
                               </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-1 shrink-0">
-                              <div className="text-[11px] text-neutral-500">
-                                {t.lastMessageDate ? new Date(t.lastMessageDate).toLocaleString() : ""}
+                            <div className="flex items-center justify-between gap-1.5 mt-0.5 min-w-0">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate min-w-0 flex-1">
+                                {t.metadata?.lastMessagePreview || "—"}
                               </div>
-                              {unread > 0 && (
-                                <span className="text-[11px] min-w-[20px] text-center rounded-full px-2 py-0.5 bg-emerald-600 text-white">
-                                  {unread}
-                                </span>
-                              )}
+                              <div className="flex items-center gap-1 shrink-0 ml-1">
+                                {takeover === "HUMAN" && (
+                                  <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30 hidden sm:inline-block">
+                                    H
+                                  </span>
+                                )}
+                                {takeover === "HUMAN" && lockedBy && lockedBy !== executingUserId && (
+                                  <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-red-500/10 text-red-600 dark:text-red-300 ring-1 ring-red-400/30 hidden sm:inline-block">
+                                    🔒
+                                  </span>
+                                )}
+                                {unread > 0 && (
+                                  <span className="text-[11px] min-w-[20px] text-center rounded-full px-1.5 py-0.5 bg-emerald-600 text-white font-semibold">
+                                    {unread}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </button>
@@ -2123,39 +2286,67 @@ export default function Inbox() {
           </div>
 
           {/* Chat */}
-          <div className="rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-hidden flex flex-col h-full min-h-0">
-            <div className="p-3 border-b border-neutral-200/40 dark:border-neutral-800/60 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <div className="font-medium truncate">
-                  {activeThread ? threadDisplayName(activeThread) : "Chat"}
-                </div>
-                {activeThread && (
-                  <div className="text-xs text-neutral-600 dark:text-neutral-300 truncate">
-                    {activeThread.contactId}
-                  </div>
-                )}
-              </div>
+          <div
+            className={[
+              "bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 flex flex-col overflow-hidden",
+              "lg:rounded-2xl lg:flex-1 lg:min-w-0",
+              // Mobile: pantalla completa cuando hay chat activo
+              activeThread ? "flex w-full h-full" : "hidden lg:flex",
+            ].join(" ")}
+          >
+            {/* Header del chat estilo WhatsApp */}
+            <div className="flex items-center gap-3 px-3 py-2.5 border-b border-neutral-200/40 dark:border-neutral-800/60 bg-[#075E54] dark:bg-[#1a2a27]">
+              {/* Botón volver (solo mobile) */}
+              {activeThread ? (
+                <button
+                  type="button"
+                  onClick={closeMobileChat}
+                  className="lg:hidden inline-flex items-center justify-center h-8 w-8 rounded-full text-white hover:bg-white/10 transition-colors"
+                  title={tr("back", "Volver")}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+              ) : null}
 
-              <div className="flex items-center gap-2">
+              {/* Avatar + nombre */}
+              {activeThread ? (
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold text-white shrink-0 select-none">
+                    {threadDisplayName(activeThread)
+                      .split(" ")
+                      .slice(0, 2)
+                      .map((w: string) => w[0] || "")
+                      .join("")
+                      .toUpperCase() || "?"}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-[15px] text-white truncate">
+                      {threadDisplayName(activeThread)}
+                    </div>
+                    <div className="text-[11px] text-white/70 truncate">
+                      {activeThread.contactId}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 font-semibold text-white">{tr("inbox.chat", "Chat")}</div>
+              )}
+
+              {/* Acciones del chat */}
+              <div className="flex items-center gap-1.5 shrink-0">
                 {activeThread && (
                   <button
                     onClick={() => setLeadModalOpen(true)}
                     disabled={!selectedCampaign?.id}
-                    className={
-                      "px-3 py-2 rounded-xl text-sm font-semibold inline-flex items-center gap-2 shadow-sm ring-1 transition " +
-                      "bg-white/70 dark:bg-neutral-950/40 ring-neutral-200/70 dark:ring-neutral-800/70 " +
-                      "hover:bg-neutral-100 dark:hover:bg-neutral-900 disabled:opacity-60"
-                    }
+                    className="p-2 rounded-full text-white hover:bg-white/10 transition-colors disabled:opacity-60 inline-flex items-center justify-center"
                     title={
                       selectedCampaign?.id
-                        ? "Editar lead (status / área / próxima acción)"
-                        : "Seleccioná la campaña (arriba) para obtener el campaignId"
+                        ? tr("inbox.edit_lead_tooltip", "Editar lead (status / área / próxima acción)")
+                        : tr("inbox.edit_lead_need_campaign", "Seleccioná la campaña para obtener el campaignId")
                     }
                   >
-                    <ClipboardList className="h-4 w-4" />
-                    Modificar
+                    <ClipboardList className="h-5 w-5" />
                   </button>
-
                 )}
 
                 {activeThread && (
@@ -2163,16 +2354,30 @@ export default function Inbox() {
                     onClick={onToggleTakeover}
                     disabled={isReadOnlyLock}
                     className={[
-                      "px-4 py-2 rounded-xl text-sm font-semibold inline-flex items-center gap-2 shadow-sm ring-1 transition",
-                      isReadOnlyLock ? "opacity-60 cursor-not-allowed" : "hover:shadow",
+                      "px-2.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors",
+                      isReadOnlyLock ? "opacity-60 cursor-not-allowed bg-white/10 text-white" : "",
                       activeThread.metadata?.takeoverMode === "HUMAN"
-                        ? "bg-emerald-600 text-white ring-emerald-400/40 hover:bg-emerald-500"
-                        : "bg-amber-600 text-white ring-amber-400/40 hover:bg-amber-500 animate-pulse",
+                        ? "bg-white/20 text-white hover:bg-white/30"
+                        : "bg-amber-500 text-white hover:bg-amber-400 animate-pulse",
                     ].join(" ")}
-                    title={isReadOnlyLock ? "Bloqueado por otro usuario" : "Cambiar modo (BOT / HUMANO)"}
+                    title={
+                      isReadOnlyLock
+                        ? tr("inbox.locked_by_other", "Bloqueado por otro usuario")
+                        : tr("inbox.toggle_mode", "Cambiar modo (BOT / HUMANO)")
+                    }
                   >
                     <ShieldAlert className="h-4 w-4" />
-                    {activeThread.metadata?.takeoverMode === "HUMAN" ? "Modo humano (activo)" : "Tomar control (modo humano)"}
+                    {activeThread.metadata?.takeoverMode === "HUMAN" ? (
+                      <>
+                        <span className="hidden sm:inline">{tr("inbox.human_mode_active", "Modo humano")}</span>
+                        <span className="sm:hidden">{tr("inbox.human", "H")}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="hidden sm:inline">{tr("inbox.takeover_short", "Tomar")}</span>
+                        <span className="sm:hidden">Bot</span>
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -2184,20 +2389,37 @@ export default function Inbox() {
               </div>
             )}
 
-            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+            {/* Área de mensajes — fondo estilo WhatsApp */}
+            <div
+              ref={chatScrollRef}
+              className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 min-h-0"
+              style={{
+                backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+                backgroundColor: "rgba(229,221,213,0.35)",
+              }}
+            >
               {chatLoading ? (
-                <div className="text-sm text-neutral-600 dark:text-neutral-300">Cargando…</div>
+                <div className="flex justify-center pt-8">
+                  <div className="text-sm text-neutral-500 bg-white/70 dark:bg-neutral-800/70 rounded-full px-4 py-2">
+                    {tr("loading", "Cargando…")}
+                  </div>
+                </div>
               ) : !activeThread ? (
-                <div className="text-sm text-neutral-600 dark:text-neutral-300">Abrí una conversación.</div>
+                <div className="flex justify-center pt-8">
+                  <div className="text-sm text-neutral-500 bg-white/70 dark:bg-neutral-800/70 rounded-full px-4 py-2">
+                    {tr("inbox.open_conversation", "Abrí una conversación.")}
+                  </div>
+                </div>
               ) : (
                 <>
                   {messages.length > 0 && (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center mb-2">
                       <button
                         onClick={loadOlder}
-                        className="text-xs px-3 py-1 rounded-full bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700"
+                        className="text-xs px-3 py-1.5 rounded-full bg-white/80 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-700 shadow-sm"
                       >
-                        Cargar anteriores
+                        {tr("inbox.load_older", "Cargar anteriores")}
                       </button>
                     </div>
                   )}
@@ -2208,15 +2430,15 @@ export default function Inbox() {
                       <div key={msgKey(m)} className={mine ? "flex justify-end" : "flex justify-start"}>
                         <div
                           className={[
-                            "max-w-[78%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
+                            "max-w-[85%] sm:max-w-[72%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words shadow-sm",
                             mine
-                              ? "bg-emerald-600 text-white"
-                              : "bg-neutral-200/80 dark:bg-neutral-800/70 text-neutral-900 dark:text-neutral-50",
+                              ? "bg-[#dcf8c6] dark:bg-[#005c4b] text-neutral-900 dark:text-neutral-50 rounded-tr-sm"
+                              : "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 rounded-tl-sm",
                           ].join(" ")}
                         >
                           {m.content}
-                          <div className="mt-1 text-[11px] opacity-70">
-                            {new Date(m.time).toLocaleTimeString()}
+                          <div className={["mt-0.5 text-[10px] text-right", mine ? "text-neutral-600/70 dark:text-neutral-300/70" : "text-neutral-500"].join(" ")}>
+                            {new Date(m.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                           </div>
                         </div>
                       </div>
@@ -2228,46 +2450,46 @@ export default function Inbox() {
             </div>
 
             {/* Composer */}
-            <div className="p-3 border-t border-neutral-200/40 dark:border-neutral-800/60">
+            <div className="px-2 py-2 border-t border-neutral-200/40 dark:border-neutral-800/60 bg-neutral-50/90 dark:bg-neutral-900/90">
               {activeThread?.metadata?.takeoverMode === "BOT" && (
-                <div className="mb-2 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2 flex items-center justify-between gap-2">
+                <div className="mb-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-200">
-                    <ShieldAlert className="h-4 w-4" />
-                    Para responder, activá el <span className="font-semibold">modo humano</span>.
+                    <ShieldAlert className="h-4 w-4 shrink-0" />
+                    <span>{tr("inbox.reply_requires_human", "Para responder, activá el modo humano.")}</span>
                   </div>
                   <button
                     onClick={onToggleTakeover}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white hover:bg-amber-500"
-                    title="Activar modo humano"
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white hover:bg-amber-500"
+                    title={tr("inbox.activate_human", "Activar modo humano")}
                   >
-                    Tomar control
+                    {tr("inbox.takeover_short", "Tomar")}
                   </button>
                 </div>
               )}
 
               {isReadOnlyLock && (
-                <div className="mb-2 flex items-center gap-2 text-xs text-red-600 dark:text-red-300">
-                  <ShieldAlert className="h-4 w-4" />
-                  Bloqueado por otro usuario. Solo lectura.
+                <div className="mb-2 flex items-center gap-2 text-xs text-red-600 dark:text-red-300 px-1">
+                  <ShieldAlert className="h-4 w-4 shrink-0" />
+                  {tr("inbox.read_only_locked", "Bloqueado por otro usuario. Solo lectura.")}
                 </div>
               )}
 
               {pending && (
-                <div className="mb-2 rounded-lg border border-neutral-200/50 dark:border-neutral-800/60 bg-white/70 dark:bg-neutral-950/40 p-2">
+                <div className="mb-2 rounded-xl border border-neutral-200/50 dark:border-neutral-800/60 bg-white/80 dark:bg-neutral-950/40 p-2.5">
                   <div className="flex items-start gap-2">
                     <div className="flex-1 min-w-0">
                       {pending.kind === "image" && (
                         <img
                           src={pending.previewUrl}
                           alt="preview"
-                          className="max-h-[220px] w-auto rounded-lg border border-neutral-200/60 dark:border-neutral-800/60"
+                          className="max-h-[180px] w-auto rounded-lg border border-neutral-200/60 dark:border-neutral-800/60"
                         />
                       )}
                       {pending.kind === "video" && (
                         <video
                           src={pending.previewUrl}
                           controls
-                          className="max-h-[220px] w-auto rounded-lg border border-neutral-200/60 dark:border-neutral-800/60"
+                          className="max-h-[180px] w-auto rounded-lg border border-neutral-200/60 dark:border-neutral-800/60"
                         />
                       )}
                       {pending.kind === "audio" && (
@@ -2281,14 +2503,11 @@ export default function Inbox() {
                       <div className="mt-1 text-[11px] text-neutral-500 truncate">
                         {pending.mimeType}
                       </div>
-                      <div className="mt-1 text-[11px] text-neutral-500">
-                        Vista previa.
-                      </div>
                     </div>
 
                     <button
                       onClick={() => setPending(null)}
-                      className="p-1 rounded-md hover:bg-neutral-200/70 dark:hover:bg-neutral-800/70"
+                      className="p-1.5 rounded-full hover:bg-neutral-200/70 dark:hover:bg-neutral-800/70"
                       title="Quitar adjunto"
                     >
                       <X className="h-4 w-4" />
@@ -2297,34 +2516,21 @@ export default function Inbox() {
                 </div>
               )}
 
+              {/* Barra de escritura estilo WhatsApp */}
               <div className="flex items-end gap-2">
                 <button
                   onClick={onPickFile}
                   disabled={!activeThread || !canSend}
-                  className="p-2 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-50"
-                  title="Adjuntar"
+                  className="p-2.5 rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-50 shrink-0"
+                  title={tr("inbox.attach", "Adjuntar")}
                 >
                   <Paperclip className="h-5 w-5" />
                 </button>
 
-                {/*                 <button
-                  onClick={isRecording ? stopRecording : startRecording}
-                  disabled={!activeThread || !canSend}
-                  className={[
-                    "p-2 rounded-lg disabled:opacity-50",
-                    isRecording
-                      ? "bg-red-600 text-white hover:bg-red-500"
-                      : "bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700",
-                  ].join(" ")}
-                  title={isRecording ? "Detener grabación" : "Grabar audio"}
-                >
-                  {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                </button> */}
-
                 <button
                   onClick={() => {
                     if (pending && (pending.kind === "video" || pending.kind === "image")) {
-                      // no-op, just a hint button spot if you want later
+                      // no-op
                     }
                   }}
                   disabled
@@ -2332,6 +2538,7 @@ export default function Inbox() {
                 >
                   <Video className="h-5 w-5" />
                 </button>
+
                 <textarea
                   ref={textareaRef}
                   value={draft}
@@ -2346,18 +2553,24 @@ export default function Inbox() {
                   disabled={!activeThread || !canSend}
                   placeholder={
                     !activeThread
-                      ? "Seleccioná una conversación…"
+                      ? tr("inbox.select_conversation", "Seleccioná una conversación…")
                       : !canSend
-                        ? "Activá modo humano para responder (Shift+Enter para salto de línea)."
-                        : "Escribí un mensaje… (Shift+Enter para salto de línea)"
+                        ? tr(
+                            "inbox.activate_human_to_reply",
+                            "Activá modo humano para responder.",
+                          )
+                        : tr(
+                            "inbox.write_message_placeholder",
+                            "Escribí un mensaje…",
+                          )
                   }
-                  className="flex-1 rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none"
+                  className="flex-1 rounded-full border border-neutral-300/60 dark:border-neutral-700/60 bg-white dark:bg-neutral-950/80 px-4 py-2.5 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none min-h-[42px]"
                 />
                 <button
                   onClick={onSend}
                   disabled={!activeThread || !canSend || (!pending && !draft.trim())}
-                  className="p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
-                  title="Enviar"
+                  className="p-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 shrink-0"
+                  title={tr("send", "Enviar")}
                 >
                   <Send className="h-5 w-5" />
                 </button>

@@ -346,7 +346,7 @@ export default function StatisticsView() {
     return (
         <OnlineLayout>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">{campaign.name}</h2>
                     </div>
@@ -480,7 +480,7 @@ export default function StatisticsView() {
                                 <MessageSquare className="h-4 w-4" />
                             </div>
                             <div className="flex-1">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                     <h3 className="text-[15px] font-semibold leading-tight">{t("setup_whatsapp")}</h3>
                                     <button
                                         className="text-xs px-3 py-1 rounded bg-neutral-200/70 dark:bg-neutral-800/70"
@@ -492,7 +492,7 @@ export default function StatisticsView() {
 
                                 {!userId ? (
                                     <div className="mt-3 text-sm text-amber-600">
-                                        No se encontró <code>aiaUserId</code>. Iniciá sesión para continuar.
+                                        {t("inbox.no_aiaUserId", { defaultValue: "No se encontró aiaUserId. Iniciá sesión para continuar." })}
                                     </div>
                                 ) : (
                                     <div className="mt-4">
@@ -617,28 +617,28 @@ export default function StatisticsView() {
             {campaign?.webchatCredentials && (
                 <section className="rounded-xl mt-6 p-4 md:p-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl ring-1 ring-emerald-400/20">
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <h3 className="text-[15px] font-semibold leading-tight">
-                            Configuración de Webchat
+                            {t("stats.webchat_config_title", { defaultValue: "Configuración de Webchat" })}
                         </h3>
                         <button
                             onClick={() => setShowWebchatModal(true)}
-                            className="text-sm px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
+                            className="text-sm px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 w-full sm:w-auto"
                         >
-                            Ver instrucciones
+                            {t("stats.view_instructions", { defaultValue: "Ver instrucciones" })}
                         </button>
                     </div>
 
                     <p className="text-sm opacity-80 mt-1">
-                        Tu campaña tiene habilitado el Webchat para insertar un chatbot en tu sitio web.
+                        {t("stats.webchat_enabled_desc", { defaultValue: "Tu campaña tiene habilitado el Webchat para insertar un chatbot en tu sitio web." })}
                     </p>
 
                     {/* Domain */}
                     <div className="mt-4">
-                        <label className="text-sm opacity-70">Dominio configurado</label>
+                        <label className="text-sm opacity-70">{t("stats.configured_domain", { defaultValue: "Dominio configurado" })}</label>
 
                         {!editingWebchatDomain ? (
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
                                 <span className="px-3 py-1.5 rounded-lg ring-1 ring-neutral-400/30 bg-neutral-100 dark:bg-neutral-800">
                                     {webchatDomain || "—"}
                                 </span>
@@ -646,11 +646,11 @@ export default function StatisticsView() {
                                     onClick={() => setEditingWebchatDomain(true)}
                                     className="text-xs px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300"
                                 >
-                                    Editar
+                                    {t("edit", { defaultValue: "Editar" })}
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-2 mt-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
                                 <input
                                     className="px-3 py-1.5 rounded-lg ring-1 ring-neutral-400/40 bg-white/80 dark:bg-neutral-950/60 text-sm"
                                     value={webchatDomain}
@@ -662,14 +662,14 @@ export default function StatisticsView() {
                                     onClick={handleSaveWebchatDomain}
                                     className="text-xs px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
                                 >
-                                    {savingWebchat ? "Guardando…" : "Guardar"}
+                                    {savingWebchat ? t("saving", { defaultValue: "Guardando…" }) : t("save", { defaultValue: "Guardar" })}
                                 </button>
                                 <button
                                     disabled={savingWebchat}
                                     onClick={() => setEditingWebchatDomain(false)}
                                     className="text-xs px-3 py-1 rounded bg-neutral-300 dark:bg-neutral-700"
                                 >
-                                    Cancelar
+                                    {t("cancel", { defaultValue: "Cancelar" })}
                                 </button>
                             </div>
                         )}
@@ -677,9 +677,9 @@ export default function StatisticsView() {
 
                     {/* SDK */}
                     <div className="mt-6">
-                        <h4 className="text-sm font-semibold">Código para insertar el Webchat</h4>
+                        <h4 className="text-sm font-semibold">{t("stats.webchat_embed_code_title", { defaultValue: "Código para insertar el Webchat" })}</h4>
                         <p className="text-xs opacity-60 mt-1">
-                            Pegá este script en tu sitio web (antes del cierre de &lt;/body&gt;)
+                            {t("stats.webchat_embed_code_help", { defaultValue: "Pegá este script en tu sitio web (antes del cierre de </body>)" })}
                         </p>
 
                         <div className="mt-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg ring-1 ring-neutral-400/20">
@@ -690,7 +690,7 @@ export default function StatisticsView() {
                             className="mt-2 px-3 py-1.5 rounded-lg text-sm bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300"
                             onClick={() => { navigator.clipboard.writeText(sdkScript), toast.success(t("script_copied_to_clipboard")) }}
                         >
-                            Copiar script
+                            {t("copy_script", { defaultValue: "Copiar script" })}
                         </button>
                     </div>
                 </section>
@@ -837,20 +837,19 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                     <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl w-full max-w-2xl p-6 ring-1 ring-emerald-400/40">
 
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">Cómo integrar el Webchat</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                            <h3 className="text-lg font-semibold">{t("stats.how_to_integrate_webchat", { defaultValue: "Cómo integrar el Webchat" })}</h3>
                             <button
                                 className="text-xs px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-800"
                                 onClick={() => setShowWebchatModal(false)}
                             >
-                                Cerrar
+                                {t("close", { defaultValue: "Cerrar" })}
                             </button>
                         </div>
 
                         <div className="text-sm leading-relaxed space-y-3">
                             <p>
-                                El Webchat te permite mostrar un asistente automatizado directamente en tu sitio web.
-                                Para integrarlo, seguí estos pasos:
+                                {t("stats.webchat_modal_intro", { defaultValue: "El Webchat te permite mostrar un asistente automatizado directamente en tu sitio web. Para integrarlo, seguí estos pasos:" })}
                             </p>
 
                             <ol className="list-decimal ml-5 space-y-2">
@@ -867,7 +866,7 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
                                 className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
                                 onClick={() => setShowWebchatModal(false)}
                             >
-                                Entendido
+                                {t("got_it", { defaultValue: "Entendido" })}
                             </button>
                         </div>
                     </div>

@@ -118,6 +118,11 @@ function getConversationLink(lead: Lead) {
 }
 
 function ContactCell({ lead }: { lead: Lead }) {
+    const { t } = useTranslation("translations");
+    const tr = React.useCallback(
+        (key: string, fallback: string) => t(key, { defaultValue: fallback }),
+        [t],
+    );
     const channel = String((lead as any).channel || "").toLowerCase();
     const profilePic = (lead as any).profilePic as string | null | undefined;
     const username = (lead as any).username as string | null | undefined;
@@ -126,11 +131,11 @@ function ContactCell({ lead }: { lead: Lead }) {
     const wspName = (lead as any).name as string | null | undefined;
 
     if (channel === "instagram") {
-        const primary = username ? `@${username}` : (lead as any).name || "Instagram";
+        const primary = username ? `@${username}` : (lead as any).name || tr("instagram", "Instagram");
         const secondary = username && (lead as any).name ? (lead as any).name : null;
 
         return (
-            <div className="flex items-center gap-3 min-w-[220px]">
+            <div className="flex items-center gap-3 min-w-0 md:min-w-[220px]">
                 {profilePic ? (
                     <img
                         src={profilePic}
@@ -148,10 +153,10 @@ function ContactCell({ lead }: { lead: Lead }) {
                         {requiresAction ? (
                             <span
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
-                                title="Requiere acción humana"
+                                title={tr("stats.requires_human_action", "Requiere acción humana")}
                             >
                                 <AlertTriangle className="h-3.5 w-3.5" />
-                                <span className="hidden md:inline">Acción</span>
+                                <span className="hidden md:inline">{tr("action", "Acción")}</span>
                             </span>
                         ) : null}
                     </div>
@@ -166,7 +171,7 @@ function ContactCell({ lead }: { lead: Lead }) {
         const primary = wspName !== 'WhatsApp Bot' ? wspName : 'Whatsapp';
 
         return (
-            <div className="flex items-center gap-3 min-w-[220px]">
+            <div className="flex items-center gap-3 min-w-0 md:min-w-[220px]">
                 <ChannelBadge channel="whatsapp" />
                 <div className="leading-tight">
                     <div className="flex items-center gap-2">
@@ -174,10 +179,10 @@ function ContactCell({ lead }: { lead: Lead }) {
                         {requiresAction ? (
                             <span
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
-                                title="Requiere acción humana"
+                                title={tr("stats.requires_human_action", "Requiere acción humana")}
                             >
                                 <AlertTriangle className="h-3.5 w-3.5" />
-                                <span className="hidden md:inline">Acción</span>
+                                <span className="hidden md:inline">{tr("action", "Acción")}</span>
                             </span>
                         ) : null}
                     </div>
@@ -188,10 +193,10 @@ function ContactCell({ lead }: { lead: Lead }) {
     }
 
     if (channel === "facebook") {
-        const primary = (lead as any).name || "Facebook";
+        const primary = (lead as any).name || tr("facebook", "Facebook");
 
         return (
-            <div className="flex items-center gap-3 min-w-[220px]">
+            <div className="flex items-center gap-3 min-w-0 md:min-w-[220px]">
                 <ChannelBadge channel="facebook" />
                 <div className="leading-tight">
                     <div className="flex items-center gap-2">
@@ -199,10 +204,10 @@ function ContactCell({ lead }: { lead: Lead }) {
                         {requiresAction ? (
                             <span
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
-                                title="Requiere acción humana"
+                                title={tr("stats.requires_human_action", "Requiere acción humana")}
                             >
                                 <AlertTriangle className="h-3.5 w-3.5" />
-                                <span className="hidden md:inline">Acción</span>
+                                <span className="hidden md:inline">{tr("action", "Acción")}</span>
                             </span>
                         ) : null}
                     </div>
@@ -651,7 +656,7 @@ function StatusCell({
             setLoading(null);
         }
     }
-    
+
     const swallowPointer = (e: React.SyntheticEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -905,6 +910,10 @@ function LeadSummaryModal({
     inboxAgentId?: string;
 }) {
     const { t } = useTranslation("translations");
+    const tr = React.useCallback(
+        (key: string, fallback: string) => t(key, { defaultValue: fallback }),
+        [t],
+    );
     const navigate = useNavigate();
 
     React.useEffect(() => {
@@ -990,7 +999,7 @@ function LeadSummaryModal({
                             {requiresAction ? (
                                 <span
                                     className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/30"
-                                    title="Requiere acción humana"
+                                    title={tr("stats.requires_human_action", "Requiere acción humana")}
                                 >
                                     <AlertTriangle className="h-4 w-4" />
                                     <span className="font-medium">Acción</span>
@@ -1293,9 +1302,10 @@ export function LeadsTable({
 }: LeadsTableProps) {
     const { t } = useTranslation("translations");
     const navigate = useNavigate();
-
-    console.log('my leads', leads);
-
+    const tr = React.useCallback(
+        (key: string, fallback: string) => t(key, { defaultValue: fallback }),
+        [t],
+    );
 
     const [overrides, setOverrides] = React.useState<
         Record<
@@ -1432,23 +1442,148 @@ export function LeadsTable({
         },
         [campaignId, nextActionLead, onAppendLeadNextAction],
     );
-
     return (
         <div className="rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-neutral-200/60 dark:border-neutral-800/70 bg-white/40 dark:bg-neutral-950/20">
-                <h3 className="text-sm font-semibold">Leads</h3>
+                <h3 className="text-sm font-semibold">{tr("stats_leads_table_title", "Leads")}</h3>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile cards (WhatsApp-like list) */}
+            <div className="md:hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/60">
+                {mergedLeads.length === 0 ? (
+                    <div className="p-4 text-sm opacity-70">
+                        {tr(
+                            "stats_no_leads_yet",
+                            "Todavía no hay leads analizados. Cuando la campaña genere leads vas a verlos acá.",
+                        )}
+                    </div>
+                ) : (
+                    mergedLeads.map((l) => {
+                        const convLink = getConversationLink(l);
+                        const inboxContactId = inboxAgentId ? getInboxContactIdFromLead(l) : null;
+                        const convId = getLeadConversationId(l);
+                        const requiresActionRow = isRequiresAction(l);
+                        const nextActions = Array.isArray((l as any).nextAction) ? ((l as any).nextAction as any[]) : [];
+                        const nextCount = nextActions.length;
+
+                        return (
+                            <div
+                                key={(l as any).id}
+                                className={
+                                    "p-4 transition hover:bg-emerald-500/5 dark:hover:bg-white/5 " +
+                                    (requiresActionRow ? "bg-amber-500/5 dark:bg-amber-500/10" : "")
+                                }
+                                onClick={() => openSummary(l)}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <ContactCell lead={l} />
+                                        {(l as any).summary ? (
+                                            <p className="mt-2 text-xs opacity-80 line-clamp-2">
+                                                {(l as any).summary}
+                                            </p>
+                                        ) : null}
+                                    </div>
+
+                                    <span
+                                        className={
+                                            "shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] ring-1 " +
+                                            scoreClasses((l as any).score)
+                                        }
+                                    >
+                                        {(l as any).score}/10
+                                    </span>
+                                </div>
+
+                                <div
+                                    className="mt-3 flex flex-wrap items-center gap-2"
+                                    data-stop-row
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <div className="min-w-[150px]">
+                                        <StatusCell
+                                            lead={l}
+                                            campaignId={campaignId}
+                                            onUpdateLeadStatus={onUpdateLeadStatus}
+                                            onLocalUpdate={(next) => {
+                                                if (!convId) return;
+                                                setOverrides((prev) => ({ ...prev, [convId]: { ...(prev[convId] || {}), ...next } }));
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="min-w-[150px]">
+                                        <AreaCell
+                                            lead={l}
+                                            campaignId={campaignId}
+                                            areas={areas}
+                                            onUpdateLeadArea={onUpdateLeadArea}
+                                            onLocalUpdate={(next) => {
+                                                if (!convId) return;
+                                                setOverrides((prev) => ({ ...prev, [convId]: { ...prev[convId], ...next } }));
+                                            }}
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
+                                        onClick={() => openNextAction(l)}
+                                        title={t("stats_next_action", { defaultValue: "Próxima acción" })}
+                                    >
+                                        <ClipboardList className="h-4 w-4 opacity-80" />
+                                        <span className="font-medium">
+                                            {nextCount > 0 ? nextCount : t("add", { defaultValue: "Agregar" })}
+                                        </span>
+                                    </button>
+
+                                    {inboxAgentId && inboxContactId ? (
+                                        <button
+                                            type="button"
+                                            className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
+                                            title={tr("inbox.open_inbox", "Abrir en Inbox")}
+                                            onClick={() => {
+                                                navigate(
+                                                    `/inbox/${encodeURIComponent(inboxAgentId)}?contactId=${encodeURIComponent(
+                                                        inboxContactId,
+                                                    )}`,
+                                                );
+                                            }}
+                                        >
+                                            <Inbox className="h-4 w-4 opacity-80" />
+                                            <span>Inbox</span>
+                                        </button>
+                                    ) : convLink ? (
+                                        <a
+                                            href={convLink}
+                                            target="_blank"
+                                            rel="noreferrer noopener"
+                                            className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
+                                            title={tr("stats.open_conversation", "Abrir conversación")}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <ChannelIcon channel={(l as any).channel} />
+                                            <span>{t("open", { defaultValue: "Abrir" })}</span>
+                                        </a>
+                                    ) : null}
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full text-sm">
                     <thead className="text-left bg-neutral-50/70 dark:bg-neutral-950/30 text-neutral-600 dark:text-neutral-300">
                         <tr className="border-b border-neutral-200/60 dark:border-neutral-800/70">
                             <th className="px-4 py-2 font-semibold">{t("stats_name")}</th>
-                            <th className="px-4 py-2 font-semibold">{t("stats_summary")}</th>
+                            <th className="hidden lg:table-cell px-4 py-2 font-semibold">{t("stats_summary")}</th>
                             <th className="px-4 py-2 font-semibold">{t("stats_score")}</th>
                             <th className="px-4 py-2 font-semibold">{t("stats_status")}</th>
                             <th className="px-4 py-2 font-semibold">{t("stats_area")}</th>
-                            <th className="px-4 py-2 font-semibold">{t("stats_next_action")}</th>
+                            <th className="hidden lg:table-cell px-4 py-2 font-semibold">{t("stats_next_action")}</th>
                             <th className="px-4 py-2 font-semibold">{t("stats_conversation")}</th>
                         </tr>
                     </thead>
@@ -1465,9 +1600,10 @@ export function LeadsTable({
                             const nextCount = nextActions.length;
                             const latestNext = nextActions
                                 .slice()
-                                .sort((a, b) =>
-                                    new Date(b?.createdAt || 0).getTime() -
-                                    new Date(a?.createdAt || 0).getTime(),
+                                .sort(
+                                    (a, b) =>
+                                        new Date(b?.createdAt || 0).getTime() -
+                                        new Date(a?.createdAt || 0).getTime(),
                                 )[0];
 
                             return (
@@ -1482,18 +1618,18 @@ export function LeadsTable({
                                         if (target?.closest?.("[data-stop-row]")) return;
                                         openSummary(l);
                                     }}
-                                    title="Ver resumen completo"
+                                    title={tr("stats.view_full_summary", "Ver resumen completo")}
                                 >
                                     <td className="px-4 py-2 whitespace-nowrap">
                                         <ContactCell lead={l} />
                                     </td>
 
-
-                                    <td className="px-4 py-2 max-w-[420px]">
+                                    <td className="hidden lg:table-cell px-4 py-2 max-w-[420px]">
                                         <div className="relative pr-10">
-                                            <p className="line-clamp-2 text-neutral-700 dark:text-neutral-200/80">{(l as any).summary}</p>
+                                            <p className="line-clamp-2 text-neutral-700 dark:text-neutral-200/80">
+                                                {(l as any).summary}
+                                            </p>
 
-                                            {/* Botón ojo: abre modal sin afectar otras acciones */}
                                             <button
                                                 type="button"
                                                 data-stop-row
@@ -1503,7 +1639,7 @@ export function LeadsTable({
                                                     e.stopPropagation();
                                                     openSummary(l);
                                                 }}
-                                                title="Ver resumen completo"
+                                                title={tr("stats.view_full_summary", "Ver resumen completo")}
                                             >
                                                 <Eye className="h-4 w-4 opacity-80" />
                                             </button>
@@ -1528,7 +1664,10 @@ export function LeadsTable({
                                             onUpdateLeadStatus={onUpdateLeadStatus}
                                             onLocalUpdate={(next) => {
                                                 if (!convId) return;
-                                                setOverrides((prev) => ({ ...prev, [convId]: { ...(prev[convId] || {}), ...next } }));
+                                                setOverrides((prev) => ({
+                                                    ...prev,
+                                                    [convId]: { ...(prev[convId] || {}), ...next },
+                                                }));
                                             }}
                                         />
                                     </td>
@@ -1542,7 +1681,10 @@ export function LeadsTable({
                                                 onUpdateLeadArea={onUpdateLeadArea}
                                                 onLocalUpdate={(next) => {
                                                     if (!convId) return;
-                                                    setOverrides((prev) => ({ ...prev, [convId]: { ...prev[convId], ...next } }));
+                                                    setOverrides((prev) => ({
+                                                        ...prev,
+                                                        [convId]: { ...prev[convId], ...next },
+                                                    }));
                                                 }}
                                             />
 
@@ -1558,7 +1700,7 @@ export function LeadsTable({
                                         </div>
                                     </td>
 
-                                    <td className="px-4 py-2 whitespace-nowrap" data-stop-row>
+                                    <td className="hidden lg:table-cell px-4 py-2 whitespace-nowrap" data-stop-row>
                                         <button
                                             type="button"
                                             className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
@@ -1567,11 +1709,7 @@ export function LeadsTable({
                                                 e.stopPropagation();
                                                 openNextAction(l);
                                             }}
-                                            title={
-                                                latestNext?.text
-                                                    ? String(latestNext.text).trim()
-                                                    : t("stats_next_action")
-                                            }
+                                            title={latestNext?.text ? String(latestNext.text).trim() : t("stats_next_action")}
                                         >
                                             <ClipboardList className="h-4 w-4 opacity-80" />
                                             <span className="font-medium">
@@ -1585,7 +1723,7 @@ export function LeadsTable({
                                             <button
                                                 type="button"
                                                 className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
-                                                title="Abrir en Inbox"
+                                                title={tr("inbox.open_inbox", "Abrir en Inbox")}
                                                 onMouseDown={(e) => e.stopPropagation()}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -1605,7 +1743,7 @@ export function LeadsTable({
                                                 target="_blank"
                                                 rel="noreferrer noopener"
                                                 className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
-                                                title="Abrir conversación"
+                                                title={tr("stats.open_conversation", "Abrir conversación")}
                                                 onMouseDown={(e) => e.stopPropagation()}
                                                 onClick={(e) => e.stopPropagation()}
                                             >

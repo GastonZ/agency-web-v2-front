@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import OnlineLayout from "../../../layout/OnlineLayout";
 import { getMarketingCampaignById } from "../../../services/marketingCampaigns";
 import { ClipboardList, CalendarRange, UserCircle2, Images, Share2 } from "lucide-react";
@@ -18,6 +19,11 @@ const DAY_LABELS: Record<string, string> = {
 };
 
 export default function MarketingStatisticsView() {
+  const { t } = useTranslation("translations");
+  const tr = React.useCallback(
+    (key: string, fallback: string) => t(key, { defaultValue: fallback }),
+    [t],
+  );
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(true);
@@ -33,7 +39,7 @@ export default function MarketingStatisticsView() {
         if (!mounted) return;
         setCampaign(data);
       } catch (e: any) {
-        setError(e?.message || "Error al cargar la campaña");
+        setError(e?.message || tr("marketing.stats.error_loading_campaign", "Error al cargar la campaña"));
       } finally {
         setLoading(false);
       }
@@ -45,7 +51,7 @@ export default function MarketingStatisticsView() {
     <div className="flex items-center justify-center min-h-screen bg-neutral-950">
       <div className="text-center space-y-3">
         <div className="w-6 h-6 mx-auto border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-600 dark:text-gray-300 text-sm">Cargando campaña…</p>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">{tr("loading", "Cargando…")}</p>
       </div>
     </div>
   );
@@ -61,7 +67,7 @@ export default function MarketingStatisticsView() {
   if (!campaign) return (
     <div className="flex items-center justify-center min-h-screen bg-neutral-950">
       <div className="text-center space-y-3">
-        <p className="text-red-600 text-sm">No se encontró la campaña</p>
+        <p className="text-red-600 text-sm">{tr("not_found", "No se encontró la campaña")}</p>
       </div>
     </div>
   );
@@ -99,7 +105,7 @@ export default function MarketingStatisticsView() {
     <OnlineLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">{name || "—"}</h2>
             <p className="text-sm opacity-70">ID: {campaign.id}</p>
@@ -112,7 +118,7 @@ export default function MarketingStatisticsView() {
               className="rounded-xl px-4 h-10 ring-1 ring-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition text-[14px]"
               onClick={() => navigate(`/campaign_marketing_creation?fromId=${campaign.id}`)}
             >
-              Editar campaña
+              {tr("edit_campaign", "Editar campaña")}
             </button>
           </div>
         </div>
@@ -124,16 +130,16 @@ export default function MarketingStatisticsView() {
               <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
                 <ClipboardList className="h-4 w-4" />
               </div>
-              <h4 className="text-[15px] font-semibold leading-tight">Resumen</h4>
+              <h4 className="text-[15px] font-semibold leading-tight">{tr("summary", "Resumen")}</h4>
             </div>
             <dl className="grid md:grid-cols-2 gap-3 text-[15px] leading-6">
-              <div><dt className="opacity-70">Tipo</dt><dd>{campaignType || "—"}</dd></div>
-              <div><dt className="opacity-70">Negocio</dt><dd>{businessType || "—"}</dd></div>
-              <div><dt className="opacity-70">Objetivo</dt><dd>{objective || "—"}</dd></div>
-              <div><dt className="opacity-70">Lead</dt><dd>{leadDefinition || "—"}</dd></div>
-              <div className="md:col-span-2"><dt className="opacity-70">Mensaje principal</dt><dd>{mainMessage || "—"}</dd></div>
-              <div className="md:col-span-2"><dt className="opacity-70">Descripción</dt><dd className="opacity-90">{description || "—"}</dd></div>
-              <div className="md:col-span-2"><dt className="opacity-70">Canales</dt><dd>{(channels || []).join(", ") || "—"}</dd></div>
+              <div><dt className="opacity-70">{tr("type", "Tipo")}</dt><dd>{campaignType || "—"}</dd></div>
+              <div><dt className="opacity-70">{tr("business", "Negocio")}</dt><dd>{businessType || "—"}</dd></div>
+              <div><dt className="opacity-70">{tr("objective", "Objetivo")}</dt><dd>{objective || "—"}</dd></div>
+              <div><dt className="opacity-70">{tr("lead", "Lead")}</dt><dd>{leadDefinition || "—"}</dd></div>
+              <div className="md:col-span-2"><dt className="opacity-70">{tr("main_message", "Mensaje principal")}</dt><dd>{mainMessage || "—"}</dd></div>
+              <div className="md:col-span-2"><dt className="opacity-70">{tr("description", "Descripción")}</dt><dd className="opacity-90">{description || "—"}</dd></div>
+              <div className="md:col-span-2"><dt className="opacity-70">{tr("channels", "Canales")}</dt><dd>{(channels || []).join(", ") || "—"}</dd></div>
             </dl>
           </div>
 
@@ -143,12 +149,12 @@ export default function MarketingStatisticsView() {
               <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
                 <UserCircle2 className="h-4 w-4" />
               </div>
-              <h4 className="text-[15px] font-semibold leading-tight">Influencer</h4>
+              <h4 className="text-[15px] font-semibold leading-tight">{tr("influencer", "Influencer")}</h4>
             </div>
             <dl className="grid md:grid-cols-2 gap-3 text-[15px] leading-6">
-              <div><dt className="opacity-70">Selección</dt><dd>{influencerSelectionType || "—"}</dd></div>
-              <div><dt className="opacity-70">Influencer (cat.)</dt><dd>{selectedInfluencerId || "—"}</dd></div>
-              <div className="md:col-span-2"><dt className="opacity-70">Notas</dt><dd>{influencerSelectionNotes || "—"}</dd></div>
+              <div><dt className="opacity-70">{tr("selection", "Selección")}</dt><dd>{influencerSelectionType || "—"}</dd></div>
+              <div><dt className="opacity-70">{tr("influencer_category", "Influencer (cat.)")}</dt><dd>{selectedInfluencerId || "—"}</dd></div>
+              <div className="md:col-span-2"><dt className="opacity-70">{tr("notes", "Notas")}</dt><dd>{influencerSelectionNotes || "—"}</dd></div>
             </dl>
           </div>
         </div>
@@ -159,12 +165,12 @@ export default function MarketingStatisticsView() {
             <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
               <CalendarRange className="h-4 w-4" />
             </div>
-            <h4 className="text-[15px] font-semibold leading-tight">Contenido & Calendario</h4>
+            <h4 className="text-[15px] font-semibold leading-tight">{tr("content_calendar", "Contenido & Calendario")}</h4>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h5 className="text-sm font-semibold mb-1">Tópicos</h5>
+              <h5 className="text-sm font-semibold mb-1">{tr("topics", "Tópicos")}</h5>
               <div className="flex flex-wrap gap-2">
                 {(topics.length ? topics : ["—"]).map((t: string, i: number) => (
                   <span key={`${t}-${i}`} className="text-xs px-2 py-1 rounded-full ring-1 ring-emerald-400/30 bg-emerald-500/10">
@@ -173,7 +179,7 @@ export default function MarketingStatisticsView() {
                 ))}
               </div>
 
-              <h5 className="text-sm font-semibold mt-4 mb-1">Tipos</h5>
+              <h5 className="text-sm font-semibold mt-4 mb-1">{tr("types", "Tipos")}</h5>
               <div className="flex flex-wrap gap-2">
                 {(contentTypes.length ? contentTypes : ["—"]).map((t: string, i: number) => (
                   <span key={`${t}-${i}`} className="text-xs px-2 py-1 rounded-full ring-1 ring-emerald-400/30 bg-emerald-500/10">
@@ -186,7 +192,7 @@ export default function MarketingStatisticsView() {
                 <>
                   <div className="flex items-center gap-2 mt-5 mb-2">
                     <Images className="h-4 w-4 opacity-70" />
-                    <h5 className="text-sm font-semibold">Imágenes cargadas</h5>
+                    <h5 className="text-sm font-semibold">{tr("uploaded_images", "Imágenes cargadas")}</h5>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                     {persistedImages.map((p: string, i: number) => (
@@ -204,10 +210,10 @@ export default function MarketingStatisticsView() {
             </div>
 
             <div>
-              <h5 className="text-sm font-semibold mb-2">Días & horarios</h5>
+              <h5 className="text-sm font-semibold mb-2">{tr("days_times", "Días & horarios")}</h5>
               <div className="space-y-2">
                 <div className="text-sm opacity-80">
-                  <span className="font-medium">Activos:</span>{" "}
+                  <span className="font-medium">{tr("active_days", "Activos")}:</span>{" "}
                   {activeDays.length
                     ? activeDays.map((d: string) => DAY_LABELS[d] || d).join(", ")
                     : "—"}
@@ -247,13 +253,13 @@ export default function MarketingStatisticsView() {
             <div className="inline-flex items-center justify-center rounded-lg h-9 w-9 ring-1 ring-emerald-400/20 bg-emerald-500/10">
               <Share2 className="h-4 w-4" />
             </div>
-            <h4 className="text-[15px] font-semibold leading-tight">Canales & Contactos</h4>
+            <h4 className="text-[15px] font-semibold leading-tight">{tr("channels_contacts", "Canales & Contactos")}</h4>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <div className="text-sm">
-                <span className="opacity-70">Presupuesto de pauta:</span>{" "}
+                <span className="opacity-70">{tr("ad_budget", "Presupuesto de pauta")}:</span>{" "}
                 <span className="font-semibold">
                   {typeof advertisingBudget === "number"
                     ? advertisingBudget.toLocaleString("es-AR", { style: "currency", currency: "ARS" })
@@ -262,7 +268,7 @@ export default function MarketingStatisticsView() {
               </div>
 
               <div>
-                <div className="text-sm font-semibold mb-1">Plataformas a scrapear</div>
+                <div className="text-sm font-semibold mb-1">{tr("scrap_platforms", "Plataformas a scrapear")}</div>
                 <div className="flex flex-wrap gap-2">
                   {(scrappingConfig?.platforms?.length ? scrappingConfig.platforms : ["—"]).map((p: string, i: number) => (
                     <span key={`${p}-${i}`} className="text-xs px-2 py-1 rounded-full ring-1 ring-emerald-400/30 bg-emerald-500/10">
@@ -272,7 +278,7 @@ export default function MarketingStatisticsView() {
                 </div>
                 {typeof scrappingConfig?.filters?.minFollowers === "number" && (
                   <div className="text-xs opacity-80 mt-2">
-                    Min. seguidores: <span className="font-medium">{scrappingConfig.filters.minFollowers}</span>
+                    {tr("min_followers", "Min. seguidores")}: <span className="font-medium">{scrappingConfig.filters.minFollowers}</span>
                   </div>
                 )}
               </div>
@@ -280,7 +286,7 @@ export default function MarketingStatisticsView() {
 
             <div className="space-y-3">
               <div>
-                <div className="text-sm font-semibold mb-1">Cuentas conectadas</div>
+                <div className="text-sm font-semibold mb-1">{tr("connected_accounts", "Cuentas conectadas")}</div>
                 <div className="flex flex-wrap gap-2">
                   {(connectedSocialAccounts.length ? connectedSocialAccounts : ["—"]).map((acc: string, i: number) => (
                     <span key={`${acc}-${i}`} className="text-xs px-2 py-1 rounded-full ring-1 ring-emerald-400/30 bg-emerald-500/10">
@@ -291,7 +297,7 @@ export default function MarketingStatisticsView() {
               </div>
 
               <div>
-                <div className="text-sm font-semibold mb-1">Documentos de referencia</div>
+                <div className="text-sm font-semibold mb-1">{tr("reference_documents", "Documentos de referencia")}</div>
                 <ul className="text-sm list-disc pl-5 space-y-1">
                   {(referenceDocuments.length ? referenceDocuments : ["—"]).map((fn: string, i: number) => (
                     <li key={`${fn}-${i}`} className="opacity-90">{fn}</li>
@@ -303,13 +309,13 @@ export default function MarketingStatisticsView() {
         </div>
 
         {/* Back link */}
-        <div className="pt-2 flex items-center justify-between">
-          <Link to="/my_campaigns" className="text-emerald-600 hover:underline">← Volver a mis campañas</Link>
+        <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <Link to="/my_campaigns" className="text-emerald-600 hover:underline">{tr("back_to_my_campaigns", "← Volver a mis campañas")}</Link>
           <button
             className="rounded-xl px-4 h-10 ring-1 ring-emerald-400/30 bg-white/70 dark:bg-neutral-900/70 hover:bg-white transition text-[14px]"
             onClick={() => navigate(`/campaign_marketing_creation?fromId=${campaign.id}`)}
           >
-            Editar
+            {tr("edit", "Editar")}
           </button>
         </div>
       </div>

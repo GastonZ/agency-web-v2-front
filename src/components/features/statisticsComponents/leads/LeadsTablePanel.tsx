@@ -297,7 +297,7 @@ export function LeadsTablePanel({
     <div>
       <div className="mb-3 rounded-2xl ring-1 ring-emerald-400/20 bg-white/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-neutral-100 backdrop-blur-xl px-4 py-3">
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="min-w-0">
               <div className="text-sm font-semibold">{t("stats_leads_table_title") || "Leads"}</div>
               <div className="mt-0.5 text-xs opacity-70">
@@ -307,7 +307,7 @@ export function LeadsTablePanel({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 justify-end">
               <button
                 type="button"
                 onClick={() => setFiltersOpen((v) => !v)}
