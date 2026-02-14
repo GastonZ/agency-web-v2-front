@@ -976,17 +976,6 @@ export default function V2ConversationalWidget(props: {
                   />
                 </div>
 
-                <div className="mt-3">
-                  
-                  <textarea
-                    value={contextEditor}
-                    onChange={(e) => setContextEditor(e.target.value)}
-                    className="w-full min-h-[160px] rounded-xl border border-neutral-200/70 dark:border-neutral-800/60 bg-white/70 dark:bg-neutral-950/30 px-4 py-3 text-xs text-neutral-900 dark:text-neutral-100 outline-none focus:ring-2 focus:ring-emerald-500/40"
-                  />
-                  {contextEditorError ? (
-                    <div className="mt-2 text-xs text-rose-600 dark:text-rose-300">{contextEditorError}</div>
-                  ) : null}
-                </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
