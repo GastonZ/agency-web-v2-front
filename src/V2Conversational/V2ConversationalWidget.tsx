@@ -781,7 +781,7 @@ export default function V2ConversationalWidget(props: {
                 </span>
               )}
             </button>
-{/* 
+
             <button
               onClick={() => setShowSettings((v) => !v)}
               className="px-3 py-2 rounded-xl border border-neutral-200/70 dark:border-neutral-700/60 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -792,7 +792,7 @@ export default function V2ConversationalWidget(props: {
               </span>
             </button>
 
-            <button
+{/*             <button
               onClick={() => {
                 clearMessages();
                 clearDraft();
@@ -938,16 +938,6 @@ export default function V2ConversationalWidget(props: {
               )}
             </div>
           </div>
-
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-/*          
           <div className="lg:col-span-5">
             {showSettings ? (
               <div className="rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white/40 dark:bg-neutral-950/30 p-4">
@@ -1089,4 +1079,13 @@ export default function V2ConversationalWidget(props: {
                 </div>
               </div>
             )}
-          </div> */
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+         
