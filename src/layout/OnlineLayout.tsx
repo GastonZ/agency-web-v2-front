@@ -4,7 +4,7 @@ import LenguageBtn from "../components/features/LenguageBtn";
 import LogoutBtn from "../components/features/LogoutBtn";
 import ThemeToggle from "../components/features/ThemeToggle";
 import { SidebarNav, type NavItem } from "../components/main/SidebarNav";
-import { Factory, Folder, Home,  Menu, MessageSquare, Settings, X } from "lucide-react";
+import { Factory, Folder, Home, Menu, MessageSquare, Settings, X } from "lucide-react";
 import { isSubAccountSession } from "../utils/helper";
 import { useTranslation } from "react-i18next";
 
@@ -18,24 +18,28 @@ const SIDE_WIDTH = "w-64";
 const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { t } = useTranslation('translations');
-
-  const defaultNavItems: NavItem[] = [
-    { id: "home", label: t("dashboard_title"), href: "/", icon: Home },
-    { id: "campaign", label: t("campaign_title"), href: "/campaign_selection", icon: Folder },
-    { id: "myCampaigns", label: t("my_campaigns_title"), href: "/my_campaigns", icon: Factory },
-    { id: "inbox", label: t("inbox_title"), href: "/inbox", icon: MessageSquare },
-    { id: "settings", label: t("settings_title"), href: "/settings", icon: Settings },
-  ];
-
+  const { t, i18n } = useTranslation("translations");
   const isSub = isSubAccountSession();
+
+  const defaultNavItems: NavItem[] = React.useMemo(
+    () => [
+      { id: "home", label: t("dashboard_title"), href: "/", icon: Home },
+      { id: "campaign", label: t("campaign_title"), href: "/campaign_selection", icon: Folder },
+      { id: "myCampaigns", label: t("my_campaigns_title"), href: "/my_campaigns", icon: Factory },
+      { id: "inbox", label: t("inbox_title"), href: "/inbox", icon: MessageSquare },
+      { id: "settings", label: t("settings_title"), href: "/settings", icon: Settings },
+    ],
+    // 👇 cuando cambia el idioma, recalcula labels
+    [i18n.resolvedLanguage] // o i18n.language
+  );
+
+  // ✅ Memoizado con deps correctas
   const navItems = React.useMemo(() => {
     if (!isSub) return defaultNavItems;
-    // Sub accounts: only Dashboard + My Campaigns
     return defaultNavItems.filter(
-      (it) => it.id === "home" || it.id === "myCampaigns" || it.id === "inbox",
+      (it) => it.id === "home" || it.id === "myCampaigns" || it.id === "inbox"
     );
-  }, [isSub]);
+  }, [isSub, defaultNavItems]);
 
   return (
     <div className="h-[100dvh] overflow-hidden bg-gray-200 text-black dark:bg-neutral-950 dark:text-white flex">
@@ -59,16 +63,12 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
               className="h-full"
               onClose={() => setMobileOpen(false)}
             />
-
             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
               <ThemeToggle />
             </div>
           </div>
 
-          <div
-            className="flex-1 bg-black/50"
-            onClick={() => setMobileOpen(false)}
-          />
+          <div className="flex-1 bg-black/50" onClick={() => setMobileOpen(false)} />
         </div>
       )}
 
@@ -90,9 +90,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
           </div>
         </header>
 
-        <main
-          className={`flex-1 min-h-0 overflow-y-auto px-4 pb-8 pt-4 lg:pt-6 ${SIDE_WIDTH ? "lg:pl-64" : "lg:pl-[72px]"}`}
-        >
+        <main className={`flex-1 min-h-0 overflow-y-auto px-4 pb-8 pt-4 lg:pt-6 ${SIDE_WIDTH ? "lg:pl-64" : "lg:pl-[72px]"}`}>
           {children}
         </main>
       </div>
