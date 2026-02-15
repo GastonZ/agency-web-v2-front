@@ -25,6 +25,7 @@ type CardSpec = {
     bullets: string[];
     badge?: string;
     goto: string;
+    disabled?: boolean;
 };
 
 
@@ -53,22 +54,41 @@ export default function CampaignCreation({
                 t("campaigns_moderation_desc_6"),
             ],
             badge: "Atención",
-            goto: '/campaign_moderation_creation'
+            goto: '/campaign_moderation_creation',
+            disabled: false
         },
-        /*     {
-                id: "listening",
-                title: "Social Listening",
-                icon: Waves,
-                short:
-                    "Monitoreo de conversaciones, opiniones y tendencias en redes y web.",
-                bullets: [
-                    "Google Query + scraping multi-plataforma",
-                    "Sinónimos + búsquedas booleanas + filtro por ubicación",
-                    "Dashboards con KPIs, perfiles y segmentación opcional",
-                ],
-                badge: "Insights",
-                goto: '/'
-            }, */
+        {
+            id: "listening",
+            campaignW: "Campaign",
+            title: "Social Listening",
+            icon: Waves,
+            short:
+                t("campaigns_listening_title"),
+            bullets: [
+                t("campaigns_listening_desc_1"),
+                t("campaigns_listening_desc_2"),
+                t("campaigns_listening_desc_3"),
+            ],
+            badge: "Insights",
+            goto: '/',
+            disabled: true
+        },
+        {
+            id: "marketing",
+            campaignW: "Campaign",
+            title: t("campaigns_marketing_title"),
+            icon: Megaphone,
+            short: t("campaigns_marketing_desc_1"),
+            bullets: [
+                t("campaigns_marketing_desc_2"),
+                t("campaigns_marketing_desc_3"),
+                t("campaigns_marketing_desc_4"),
+                t("campaigns_marketing_desc_5"),
+            ],
+            badge: "Promoción",
+            goto: '/campaign_marketing_creation',
+            disabled: true
+        },
     ];
 
     const [value, setValue] = React.useState<CampaignType>(defaultValue ?? "marketing");
@@ -102,8 +122,8 @@ export default function CampaignCreation({
                             return (
                                 <motion.div
                                     key={card.id}
-                                    onClick={() => select(card.id)}
-                                    onKeyDown={(e) => { if (e.key === "Enter") select(card.id); }}
+                                    onClick={() => !card.disabled && select(card.id)}
+                                    onKeyDown={(e) => { if (e.key === "Enter" && !card.disabled) select(card.id); }}
                                     initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.22 }}
@@ -114,11 +134,13 @@ export default function CampaignCreation({
 
                                         "bg-white/20 dark:bg-neutral-900/30 backdrop-blur-xl",
                                         "border border-white/30 dark:border-white/10",
-                                        "shadow-[0_0_0_1px_rgba(16,185,129,0.15)]",
-                                        "hover:shadow-[0_0_24px_rgba(16,185,129,0.25)]",
+                                        
+                                        card.disabled
+                                            ? "shadow-[0_0_0_1px_rgba(107,114,128,0.15)] cursor-not-allowed opacity-60"
+                                            : "shadow-[0_0_0_1px_rgba(16,185,129,0.15)] hover:shadow-[0_0_24px_rgba(16,185,129,0.25)] cursor-pointer",
 
-                                        "focus-visible:ring-2 focus-visible:ring-emerald-400/60",
-                                        isActive && "ring-2 ring-emerald-400/60"
+                                        "focus-visible:ring-2 focus-visible:ring-red-400/60",
+                                        isActive && !card.disabled && "ring-2 ring-emerald-400/60"
                                     )}
                                     aria-pressed={isActive}
                                 >
@@ -126,21 +148,27 @@ export default function CampaignCreation({
                                         <div
                                             className={cn(
                                                 "flex size-12 items-center justify-center rounded-xl",
-                                                "bg-emerald-400/20 ring-1 ring-emerald-400/30",
-                                                "group-hover:scale-105 transition-transform"
+                                                card.disabled
+                                                    ? "bg-neutral-400/20 ring-1 ring-neutral-400/30"
+                                                    : `bg-emerald-400/20 ring-1 ring-emerald-400/30 group-hover:scale-105 transition-transform`
                                             )}
                                         >
-                                            <Icon className="h-6 w-6 text-emerald-400 md:h-7 md:w-7" />
+                                            <Icon className={`h-6 w-6 ${card.disabled ? "text-neutral-400" : "text-emerald-400"} md:h-7 md:w-7`} />
                                         </div>
 
                                         <div className="flex items-center gap-2">
-                                            {isActive && (
+                                            {isActive && !card.disabled && (
                                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-400 ring-1 ring-emerald-500/30">
                                                     <Check className="h-3.5 w-3.5" /> Selected
                                                 </span>
                                             )}
                                             {card.badge && (
-                                                <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] text-neutral-600 ring-1 ring-white/20 dark:text-neutral-300">
+                                                <span className={cn(
+                                                    "rounded-full px-2 py-1 text-[11px] ring-1",
+                                                    card.disabled
+                                                        ? "bg-neutral-400/10 text-neutral-600 ring-neutral-400/20 dark:text-neutral-400"
+                                                        : "bg-white/10 text-neutral-600 ring-white/20 dark:text-neutral-300"
+                                                )}>
                                                     {card.badge}
                                                 </span>
                                             )}
@@ -161,9 +189,15 @@ export default function CampaignCreation({
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); setExpanded(isOpen ? null : card.id); }}
-                                                        className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-emerald-500 focus-visible:outline-none dark:text-neutral-300"
+                                                        className={cn(
+                                                            "inline-flex items-center gap-1 text-xs focus-visible:outline-none",
+                                                            card.disabled
+                                                                ? "text-neutral-400 cursor-not-allowed"
+                                                                : "text-neutral-600 hover:text-emerald-500 dark:text-neutral-300"
+                                                        )}
                                                         aria-expanded={isOpen}
                                                         aria-controls={`${card.id}-more`}
+                                                        disabled={card.disabled}
                                                     >
                                                         <Info className="h-4 w-4" />
                                                         Learn more
@@ -195,14 +229,11 @@ export default function CampaignCreation({
                                     <div className="mt-auto pt-3 flex w-full items-center justify-between">
                                         <span className="hidden text-xs text-neutral-500 md:block dark:text-neutral-400">
                                         </span>
-                                        <Link to={card.goto} style={{ textDecoration: 'none' }}>
+                                        <Link to={card.disabled ? '#' : card.goto} style={{ textDecoration: 'none' }}>
                                             <PunkButton
                                                 size="sm"
-                                                variant="secondary"
-                                                className={cn(
-                                                    "h-9 rounded-lg bg-emerald-400/20 text-emerald-700 hover:bg-emerald-400/30 dark:text-emerald-300",
-                                                    "ring-1 ring-emerald-400/30 hover:ring-emerald-400/40"
-                                                )}
+                                                disabled={card.disabled}
+                                                
                                             >
                                                 Create {card.campaignW}
                                             </PunkButton>
