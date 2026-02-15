@@ -274,6 +274,7 @@
     "facebook_connected_successfully": "Facebook connected successfully",
     "my_moderation_campaigns": "My Conversation Management campaigns",
     "my_marketing_campaigns": "My marketing campaigns",
+    "my_listening_campaigns": "My social listening campaigns",
     "new_campaign": "New campaign",
     "stepReview": {
         "header": {
@@ -336,6 +337,8 @@
     "campaigns_table_channels": "Channels",
     "campaigns_empty_with_filters": "No campaigns found with the selected filters.",
     "campaigns_empty_marketing": "No marketing campaigns yet.",
+    "campaigns_empty_moderation": "No conversation management campaigns yet.",
+    "campaigns_empty_listening": "No social listening campaigns yet.",
     "campaigns_delete_modal_title": "Delete campaign?",
     "campaigns_delete_modal_confirm": "Are you sure you want to delete this campaign?",
     "campaigns_unnamed_campaign": "Unnamed campaign",

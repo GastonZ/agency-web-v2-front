@@ -325,6 +325,62 @@ export default function CampaignsTable() {
         </section>
       </div>
 
+      {/* Tabla Socail */}
+      <section className="space-y-3 pt-8">
+        <h2 className="text-2xl font-semibold tracking-tight">{t("my_listening_campaigns")}</h2>
+
+        <div className="rounded-2xl pt-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow-xl ring-1 ring-emerald-400/20 overflow-visible">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-[15px] leading-6">
+              <thead className="bg-white/80 dark:bg-neutral-900/80">
+                <tr className="text-left border-b border-neutral-200/50 dark:border-neutral-800/60">
+                  <th className="px-4 py-3 font-semibold">{t("campaigns_table_name")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("campaigns_table_status")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("campaigns_table_updated")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("campaigns_table_channels")}</th>
+                  <th className="px-4 py-3 w-12"></th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:nth-child(even)]:bg-black/0 [&_tr:nth-child(odd)]:bg-black/0">
+                {mktRows.length === 0 && !loading && (
+                  <tr>
+                    <td className="px-4 py-4 text-sm opacity-70" colSpan={5}>
+                      {t("campaigns_empty_listening")}
+                    </td>
+                  </tr>
+                )}
+                {mktRows.map((c) => {
+                  const date = c.updatedAt || c.createdAt || "";
+                  const chans = c.selectedChannels || c.channels || [];
+                  return (
+                    <tr
+                      key={c.id}
+                      className="border-t border-neutral-200/20 dark:border-neutral-800/40 hover:bg-emerald-500/5 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-medium">{c.name || "—"}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-1 rounded-full ring-1 ${statusTone(c.status)}`}>
+                          {c.status || "—"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{date ? new Date(date).toLocaleString() : "—"}</td>
+                      <td className="px-4 py-3">{(chans || []).join(", ") || "—"}</td>
+                      <td className="px-4 py-3">
+                        <ActionsButton
+                          onViewStats={() => navigate(`/my_marketing_campaign/${c.id}/statistics`)}
+                          onEdit={isSub ? undefined : () => navigate(`/campaign_marketing_creation?fromId=${c.id}`)}
+                          showEdit={!isSub}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {confirmDeleteId && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl w-full max-w-md p-6 ring-1 ring-emerald-400/40">
