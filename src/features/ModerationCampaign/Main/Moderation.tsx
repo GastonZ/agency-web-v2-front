@@ -491,10 +491,6 @@ const Moderation: React.FC = () => {
             Array.isArray(data?.escalationItems) && data.escalationItems.length > 0;
         const phone = (data?.escalationPhone || "").trim();
 
-        if (hasEscalationItems && !phone) {
-            missing.push("escalation.phone");
-        }
-
         return missing;
     }
 

@@ -22,7 +22,7 @@ const EscalationCard: React.FC = () => {
           onChange={setEscalationItems}
           placeholder={t("escalation_example")}
         />
-        <div>
+{/*         <div>
           <Label>{t("contact_number")}</Label>
           <TextInput
             id="escalationPhone"
@@ -35,7 +35,7 @@ const EscalationCard: React.FC = () => {
           {!ok && touched && (
             <p className="mt-1 text-sm text-red-500">{t("invalid_format_contact")}</p>
           )}
-        </div>
+        </div> */}
       </div>
     </GlassCard>
   );

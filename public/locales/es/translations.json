@@ -335,6 +335,8 @@
     "campaigns_table_channels": "Canales",
     "campaigns_empty_with_filters": "No se encontraron campañas con los filtros seleccionados.",
     "campaigns_empty_marketing": "Aún no hay campañas de marketing.",
+    "campaigns_empty_moderation": "Aun no hay campañas de gestion de conversaciones.",
+    "campaigns_empty_listening": "Aun no hay campañas de escucha social.",
     "campaigns_delete_modal_title": "¿Eliminar campaña?",
     "campaigns_delete_modal_confirm": "¿Estás seguro de que querés eliminar esta campaña?",
     "campaigns_unnamed_campaign": "Campaña sin nombre",
