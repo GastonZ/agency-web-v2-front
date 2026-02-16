@@ -92,11 +92,16 @@ function mergeThread(prev: InboxThread, next: InboxThread): InboxThread {
   const nextNameOk = isViableName(next.name);
   const prevNameOk = isViableName(prev.name);
 
+  // IMPORTANT: never allow an empty/undefined contactId from backend updates to overwrite a valid one.
+  const prevCid = normalizeContactId((prev as any).contactId);
+  const nextCid = normalizeContactId((next as any).contactId);
+  const cid = isValidContactId(nextCid) ? nextCid : prevCid;
+
   const merged: InboxThread = {
     ...prev,
     ...next,
     channel: (next.channel ?? prev.channel) as any,
-    contactId: normalizeContactId(next.contactId ?? prev.contactId),
+    contactId: cid,
     name: nextNameOk ? next.name : prevNameOk ? prev.name : next.name ?? prev.name,
     metadata: { ...(prev.metadata || {}), ...(next.metadata || {}) },
     lastMessageDate:
@@ -840,35 +845,35 @@ function StartThreadModal({
 
         const thread: InboxThread = rawThread?.agentId
           ? ({
-              ...rawThread,
-              agentId: rawThread.agentId || agentId,
-              channel: (rawThread.channel || "whatsapp") as any,
-              contactId: normalizeContactId(rawThread.contactId ?? normalizedContactId),
-              metadata: rawThread.metadata || {
-                takeoverMode: "HUMAN",
-                lockedByUserId: null,
-                lockedAt: null,
-                unreadCount: 0,
-                lastMessagePreview: msg,
-                lastMessageDirection: "out",
-              },
-              lastMessageDate: rawThread.lastMessageDate || new Date().toISOString(),
-            } as InboxThread)
+            ...rawThread,
+            agentId: rawThread.agentId || agentId,
+            channel: (rawThread.channel || "whatsapp") as any,
+            contactId: normalizeContactId(rawThread.contactId ?? normalizedContactId),
+            metadata: rawThread.metadata || {
+              takeoverMode: "HUMAN",
+              lockedByUserId: null,
+              lockedAt: null,
+              unreadCount: 0,
+              lastMessagePreview: msg,
+              lastMessageDirection: "out",
+            },
+            lastMessageDate: rawThread.lastMessageDate || new Date().toISOString(),
+          } as InboxThread)
           : ({
-              agentId,
-              channel: "whatsapp",
-              contactId: normalizedContactId,
-              name: nm || null,
-              lastMessageDate: new Date().toISOString(),
-              metadata: {
-                takeoverMode: "HUMAN",
-                lockedByUserId: null,
-                lockedAt: null,
-                unreadCount: 0,
-                lastMessagePreview: msg,
-                lastMessageDirection: "out",
-              },
-            } as InboxThread);
+            agentId,
+            channel: "whatsapp",
+            contactId: normalizedContactId,
+            name: nm || null,
+            lastMessageDate: new Date().toISOString(),
+            metadata: {
+              takeoverMode: "HUMAN",
+              lockedByUserId: null,
+              lockedAt: null,
+              unreadCount: 0,
+              lastMessagePreview: msg,
+              lastMessageDirection: "out",
+            },
+          } as InboxThread);
 
         if (!isValidContactId(thread.contactId)) {
           throw new Error(tr("inbox.start_thread.no_contact_id", "No se pudo obtener el contactId del thread"));
@@ -876,7 +881,6 @@ function StartThreadModal({
 
         onStarted(thread, thread.contactId);
         onClose();
-        // Keep fields for the next open, but clear message for safety.
         setText("");
       } catch (e: any) {
         const status = e?.status;
@@ -1618,31 +1622,43 @@ export default function Inbox() {
 
   const onToggleTakeover = React.useCallback(async () => {
     if (!activeThread || !agentKey) return;
-    const md = activeThread.metadata;
-    const nextMode = md.takeoverMode === "HUMAN" ? "BOT" : "HUMAN";
+
+    const currentCid = normalizeContactId((activeContactId ?? activeThread.contactId) as any);
+    if (!isValidContactId(currentCid)) {
+      alert(tr("inbox.invalid_thread", "Thread inválido (contactId vacío/undefined)."));
+      return;
+    }
+
+    const md: any = (activeThread as any).metadata || {};
+    const takeover = String(md.takeoverMode || "BOT").toUpperCase();
+    const nextMode = takeover === "HUMAN" ? "BOT" : "HUMAN";
+
     try {
       const res = await takeoverThread(
         agentKey,
-        normalizeContactId(activeThread.contactId),
+        currentCid,
         { mode: nextMode, force: false },
         { channel: "whatsapp" },
       );
 
-      const nextThread: InboxThread = res.thread
-        ? ({ ...res.thread, contactId: normalizeContactId((res.thread as any).contactId) } as any)
-        : (activeThread as any);
+      const resCid = res?.thread ? normalizeContactId((res.thread as any).contactId) : "";
+      const safeCid = isValidContactId(resCid) ? resCid : currentCid;
+
+      const nextThread: InboxThread = res?.thread
+        ? ({ ...res.thread, contactId: safeCid } as any)
+        : ({ ...activeThread, contactId: safeCid } as any);
 
       setActiveThread((prev) => (prev ? mergeThread(prev, nextThread) : nextThread));
 
       setThreads((prev) => {
-        const key = threadKey(activeThread.channel, activeThread.contactId);
+        const key = threadKey(activeThread.channel, safeCid);
         return prev.map((x) => (threadKey(x.channel, x.contactId) === key ? mergeThread(x, nextThread) : x));
       });
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || tr("inbox.error_takeover", "No se pudo cambiar el takeover");
       alert(msg);
     }
-  }, [activeThread, agentKey, tr]);
+  }, [activeThread, activeContactId, agentKey, tr]);
 
   const onSend = React.useCallback(async () => {
     if (!agentKey || !activeThread || !activeContactId) return;
@@ -2011,11 +2027,14 @@ export default function Inbox() {
     } catch (e: any) {
       alert(
         e?.data?.message ||
-          e?.message ||
-          tr("inbox.error_load_older", "No se pudieron cargar mensajes anteriores"),
+        e?.message ||
+        tr("inbox.error_load_older", "No se pudieron cargar mensajes anteriores"),
       );
     }
   }, [activeThread, activeContactId, messages, agentKey, tr]);
+
+  console.log(threads);
+
 
   return (
     <OnlineLayout>
@@ -2556,13 +2575,13 @@ export default function Inbox() {
                       ? tr("inbox.select_conversation", "Seleccioná una conversación…")
                       : !canSend
                         ? tr(
-                            "inbox.activate_human_to_reply",
-                            "Activá modo humano para responder.",
-                          )
+                          "inbox.activate_human_to_reply",
+                          "Activá modo humano para responder.",
+                        )
                         : tr(
-                            "inbox.write_message_placeholder",
-                            "Escribí un mensaje…",
-                          )
+                          "inbox.write_message_placeholder",
+                          "Escribí un mensaje…",
+                        )
                   }
                   className="flex-1 rounded-full border border-neutral-300/60 dark:border-neutral-700/60 bg-white dark:bg-neutral-950/80 px-4 py-2.5 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none min-h-[42px]"
                 />
