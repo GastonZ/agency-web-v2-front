@@ -306,6 +306,7 @@
     "stats_area": "Área",
     "lead_status": {
         "new": "Nuevo",
+        "needs_human": "Necesita humano",
         "on_following": "En seguimiento",
         "contacted": "Contactado",
         "negotiating": "Negociando",
@@ -689,6 +690,7 @@
     "lead_status": {
         "closed_lost": "Cerrado (perdido)",
         "closed_won": "Cerrado (ganado)",
+        "needs_human":"Necesita humano",
         "contacted": "Contactado",
         "custom": "Personalizado",
         "custom_hint": "Usá una etiqueta personalizada para este lead.",

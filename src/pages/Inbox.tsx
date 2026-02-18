@@ -358,8 +358,9 @@ type UserArea = {
   description?: string;
 };
 
-const STATUS_OPTIONS: LeadStatus[] = [
+const BACKEND_LEAD_STATUSES: LeadStatus[] = [
   "new",
+  "needs_human",
   "on_following",
   "contacted",
   "negotiating",
@@ -367,6 +368,19 @@ const STATUS_OPTIONS: LeadStatus[] = [
   "closed_lost",
   "custom",
 ];
+const BACKEND_LEAD_STATUS_SET = new Set<string>(BACKEND_LEAD_STATUSES);
+const STATUS_OPTIONS: LeadStatus[] = BACKEND_LEAD_STATUSES;
+
+function normalizeLeadStatus(raw: any): LeadStatus | null {
+  const value = String(raw || "").trim().toLowerCase();
+  if (!value) return null;
+
+  const canonical = value.startsWith("lead_status.")
+    ? value.slice("lead_status.".length)
+    : value;
+
+  return BACKEND_LEAD_STATUS_SET.has(canonical) ? (canonical as LeadStatus) : null;
+}
 
 function countWords(value: string) {
   return value
@@ -476,7 +490,7 @@ function LeadActionsModal({
         const lead: any = await getModerationCampaignLead({ campaignId, conversationId });
         if (cancelled) return;
 
-        setCurrentStatus(lead?.status || null);
+        setCurrentStatus(normalizeLeadStatus(lead?.status));
         setCurrentCustomLabel(String(lead?.customStatusLabel || ""));
         setSelectedArea(String(lead?.area || "all"));
         setNextActions(Array.isArray(lead?.nextAction) ? lead.nextAction : []);
@@ -506,7 +520,7 @@ function LeadActionsModal({
           status,
           customStatusLabel,
         } as any);
-        setCurrentStatus(updated?.status || status);
+        setCurrentStatus(normalizeLeadStatus(updated?.status) || status);
         setCurrentCustomLabel(String(updated?.customStatusLabel || ""));
       } catch (e: any) {
         setErr(e?.message || "Error");
@@ -1376,11 +1390,12 @@ export default function Inbox() {
       if (!selectedCampaign?.id) return true;
       const convId = `${selectedCampaign.id}_${String(t.channel || "whatsapp").toLowerCase()}_${t.contactId}`;
       const meta = leadMiniMap[convId];
+      const leadStatus = normalizeLeadStatus(meta?.status);
 
       if (statusFilter === "all") return true;
-      if (statusFilter === "untracked") return !meta?.status;
+      if (statusFilter === "untracked") return !leadStatus;
 
-      return meta?.status === statusFilter;
+      return leadStatus === statusFilter;
     });
   }, [threads, threadQuery, statusFilter, selectedCampaign?.id, leadMiniMap]);
 
@@ -2438,7 +2453,14 @@ export default function Inbox() {
 
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => {
+                  const next = String(e.target.value || "").trim();
+                  if (next === "all" || next === "untracked") {
+                    setStatusFilter(next);
+                    return;
+                  }
+                  setStatusFilter(normalizeLeadStatus(next) || "all");
+                }}
                 className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               >
                 <option value="all">{tr("inbox.all_statuses", "Todos los estados")}</option>

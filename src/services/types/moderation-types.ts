@@ -150,6 +150,7 @@ export type Lead = {
 
 export type LeadStatus =
   | "new"
+  | "needs_human"
   | "on_following"
   | "contacted"
   | "negotiating"

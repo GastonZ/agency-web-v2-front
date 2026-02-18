@@ -259,15 +259,23 @@ export default function StatisticsView() {
         return arr.some((c: string) => (c || "").toLowerCase().includes("facebook"));
     }, [channelsToConfigure, campaign]);
 
-    const facebookCredentials =
-        (campaign as any)?.facebookCredentials ??
-        [];
-
-
-
     const isWhatsConnected = Boolean(campaign?.whatsappStatus?.qrScanned);
-    const isIgConnected = Boolean(accountsData?.instagram);
-    const isFbConnected = Boolean(accountsData?.facebook);
+    const isIgConnected = Boolean(
+        accountsData?.instagram &&
+        (
+            accountsData.instagram.username ||
+            accountsData.instagram.name ||
+            accountsData.instagram.profilePicture
+        )
+    );
+    const isFbConnected = Boolean(
+        accountsData?.facebook &&
+        (
+            accountsData.facebook.id ||
+            accountsData.facebook.name ||
+            accountsData.facebook.profilePicture
+        )
+    );
 
     const hasAnyConnected = isWhatsConnected || isIgConnected || isFbConnected
 
@@ -423,15 +431,18 @@ export default function StatisticsView() {
                         <ConnectedAccountsPanel
                             campaignId={campaign.id}
                             socialAccsData={{
-                                instagram: accountsData?.instagram
+                                instagram: isIgConnected
                                     ? {
                                         username: accountsData.instagram.username,
                                         profilePicture: accountsData.instagram.profilePicture,
-                                        name: campaign.instagramCredentials?.name ?? accountsData.instagram.username,
+                                        name:
+                                            campaign.instagramCredentials?.name ??
+                                            accountsData.instagram.name ??
+                                            accountsData.instagram.username,
                                         paused: campaign.instagramCredentials?.paused,
                                     }
                                     : undefined,
-                                facebook: accountsData?.facebook
+                                facebook: isFbConnected
                                     ? {
                                         id: accountsData.facebook.id,
                                         name: accountsData.facebook.name,
