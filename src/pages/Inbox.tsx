@@ -38,10 +38,14 @@ import {
   startThread,
   type InboxThread,
   type InboxMessage,
+  type InboxChannel,
   type ThreadMessagesResponse,
   type SendMessageBody,
   type StartThreadBody,
 } from "../services/inbox";
+
+const INBOX_CHANNELS: InboxChannel[] = ["whatsapp", "instagram", "facebook"];
+const LEGACY_LAST_AGENT_STORAGE_KEY = "inbox:lastAgentId";
 
 function normalizeBotId(input: string): string {
   if (!input) return "";
@@ -57,16 +61,81 @@ function normalizeBotId(input: string): string {
     .replace(/_+/g, "_");
 }
 
+function normalizeInboxChannel(input: any): InboxChannel {
+  const ch = String(input || "").trim().toLowerCase();
+  if (ch === "instagram" || ch === "facebook") return ch;
+  return "whatsapp";
+}
+
+function channelBadgeMeta(channel: any): { label: string; short: string; className: string } {
+  const ch = normalizeInboxChannel(channel);
+  if (ch === "instagram") {
+    return {
+      label: "Instagram",
+      short: "IG",
+      className:
+        "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300 ring-fuchsia-500/30",
+    };
+  }
+  if (ch === "facebook") {
+    return {
+      label: "Facebook",
+      short: "FB",
+      className:
+        "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 bg-blue-500/15 text-blue-700 dark:text-blue-300 ring-blue-500/30",
+    };
+  }
+  return {
+    label: "WhatsApp",
+    short: "WA",
+    className:
+      "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30",
+  };
+}
+
+function buildModernAgentId(campaignId: string | undefined | null): string {
+  const id = String(campaignId || "").trim();
+  return id ? `mod_${id}` : "";
+}
+
+function getCampaignAgentCandidates(campaign: ModerationCampaignItem): string[] {
+  const candidates = [
+    String((campaign as any)?.agentId || ""),
+    String((campaign as any)?.botId || ""),
+    String((campaign as any)?._id || ""),
+    String((campaign as any)?.agentConfigId || ""),
+    String((campaign as any)?.agent?._id || ""),
+    String((campaign as any)?.agent?.id || ""),
+    buildModernAgentId(campaign?.id),
+    String(campaign?.name || ""),
+    String((campaign as any)?.assistantName || ""),
+  ]
+    .map((v) => normalizeBotId(v))
+    .filter(Boolean);
+
+  return Array.from(new Set(candidates));
+}
+
+function resolveCampaignAgentKey(campaign: ModerationCampaignItem | null | undefined): string {
+  if (!campaign) return "";
+  return getCampaignAgentCandidates(campaign)[0] || "";
+}
+
 function isValidContactId(v: any): v is string {
   const s = String(v ?? "").trim();
   if (!s) return false;
-  if (s === "undefined" || s === "null") return false;
+  const l = s.toLowerCase();
+  if (l === "undefined" || l === "null") return false;
   return true;
 }
 
-function normalizeContactId(raw: any): string {
-  const s = String(raw ?? "").trim().toLowerCase();
-  if (!s || s === "undefined" || s === "null") return "";
+function normalizeContactId(raw: any, channel: any = "whatsapp"): string {
+  const ch = normalizeInboxChannel(channel);
+  const rawStr = String(raw ?? "").trim();
+  const s = rawStr.toLowerCase();
+  if (!rawStr || s === "undefined" || s === "null") return "";
+
+  if (ch !== "whatsapp") return rawStr;
 
   // WhatsApp: normalize domain and strip non-digits from user part.
   if (s.includes("@")) {
@@ -77,15 +146,16 @@ function normalizeContactId(raw: any): string {
       if (domain === "c.us" || domain === "s.whatsapp.net") return `${digits}@s.whatsapp.net`;
       return `${digits}@${domain}`;
     }
-    return s;
+    return rawStr;
   }
 
   const digits = s.replace(/\D/g, "");
-  return digits ? `${digits}@s.whatsapp.net` : s;
+  return digits ? `${digits}@s.whatsapp.net` : rawStr;
 }
 
 function threadKey(channel: any, contactId: any): string {
-  return `${String(channel || "").toLowerCase()}|${normalizeContactId(contactId)}`;
+  const ch = normalizeInboxChannel(channel);
+  return `${ch}|${normalizeContactId(contactId, ch)}`;
 }
 
 function mergeThread(prev: InboxThread, next: InboxThread): InboxThread {
@@ -93,14 +163,16 @@ function mergeThread(prev: InboxThread, next: InboxThread): InboxThread {
   const prevNameOk = isViableName(prev.name);
 
   // IMPORTANT: never allow an empty/undefined contactId from backend updates to overwrite a valid one.
-  const prevCid = normalizeContactId((prev as any).contactId);
-  const nextCid = normalizeContactId((next as any).contactId);
+  const prevChannel = normalizeInboxChannel((prev as any).channel);
+  const nextChannel = normalizeInboxChannel((next as any).channel ?? prevChannel);
+  const prevCid = normalizeContactId((prev as any).contactId, prevChannel);
+  const nextCid = normalizeContactId((next as any).contactId, nextChannel);
   const cid = isValidContactId(nextCid) ? nextCid : prevCid;
 
   const merged: InboxThread = {
     ...prev,
     ...next,
-    channel: (next.channel ?? prev.channel) as any,
+    channel: nextChannel as any,
     contactId: cid,
     name: nextNameOk ? next.name : prevNameOk ? prev.name : next.name ?? prev.name,
     metadata: { ...(prev.metadata || {}), ...(next.metadata || {}) },
@@ -119,12 +191,16 @@ function mergeThread(prev: InboxThread, next: InboxThread): InboxThread {
 function dedupeThreads(list: InboxThread[]): InboxThread[] {
   const map = new Map<string, InboxThread>();
   for (const t of list || []) {
-    const key = threadKey(t.channel, t.contactId);
+    const channel = normalizeInboxChannel((t as any).channel);
+    const contactId = normalizeContactId((t as any).contactId, channel);
+    const key = threadKey(channel, contactId);
     if (!key.endsWith("|")) {
       const prev = map.get(key);
       map.set(
         key,
-        prev ? mergeThread(prev, { ...t, contactId: normalizeContactId(t.contactId) }) : { ...t, contactId: normalizeContactId(t.contactId) },
+        prev
+          ? mergeThread(prev, { ...t, channel, contactId })
+          : ({ ...t, channel, contactId } as InboxThread),
       );
     }
   }
@@ -135,13 +211,40 @@ function isViableName(name?: string | null): boolean {
   const n = (name ?? "").trim();
   if (!n) return false;
   const lower = n.toLowerCase();
-  // Backend sometimes sets the contact name as "Whatsapp"; treat that as non-meaningful.
-  if (lower === "whatsapp" || lower === "whats app" || lower === "wa") return false;
+  // Backend sometimes sets the contact name as a channel label; treat that as non-meaningful.
+  if (
+    lower === "whatsapp" ||
+    lower === "whats app" ||
+    lower === "wa" ||
+    lower === "instagram" ||
+    lower === "facebook" ||
+    lower === "messenger"
+  ) {
+    return false;
+  }
   return true;
 }
 
-function formatContactId(contactId: string): string {
+function extractPayloadAgentAliases(payload: any): string[] {
+  return [
+    payload?.agentId,
+    payload?.agentName,
+    payload?.agentAlias,
+    payload?.thread?.agentId,
+    payload?.thread?.agentName,
+    payload?.thread?.agentAlias,
+    payload?.message?.agentId,
+    payload?.message?.agentName,
+    payload?.message?.agentAlias,
+  ]
+    .map((v) => normalizeBotId(String(v || "")))
+    .filter(Boolean);
+}
+
+function formatContactId(contactId: string, channel: any = "whatsapp"): string {
   if (!contactId) return "—";
+  const ch = normalizeInboxChannel(channel);
+  if (ch !== "whatsapp") return contactId;
   const base = contactId.split("@")[0] || contactId;
   const digits = (base.match(/\d+/g) || []).join("");
 
@@ -168,7 +271,7 @@ function formatContactId(contactId: string): string {
 }
 
 function threadDisplayName(t: InboxThread): string {
-  return isViableName(t.name) ? (t.name as string) : formatContactId(t.contactId);
+  return isViableName(t.name) ? (t.name as string) : formatContactId(t.contactId, t.channel);
 }
 
 function msgKey(m: InboxMessage): string {
@@ -839,16 +942,18 @@ function StartThreadModal({
         const res: any = await startThread(agentId, body);
 
         const rawThread: any = res?.thread ?? res;
+        const rawChannel = normalizeInboxChannel(rawThread?.channel || "whatsapp");
         const normalizedContactId = normalizeContactId(
           rawThread?.contactId ?? res?.contactId ?? res?.jid ?? "",
+          rawChannel,
         );
 
         const thread: InboxThread = rawThread?.agentId
           ? ({
             ...rawThread,
             agentId: rawThread.agentId || agentId,
-            channel: (rawThread.channel || "whatsapp") as any,
-            contactId: normalizeContactId(rawThread.contactId ?? normalizedContactId),
+            channel: rawChannel,
+            contactId: normalizeContactId(rawThread.contactId ?? normalizedContactId, rawChannel),
             metadata: rawThread.metadata || {
               takeoverMode: "HUMAN",
               lockedByUserId: null,
@@ -861,7 +966,7 @@ function StartThreadModal({
           } as InboxThread)
           : ({
             agentId,
-            channel: "whatsapp",
+            channel: rawChannel,
             contactId: normalizedContactId,
             name: nm || null,
             lastMessageDate: new Date().toISOString(),
@@ -1060,6 +1165,10 @@ export default function Inbox() {
   );
   const executingUserId = getUserId() || "";
   const token = getToken() || "";
+  const lastAgentStorageKey = React.useMemo(() => {
+    const userKey = normalizeBotId(executingUserId) || "anon";
+    return `inbox:lastAgentId:${userKey}`;
+  }, [executingUserId]);
 
   const routeAgentRaw = params.agentId;
   const routeAgentId = React.useMemo(() => {
@@ -1081,13 +1190,7 @@ export default function Inbox() {
     const a = agentKey;
     if (!a) return null;
 
-    return (
-      campaigns.find((c) => normalizeBotId(String((c as any)?.agentId ?? "")) === a) ||
-      campaigns.find((c) => normalizeBotId(String((c as any)?.botId ?? "")) === a) ||
-      campaigns.find((c) => normalizeBotId(c.name) === a) ||
-      campaigns.find((c) => normalizeBotId(String((c as any)?.assistantName ?? "")) === a) ||
-      null
-    );
+    return campaigns.find((c) => getCampaignAgentCandidates(c).includes(a)) || null;
   }, [agentKey, campaigns]);
 
   const queryContactId = React.useMemo(() => {
@@ -1099,6 +1202,28 @@ export default function Inbox() {
       return raw;
     }
   }, [location.search]);
+
+  const queryChannel = React.useMemo(() => {
+    const raw = new URLSearchParams(location.search).get("channel") || "";
+    if (!raw) return null;
+    return normalizeInboxChannel(raw);
+  }, [location.search]);
+
+  const selectedCampaignChannels = React.useMemo<InboxChannel[]>(() => {
+    const channels = ((selectedCampaign as any)?.channels || [])
+      .map((c: any) => normalizeInboxChannel(c))
+      .filter((c: InboxChannel) => INBOX_CHANNELS.includes(c));
+    return channels.length ? Array.from(new Set(channels)) : INBOX_CHANNELS;
+  }, [selectedCampaign]);
+
+  const activeAgentAliases = React.useMemo(() => {
+    return new Set(
+      [
+        agentKey,
+        ...(selectedCampaign ? getCampaignAgentCandidates(selectedCampaign) : []),
+      ].filter(Boolean),
+    );
+  }, [agentKey, selectedCampaign]);
 
   const autoOpenedRef = React.useRef<string | null>(null);
 
@@ -1118,6 +1243,15 @@ export default function Inbox() {
   const [messages, setMessages] = React.useState<InboxMessage[]>([]);
   const [chatLoading, setChatLoading] = React.useState(false);
   const [chatError, setChatError] = React.useState<string | null>(null);
+
+  const runtimeAgentAliases = React.useMemo(() => {
+    const dynamic = (threads || [])
+      .map((t) => normalizeBotId(String((t as any)?.agentId || "")))
+      .filter(Boolean);
+    const activeThreadAgent = normalizeBotId(String((activeThread as any)?.agentId || ""));
+
+    return new Set([...activeAgentAliases, ...dynamic, activeThreadAgent].filter(Boolean));
+  }, [activeAgentAliases, threads, activeThread]);
 
   const [draft, setDraft] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -1217,6 +1351,11 @@ export default function Inbox() {
     return `${threadDisplayName(activeThread)} · ${activeThread.channel}`;
   }, [activeThread]);
 
+  const activeThreadChannelMeta = React.useMemo(
+    () => (activeThread ? channelBadgeMeta(activeThread.channel) : null),
+    [activeThread],
+  );
+
   const filteredThreads = React.useMemo(() => {
     const q = (threadQuery || "").trim().toLowerCase();
     const qDigits = q.replace(/\D/g, "");
@@ -1314,16 +1453,28 @@ export default function Inbox() {
     (async () => {
       try {
         const res = await searchMyModerationCampaigns({ status: "active" } as any);
-        const items = (res?.items || []).filter((c) => (c.channels || []).includes("whatsapp"));
+        const items = (res?.items || []).filter((c: any) =>
+          ((c?.channels as any[]) || []).some((ch) => INBOX_CHANNELS.includes(normalizeInboxChannel(ch))),
+        );
         if (!mounted) return;
         setCampaigns(items);
 
         // Pick initial agentId:
         // 1) from route
         // 2) from localStorage
-        // 3) first whatsapp campaign
-        const last = localStorage.getItem("inbox:lastAgentId") || "";
-        const initialRaw = (routeAgentId || last || items?.[0]?.name || "").trim();
+        // 3) first campaign (prefer modern mod_<campaignId> when available)
+        const availableCampaignAgentKeys = new Set(
+          (items || []).flatMap((c) => getCampaignAgentCandidates(c)),
+        );
+        const scopedLast = normalizeBotId(localStorage.getItem(lastAgentStorageKey) || "");
+        const legacyLast = normalizeBotId(localStorage.getItem(LEGACY_LAST_AGENT_STORAGE_KEY) || "");
+        const last = availableCampaignAgentKeys.has(scopedLast)
+          ? scopedLast
+          : availableCampaignAgentKeys.has(legacyLast)
+            ? legacyLast
+            : "";
+        const firstCampaignKey = resolveCampaignAgentKey(items?.[0] || null);
+        const initialRaw = (routeAgentId || last || firstCampaignKey || "").trim();
         const initialKey = normalizeBotId(initialRaw);
         if (initialKey) {
           setAgentId(initialKey);
@@ -1337,7 +1488,7 @@ export default function Inbox() {
     return () => {
       mounted = false;
     };
-  }, [routeAgentId, navigate]);
+  }, [routeAgentId, navigate, lastAgentStorageKey]);
 
   // Keep internal agentId in sync with route.
   React.useEffect(() => {
@@ -1352,51 +1503,99 @@ export default function Inbox() {
     setThreadsLoading(true);
     setThreadsError(null);
     try {
-      const data = await listThreads(agentKey, { limit: 100, channel: "whatsapp" });
+      const aliases = Array.from(
+        new Set([
+          agentKey,
+          ...(selectedCampaign ? getCampaignAgentCandidates(selectedCampaign) : []),
+        ]),
+      ).filter(Boolean);
 
-      // Normalize + dedupe by (channel, contactId) to avoid duplicates and "ghost threads".
-      const normalized = dedupeThreads(
-        (data || []).map((t: any) => ({ ...t, contactId: normalizeContactId(t.contactId) })),
-      );
+      let pickedAgent = agentKey;
+      let bestThreads: InboxThread[] | null = null;
+      let lastError: any = null;
 
-      const ordered = normalized.slice().sort((a, b) => {
+      for (const alias of aliases) {
+        const settled = await Promise.allSettled(
+          selectedCampaignChannels.map((channel) =>
+            listThreads(alias, { limit: 100, channel }),
+          ),
+        );
+
+        const hasSuccess = settled.some((r) => r.status === "fulfilled");
+        if (!hasSuccess) {
+          const firstRejected = settled.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
+          if (firstRejected?.reason) lastError = firstRejected.reason;
+          continue;
+        }
+
+        const mergedRaw: InboxThread[] = [];
+        settled.forEach((r, idx) => {
+          if (r.status !== "fulfilled") return;
+          const fallbackChannel = selectedCampaignChannels[idx];
+          for (const t of r.value || []) {
+            const channel = normalizeInboxChannel((t as any)?.channel || fallbackChannel);
+            mergedRaw.push({
+              ...(t as any),
+              channel,
+              contactId: normalizeContactId((t as any)?.contactId, channel),
+            } as InboxThread);
+          }
+        });
+
+        const deduped = dedupeThreads(mergedRaw);
+        if (!bestThreads || deduped.length > bestThreads.length) {
+          bestThreads = deduped;
+          pickedAgent = alias;
+        }
+        if (deduped.length > 0) break;
+      }
+
+      if (!bestThreads) throw lastError || new Error("No se pudo cargar la bandeja");
+
+      const ordered = bestThreads.slice().sort((a, b) => {
         const da = new Date(a.lastMessageDate || 0).getTime();
         const db = new Date(b.lastMessageDate || 0).getTime();
         return db - da;
       });
 
       setThreads(ordered);
+      if (pickedAgent !== agentKey) {
+        setAgentId(pickedAgent);
+        navigate(`/inbox/${encodeURIComponent(pickedAgent)}${location.search || ""}`, { replace: true });
+      }
     } catch (e: any) {
       setThreadsError(e?.data?.message || e?.message || tr("inbox.error_load_threads", "No se pudo cargar la bandeja"));
     } finally {
       setThreadsLoading(false);
     }
-  }, [agentKey, tr]);
+  }, [agentKey, location.search, navigate, selectedCampaign, selectedCampaignChannels, tr]);
 
   // Load threads when agent changes.
   React.useEffect(() => {
     if (!agentKey) return;
-    localStorage.setItem("inbox:lastAgentId", agentKey);
+    localStorage.setItem(lastAgentStorageKey, agentKey);
+    localStorage.removeItem(LEGACY_LAST_AGENT_STORAGE_KEY);
     refreshThreads();
     // Reset chat on agent change
     setActiveContactId(null);
     setActiveThread(null);
     setMessages([]);
     setChatError(null);
-  }, [agentKey, refreshThreads]);
+  }, [agentKey, lastAgentStorageKey, refreshThreads]);
 
 
   const openThread = React.useCallback(
     async (t: InboxThread) => {
       if (!agentKey) return;
 
-      const cid = normalizeContactId(t.contactId);
+      const channel = normalizeInboxChannel(t.channel);
+      const cid = normalizeContactId(t.contactId, channel);
       if (!isValidContactId(cid)) {
         setChatError(tr("inbox.invalid_thread", "Thread inválido (contactId vacío/undefined)."));
         return;
       }
 
-      const baseThread: InboxThread = { ...t, contactId: cid };
+      const baseThread: InboxThread = { ...t, channel, contactId: cid };
 
       setActiveContactId(cid);
       setActiveThread(baseThread);
@@ -1409,11 +1608,18 @@ export default function Inbox() {
       try {
         const res: ThreadMessagesResponse = await getThreadMessages(agentKey, cid, {
           limit: 50,
-          channel: "whatsapp",
+          channel,
         });
 
         const fetchedThread = res.thread
-          ? ({ ...res.thread, contactId: normalizeContactId(res.thread.contactId) } as InboxThread)
+          ? (() => {
+            const fetchedChannel = normalizeInboxChannel((res.thread as any).channel || channel);
+            return {
+              ...(res.thread as any),
+              channel: fetchedChannel,
+              contactId: normalizeContactId((res.thread as any).contactId, fetchedChannel),
+            } as InboxThread;
+          })()
           : null;
 
         const mergedThread = fetchedThread ? mergeThread(baseThread, fetchedThread) : baseThread;
@@ -1440,7 +1646,7 @@ export default function Inbox() {
             agentKey,
             cid,
             { expectedUnread: unread },
-            { channel: "whatsapp" },
+            { channel },
           );
 
           setThreads((prev) =>
@@ -1470,18 +1676,19 @@ export default function Inbox() {
     (thread: InboxThread, contactId: string) => {
       if (!agentKey) return;
 
-      const cid = normalizeContactId(contactId);
+      const channel = normalizeInboxChannel(thread.channel);
+      const cid = normalizeContactId(contactId, channel);
       if (!isValidContactId(cid)) return;
 
       const t: InboxThread = {
         ...thread,
         agentId: agentKey,
-        channel: (thread.channel || "whatsapp") as any,
+        channel,
         contactId: cid,
       };
 
       // Pre-mark auto-open to avoid duplicate open from URL effect.
-      autoOpenedRef.current = `${agentKey}|${cid}`;
+      autoOpenedRef.current = `${agentKey}|${channel}|${cid}`;
 
       setThreads((prev) => {
         const key = threadKey(t.channel, t.contactId);
@@ -1495,7 +1702,10 @@ export default function Inbox() {
       });
 
       // Persist deep-link for refresh/back.
-      navigate(`/inbox/${encodeURIComponent(agentKey)}?contactId=${encodeURIComponent(cid)}`, { replace: true });
+      navigate(
+        `/inbox/${encodeURIComponent(agentKey)}?contactId=${encodeURIComponent(cid)}&channel=${encodeURIComponent(channel)}`,
+        { replace: true },
+      );
 
       // Open chat immediately.
       openThread(t);
@@ -1556,20 +1766,26 @@ export default function Inbox() {
   React.useEffect(() => {
     if (!agentKey || !isValidContactId(queryContactId)) return;
 
-    const qCid = normalizeContactId(queryContactId);
+    const fallbackChannel = queryChannel || "whatsapp";
+    const qCid = normalizeContactId(queryContactId, fallbackChannel);
     if (!isValidContactId(qCid)) return;
 
-    const key = `${agentKey}|${qCid}`;
+    const queryThreadKey = threadKey(fallbackChannel, qCid);
+    const key = `${agentKey}|${queryThreadKey}`;
     if (autoOpenedRef.current === key) return;
 
-    if (activeContactId && normalizeContactId(activeContactId) === qCid) {
+    if (activeThread && threadKey(activeThread.channel, activeContactId) === queryThreadKey) {
       autoOpenedRef.current = key;
       return;
     }
 
-    const existing = threads.find((t) => normalizeContactId(t.contactId) === qCid);
+    const existing = threads.find((t) => {
+      const sameCid = normalizeContactId(t.contactId, t.channel) === qCid;
+      if (!sameCid) return false;
+      return queryChannel ? normalizeInboxChannel(t.channel) === queryChannel : true;
+    });
     if (existing) {
-      autoOpenedRef.current = key;
+      autoOpenedRef.current = `${agentKey}|${threadKey(existing.channel, existing.contactId)}`;
       openThread(existing);
       return;
     }
@@ -1579,7 +1795,7 @@ export default function Inbox() {
     // If not in list (limit), try direct open with a minimal thread stub.
     openThread({
       agentId: agentKey,
-      channel: "whatsapp",
+      channel: fallbackChannel,
       contactId: qCid,
       name: "",
       lastMessageDate: new Date(0).toISOString(),
@@ -1592,7 +1808,7 @@ export default function Inbox() {
         lastMessageDirection: "in",
       } as any,
     } as any);
-  }, [agentKey, queryContactId, threads, openThread, activeContactId]);
+  }, [agentKey, queryChannel, queryContactId, threads, openThread, activeContactId, activeThread]);
 
   const canSend = React.useMemo(() => {
     if (!activeThread) return false;
@@ -1623,7 +1839,8 @@ export default function Inbox() {
   const onToggleTakeover = React.useCallback(async () => {
     if (!activeThread || !agentKey) return;
 
-    const currentCid = normalizeContactId((activeContactId ?? activeThread.contactId) as any);
+    const activeChannel = normalizeInboxChannel(activeThread.channel);
+    const currentCid = normalizeContactId((activeContactId ?? activeThread.contactId) as any, activeChannel);
     if (!isValidContactId(currentCid)) {
       alert(tr("inbox.invalid_thread", "Thread inválido (contactId vacío/undefined)."));
       return;
@@ -1638,15 +1855,16 @@ export default function Inbox() {
         agentKey,
         currentCid,
         { mode: nextMode, force: false },
-        { channel: "whatsapp" },
+        { channel: activeChannel },
       );
 
-      const resCid = res?.thread ? normalizeContactId((res.thread as any).contactId) : "";
+      const resChannel = normalizeInboxChannel((res?.thread as any)?.channel || activeChannel);
+      const resCid = res?.thread ? normalizeContactId((res.thread as any).contactId, resChannel) : "";
       const safeCid = isValidContactId(resCid) ? resCid : currentCid;
 
       const nextThread: InboxThread = res?.thread
-        ? ({ ...res.thread, contactId: safeCid } as any)
-        : ({ ...activeThread, contactId: safeCid } as any);
+        ? ({ ...res.thread, channel: resChannel, contactId: safeCid } as any)
+        : ({ ...activeThread, channel: activeChannel, contactId: safeCid } as any);
 
       setActiveThread((prev) => (prev ? mergeThread(prev, nextThread) : nextThread));
 
@@ -1662,6 +1880,9 @@ export default function Inbox() {
 
   const onSend = React.useCallback(async () => {
     if (!agentKey || !activeThread || !activeContactId) return;
+    const activeChannel = normalizeInboxChannel(activeThread.channel);
+    const normalizedActiveContactId = normalizeContactId(activeContactId, activeChannel);
+    if (!isValidContactId(normalizedActiveContactId)) return;
     if (!canSend) {
       alert(
         tr(
@@ -1694,7 +1915,7 @@ export default function Inbox() {
           };
         }
 
-        await sendMessage(agentKey, normalizeContactId(activeContactId), body, { channel: "whatsapp" });
+        await sendMessage(agentKey, normalizedActiveContactId, body, { channel: activeChannel });
         setPending(null);
         setDraft("");
         scrollToBottom("smooth");
@@ -1714,7 +1935,7 @@ export default function Inbox() {
       content: text,
       time: Date.now(),
       name: "Human",
-      channel: "whatsapp",
+      channel: activeChannel,
       profile: { source: "human", authorUserId: executingUserId },
     };
 
@@ -1723,17 +1944,20 @@ export default function Inbox() {
 
     try {
       const body: SendMessageBody = { type: "text", text };
-      await sendMessage(agentKey, normalizeContactId(activeContactId), body, { channel: "whatsapp" });
+      await sendMessage(agentKey, normalizedActiveContactId, body, { channel: activeChannel });
       scrollToBottom("smooth");
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || tr("inbox.error_send_message", "No se pudo enviar el mensaje");
       alert(msg);
     }
-  }, [draft, activeThread, activeContactId, canSend, agentKey, agentId, executingUserId, pending, scrollToBottom]);
+  }, [draft, activeThread, activeContactId, canSend, agentKey, executingUserId, pending, scrollToBottom]);
 
   const onPickFile = React.useCallback(() => {
     fileInputRef.current?.click();
   }, []);
+
+  console.log(threads);
+  
 
   const onFileChange = React.useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1904,18 +2128,23 @@ export default function Inbox() {
     const onThreadUpdated = (payload: any) => {
       if (!payload) return;
       if (!agentKey) return;
-      if (normalizeBotId(String(payload.agentId || "")) !== agentKey) return;
 
-      const cid = normalizeContactId(payload.contactId);
+      const channel = normalizeInboxChannel(payload.channel || payload?.thread?.channel);
+      const cid = normalizeContactId(payload.contactId || payload?.thread?.contactId, channel);
       if (!isValidContactId(cid)) return;
 
+      const payloadAgentAliases = extractPayloadAgentAliases(payload);
+      const matchesActiveAgent = payloadAgentAliases.some((k) => runtimeAgentAliases.has(k));
+      const allowBootstrap = threads.length === 0 && selectedCampaignChannels.includes(channel);
+      if (!matchesActiveAgent && !allowBootstrap) return;
+
       const incoming: InboxThread = {
-        agentId: agentKey,
-        channel: payload.channel || "whatsapp",
+        agentId: String(payload.agentId || payload?.thread?.agentId || agentKey),
+        channel,
         contactId: cid,
-        name: payload.name,
-        lastMessageDate: payload.lastMessageDate,
-        metadata: payload.metadata,
+        name: payload.name ?? payload?.thread?.name,
+        lastMessageDate: payload.lastMessageDate ?? payload?.thread?.lastMessageDate,
+        metadata: payload.metadata ?? payload?.thread?.metadata,
       } as any;
 
       setThreads((prev) => {
@@ -1938,10 +2167,15 @@ export default function Inbox() {
     const onInboxMessage = (payload: any) => {
       if (!payload) return;
       if (!agentKey) return;
-      if (normalizeBotId(String(payload.agentId || "")) !== agentKey) return;
 
-      const cid = normalizeContactId(payload.contactId);
+      const channel = normalizeInboxChannel(payload.channel || payload?.thread?.channel || payload?.message?.channel);
+      const cid = normalizeContactId(payload.contactId || payload?.thread?.contactId || payload?.message?.contactId, channel);
       if (!isValidContactId(cid)) return;
+
+      const payloadAgentAliases = extractPayloadAgentAliases(payload);
+      const matchesActiveAgent = payloadAgentAliases.some((k) => runtimeAgentAliases.has(k));
+      const allowBootstrap = threads.length === 0 && selectedCampaignChannels.includes(channel);
+      if (!matchesActiveAgent && !allowBootstrap) return;
 
       const msg = payload.message as InboxMessage;
       if (!msg) return;
@@ -1950,7 +2184,7 @@ export default function Inbox() {
 
       // Update preview / ordering, but never overwrite a meaningful name with an empty one.
       setThreads((prev) => {
-        const key = threadKey(payload.channel || "whatsapp", cid);
+        const key = threadKey(channel, cid);
         const existing = prev.find((t) => threadKey(t.channel, t.contactId) === key);
 
         const updatedThread: InboxThread = existing
@@ -1967,8 +2201,8 @@ export default function Inbox() {
             name: isViableName(payload.name) ? payload.name : existing.name,
           }
           : {
-            agentId: agentKey,
-            channel: payload.channel || "whatsapp",
+            agentId: String(payload.agentId || payload?.thread?.agentId || agentKey),
+            channel,
             contactId: cid,
             name: payload.name,
             lastMessageDate: new Date(ts).toISOString(),
@@ -1991,8 +2225,9 @@ export default function Inbox() {
       });
 
       // If chat open, append (deduped).
-      if (activeContactId && normalizeContactId(activeContactId) === cid) {
-        setMessages((prev) => mergeUniqueMessages(prev, [msg]));
+      const normalizedMsg: InboxMessage = { ...msg, time: ts, channel } as InboxMessage;
+      if (activeThread && threadKey(activeThread.channel, activeContactId) === threadKey(channel, cid)) {
+        setMessages((prev) => mergeUniqueMessages(prev, [normalizedMsg]));
       }
     };
 
@@ -2003,7 +2238,7 @@ export default function Inbox() {
       socket.off("inbox-thread-updated", onThreadUpdated);
       socket.off("inbox-message", onInboxMessage);
     };
-  }, [agentKey, activeContactId]);
+  }, [runtimeAgentAliases, agentKey, activeContactId, activeThread, selectedCampaignChannels, threads.length]);
 
   const loadOlder = React.useCallback(async () => {
     if (!agentKey || !activeThread || !activeContactId) return;
@@ -2018,10 +2253,11 @@ export default function Inbox() {
     }
 
     try {
-      const res = await getThreadMessages(agentKey, normalizeContactId(activeContactId), {
+      const channel = normalizeInboxChannel(activeThread.channel);
+      const res = await getThreadMessages(agentKey, normalizeContactId(activeContactId, channel), {
         limit: 50,
         before: oldest.time,
-        channel: "whatsapp",
+        channel,
       });
       setMessages((prev) => mergeUniqueMessages(res.messages || [], prev));
     } catch (e: any) {
@@ -2032,9 +2268,6 @@ export default function Inbox() {
       );
     }
   }, [activeThread, activeContactId, messages, agentKey, tr]);
-
-  console.log(threads);
-
 
   return (
     <OnlineLayout>
@@ -2097,7 +2330,7 @@ export default function Inbox() {
               >
                 <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaña…")}</option>
                 {campaigns.map((c) => (
-                  <option key={c.id} value={normalizeBotId(c.name)}>
+                  <option key={c.id} value={resolveCampaignAgentKey(c)}>
                     {c.name}
                   </option>
                 ))}
@@ -2142,7 +2375,7 @@ export default function Inbox() {
               >
                 <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaña…")}</option>
                 {campaigns.map((c) => (
-                  <option key={c.id} value={normalizeBotId(c.name)}>
+                  <option key={c.id} value={resolveCampaignAgentKey(c)}>
                     {c.name}
                   </option>
                 ))}
@@ -2227,10 +2460,11 @@ export default function Inbox() {
               ) : (
                 <ul className="divide-y divide-neutral-200/40 dark:divide-neutral-800/60">
                   {filteredThreads.map((t) => {
-                    const isActive = Boolean(activeContactId) && normalizeContactId(activeContactId) === normalizeContactId(t.contactId);
+                    const isActive = Boolean(activeThread) && threadKey(activeThread?.channel, activeContactId) === threadKey(t.channel, t.contactId);
                     const unread = t.metadata?.unreadCount || 0;
                     const takeover = t.metadata?.takeoverMode;
                     const lockedBy = t.metadata?.lockedByUserId;
+                    const chMeta = channelBadgeMeta(t.channel);
 
                     const initials = threadDisplayName(t)
                       .split(" ")
@@ -2262,8 +2496,13 @@ export default function Inbox() {
                           {/* Contenido */}
                           <div className="flex-1 min-w-0 overflow-hidden">
                             <div className="flex items-center justify-between gap-2 min-w-0">
-                              <div className="font-medium text-[15px] truncate text-neutral-900 dark:text-neutral-100 min-w-0 flex-1">
-                                {threadDisplayName(t)}
+                              <div className="min-w-0 flex-1 flex items-center gap-1.5">
+                                <div className="font-medium text-[15px] truncate text-neutral-900 dark:text-neutral-100 min-w-0">
+                                  {threadDisplayName(t)}
+                                </div>
+                                <span className={chMeta.className} title={chMeta.label}>
+                                  {chMeta.short}
+                                </span>
                               </div>
                               <div className="text-[11px] text-neutral-500 shrink-0">
                                 {t.lastMessageDate
@@ -2342,8 +2581,11 @@ export default function Inbox() {
                     <div className="font-semibold text-[15px] text-white truncate">
                       {threadDisplayName(activeThread)}
                     </div>
-                    <div className="text-[11px] text-white/70 truncate">
-                      {activeThread.contactId}
+                    <div className="text-[11px] text-white/70 truncate flex items-center gap-1.5">
+                      <span className="truncate">{activeThread.contactId}</span>
+                      {activeThreadChannelMeta && (
+                        <span className={activeThreadChannelMeta.className}>{activeThreadChannelMeta.label}</span>
+                      )}
                     </div>
                   </div>
                 </div>

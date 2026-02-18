@@ -1,6 +1,6 @@
 import api from "./api/api";
 
-export type InboxChannel = "whatsapp";
+export type InboxChannel = "whatsapp" | "instagram" | "facebook";
 
 export type ThreadMetadata = {
   takeoverMode: "BOT" | "HUMAN";

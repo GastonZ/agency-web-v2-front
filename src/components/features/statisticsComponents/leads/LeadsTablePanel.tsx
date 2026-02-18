@@ -121,12 +121,9 @@ function Chip({
 
 export function LeadsTablePanel({
   campaignId,
-  campaignName,
   onOpenLead,
 }: {
   campaignId: string;
-  /** Used for Inbox routing (agentId = campaign name). */
-  campaignName?: string;
   onOpenLead?: (lead: Lead) => void;
 }) {
   const { t } = useTranslation("translations");
@@ -540,7 +537,12 @@ export function LeadsTablePanel({
       ) : null}
 
       <div className="relative">
-        <LeadsTable leads={leads} onOpenLead={onOpenLead} campaignId={campaignId} inboxAgentId={campaignName?.toLowerCase()} />
+        <LeadsTable
+          leads={leads}
+          onOpenLead={onOpenLead}
+          campaignId={campaignId}
+          inboxAgentId={`mod_${campaignId}`}
+        />
 
         {loading ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-neutral-950/40 backdrop-blur-sm">

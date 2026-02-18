@@ -239,30 +239,76 @@ function isRequiresAction(lead: Lead): boolean {
 }
 
 /**
- * Derives Inbox contactId for WhatsApp leads.
- * Backend expects WhatsApp JID format: "<digits>@s.whatsapp.net".
+ * Derives Inbox thread target from lead data.
+ * For WhatsApp, backend expects JID format: "<digits>@s.whatsapp.net".
  */
-function getInboxContactIdFromLead(lead: Lead): string | null {
-    const channel = String((lead as any).channel || "").toLowerCase();
-    if (channel !== "whatsapp") return null;
+function getInboxThreadTargetFromLead(
+    lead: Lead,
+): { channel: "whatsapp" | "instagram" | "facebook"; contactId: string } | null {
+    const rawChannel = String((lead as any).channel || "").trim().toLowerCase();
+    const parsed = parseConversationIdToInboxTarget(getLeadConversationId(lead));
+
+    const channel: "whatsapp" | "instagram" | "facebook" | null =
+        rawChannel === "whatsapp" || rawChannel === "instagram" || rawChannel === "facebook"
+            ? (rawChannel as any)
+            : (parsed?.channel || null);
+
+    if (!channel) return null;
 
     const raw =
         ((lead as any).contactId as string | undefined) ||
+        ((lead as any).recipientId as string | undefined) ||
         ((lead as any).contactNumber as string | undefined) ||
         ((lead as any).phone as string | undefined) ||
         null;
 
-    if (!raw) return null;
-    const s = String(raw).trim();
+    const rawValue = String(raw || "").trim();
+
+    if (channel === "whatsapp") {
+        const normalizedFromRaw = normalizeWhatsappContactId(rawValue);
+        if (normalizedFromRaw) return { channel, contactId: normalizedFromRaw };
+        const normalizedFromConversation = normalizeWhatsappContactId(parsed?.contactId || "");
+        return normalizedFromConversation ? { channel, contactId: normalizedFromConversation } : null;
+    }
+
+    if (rawValue) return { channel, contactId: rawValue };
+    if (parsed?.contactId && parsed.channel === channel) {
+        return { channel, contactId: parsed.contactId };
+    }
+    return null;
+}
+
+function parseConversationIdToInboxTarget(
+    conversationId?: string,
+): { channel: "whatsapp" | "instagram" | "facebook"; contactId: string } | null {
+    const s = String(conversationId || "").trim();
     if (!s) return null;
 
-    // Already a jid
+    const m = s.match(/^[^_]+_(whatsapp|instagram|facebook)_(.+)$/i);
+    if (!m) return null;
+
+    const channel = String(m[1] || "").toLowerCase() as "whatsapp" | "instagram" | "facebook";
+    const contactId = String(m[2] || "").trim();
+    if (!contactId) return null;
+
+    return { channel, contactId };
+}
+
+function normalizeWhatsappContactId(raw?: string | null): string | null {
+    const s = String(raw || "").trim();
+    if (!s) return null;
     if (s.includes("@")) return s;
 
-    // If it's just digits / +digits, coerce to jid
     const digits = s.replace(/[^\d+]/g, "").replace(/^\+/, "");
     if (!digits) return null;
     return `${digits}@s.whatsapp.net`;
+}
+
+function buildInboxLeadUrl(
+    inboxAgentId: string,
+    target: { channel: "whatsapp" | "instagram" | "facebook"; contactId: string },
+) {
+    return `/inbox/${encodeURIComponent(inboxAgentId)}?contactId=${encodeURIComponent(target.contactId)}&channel=${encodeURIComponent(target.channel)}`;
 }
 
 function StatusPill({
@@ -906,7 +952,7 @@ function LeadSummaryModal({
     lead: Lead | null;
     open: boolean;
     onClose: () => void;
-    /** Inbox routing: agentId = campaign name */
+    /** Inbox routing: agentId used by Inbox */
     inboxAgentId?: string;
 }) {
     const { t } = useTranslation("translations");
@@ -937,8 +983,7 @@ function LeadSummaryModal({
 
     const summary = String((lead as any).summary || "").trim();
     const convLink = getConversationLink(lead);
-    const inboxContactId = inboxAgentId ? getInboxContactIdFromLead(lead) : null;
-    const canOpenInbox = Boolean(inboxAgentId && inboxContactId);
+    const inboxTarget = inboxAgentId ? getInboxThreadTargetFromLead(lead) : null;
     const requiresAction = isRequiresAction(lead);
     const { status, customStatusLabel } = getLeadStatus(lead);
 
@@ -1006,17 +1051,13 @@ function LeadSummaryModal({
                                 </span>
                             ) : null}
 
-                            {inboxAgentId && inboxContactId ? (
+                            {inboxAgentId && inboxTarget ? (
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1 text-[12px] hover:bg-emerald-500/10 dark:hover:bg-white/5"
                                     title="Abrir en Inbox"
                                     onClick={() => {
-                                        navigate(
-                                            `/inbox/${encodeURIComponent(inboxAgentId)}?contactId=${encodeURIComponent(
-                                                inboxContactId,
-                                            )}`,
-                                        );
+                                        navigate(buildInboxLeadUrl(inboxAgentId, inboxTarget));
                                     }}
                                 >
                                     <Inbox className="h-4 w-4" />
@@ -1270,7 +1311,7 @@ interface LeadsTableProps {
     /** Callback opcional (por si querés trackear o hacer algo al abrir el modal) */
     onOpenLead?: (lead: Lead) => void;
     campaignId?: string;
-    /** Inbox routing: agentId = campaign name */
+    /** Inbox routing: agentId used by Inbox */
     inboxAgentId?: string;
     onUpdateLeadStatus?: (args: {
         campaignId: string;
@@ -1460,7 +1501,7 @@ export function LeadsTable({
                 ) : (
                     mergedLeads.map((l) => {
                         const convLink = getConversationLink(l);
-                        const inboxContactId = inboxAgentId ? getInboxContactIdFromLead(l) : null;
+                        const inboxTarget = inboxAgentId ? getInboxThreadTargetFromLead(l) : null;
                         const convId = getLeadConversationId(l);
                         const requiresActionRow = isRequiresAction(l);
                         const nextActions = Array.isArray((l as any).nextAction) ? ((l as any).nextAction as any[]) : [];
@@ -1537,17 +1578,13 @@ export function LeadsTable({
                                         </span>
                                     </button>
 
-                                    {inboxAgentId && inboxContactId ? (
+                                    {inboxAgentId && inboxTarget ? (
                                         <button
                                             type="button"
                                             className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
                                             title={tr("inbox.open_inbox", "Abrir en Inbox")}
                                             onClick={() => {
-                                                navigate(
-                                                    `/inbox/${encodeURIComponent(inboxAgentId)}?contactId=${encodeURIComponent(
-                                                        inboxContactId,
-                                                    )}`,
-                                                );
+                                                navigate(buildInboxLeadUrl(inboxAgentId, inboxTarget));
                                             }}
                                         >
                                             <Inbox className="h-4 w-4 opacity-80" />
@@ -1600,7 +1637,7 @@ export function LeadsTable({
                     <tbody>
                         {mergedLeads.map((l) => {
                             const convLink = getConversationLink(l);
-                            const inboxContactId = inboxAgentId ? getInboxContactIdFromLead(l) : null;
+                            const inboxTarget = inboxAgentId ? getInboxThreadTargetFromLead(l) : null;
                             const convId = getLeadConversationId(l);
                             const requiresActionRow = isRequiresAction(l);
                             const nextActions = Array.isArray((l as any).nextAction)
@@ -1728,7 +1765,7 @@ export function LeadsTable({
                                     </td>
 
                                     <td className="px-3 lg:px-4 py-2" data-stop-row>
-                                        {inboxAgentId && inboxContactId ? (
+                                        {inboxAgentId && inboxTarget ? (
                                             <button
                                                 type="button"
                                                 className="inline-flex items-center gap-2 rounded-lg ring-1 ring-emerald-400/20 px-2.5 py-1.5 text-[12px] hover:bg-emerald-500/10"
@@ -1736,11 +1773,7 @@ export function LeadsTable({
                                                 onMouseDown={(e) => e.stopPropagation()}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    navigate(
-                                                        `/inbox/${encodeURIComponent(inboxAgentId)}?contactId=${encodeURIComponent(
-                                                            inboxContactId,
-                                                        )}`,
-                                                    );
+                                                    navigate(buildInboxLeadUrl(inboxAgentId, inboxTarget));
                                                 }}
                                             >
                                                 <Inbox className="h-4 w-4 opacity-80" />

@@ -92,6 +92,7 @@ const AppRouter: React.FC = () => (
                 <Route path="/inbox/:agentId" element={<Inbox />} />
 
                 <Route path="/settings" element={<Settings />} />
+                {/* Billing oculto temporalmente en esta rama/release */}
             </Route>
             <Route path='/landing-datacivis' element={<I18nProvider>
                 <DatacivisLanding />

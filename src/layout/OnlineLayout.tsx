@@ -27,6 +27,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
       { id: "campaign", label: t("campaign_title"), href: "/campaign_selection", icon: Folder },
       { id: "myCampaigns", label: t("my_campaigns_title"), href: "/my_campaigns", icon: Factory },
       { id: "inbox", label: t("inbox_title"), href: "/inbox", icon: MessageSquare },
+      // Billing oculto temporalmente en esta rama/release.
       { id: "settings", label: t("settings_title"), href: "/settings", icon: Settings },
     ],
     // 👇 cuando cambia el idioma, recalcula labels

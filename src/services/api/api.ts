@@ -24,6 +24,36 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response: AxiosResponse) => response,
     (error) => {
+        const response = error?.response;
+        const status = response?.status;
+        const data = response?.data || {};
+
+        const code = String(data?.code || data?.errorCode || data?.error?.code || "").toLowerCase();
+        const message = String(data?.message || data?.error?.message || "").toLowerCase();
+
+        const billingLimitError =
+            status === 402 ||
+            status === 429 ||
+            code.includes("quota") ||
+            code.includes("limit") ||
+            code.includes("billing") ||
+            message.includes("quota") ||
+            message.includes("limite") ||
+            message.includes("límite");
+
+        if (billingLimitError && typeof window !== "undefined") {
+            window.dispatchEvent(
+                new CustomEvent("billing:limit-reached", {
+                    detail: {
+                        status,
+                        code,
+                        message: data?.message || data?.error?.message || "",
+                        raw: data,
+                    },
+                }),
+            );
+        }
+
         return Promise.reject(error.response || error.message);
     }
 );

@@ -142,5 +142,6 @@ export const defaultNavItems: NavItem[] = [
   { id: "campaign", label: "Campaign", href: "/campaign_selection", icon: Folder },
   { id: "myCampaigns", label: "My Campaigns", href: "/my_campaigns", icon: Factory },
   { id: "inbox", label: "Inbox", href: "/inbox", icon: MessageSquare },
+  // Billing oculto temporalmente en esta rama/release.
   { id: "settings", label: "Settings", href: "/settings", icon: Settings },
 ];

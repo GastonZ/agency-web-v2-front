@@ -563,7 +563,6 @@ export default function StatisticsView() {
                 <section className="mt-2">
                     <LeadsTablePanel
                         campaignId={campaign?.id || id!}
-                        campaignName={campaign?.name || undefined}
                         onOpenLead={handleOpenLead}
                     />
                 </section>
