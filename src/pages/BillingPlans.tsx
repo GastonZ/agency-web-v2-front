@@ -1,4 +1,5 @@
 import React from "react";
+import { Check, Sparkles, Zap } from "lucide-react";
 import { toast } from "react-toastify";
 import OnlineLayout from "../layout/OnlineLayout";
 import { createSubscriptionCheckout, getBillingPlans, getMyBillingSummary } from "../services/billing";
@@ -6,6 +7,14 @@ import type { BillingCycle, BillingPlan, BillingPlanName } from "../services/typ
 
 function planPrice(plan: BillingPlan, cycle: BillingCycle) {
   return cycle === "yearly" ? plan.priceYearly ?? plan.priceMonthly : plan.priceMonthly;
+}
+
+function formatArs(amount?: number) {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  }).format(amount ?? 0);
 }
 
 const PLAN_RANK: Record<string, number> = {
@@ -19,6 +28,9 @@ function getPlanRank(planName?: BillingPlanName) {
   const key = String(planName || "").toLowerCase();
   return PLAN_RANK[key] ?? -1;
 }
+
+const featureTone = (enabled: boolean) =>
+  enabled ? "text-emerald-100 border-emerald-200/30 bg-emerald-400/12" : "text-white/60 border-white/15 bg-white/5";
 
 export default function BillingPlans() {
   const [loading, setLoading] = React.useState(true);
@@ -40,23 +52,28 @@ export default function BillingPlans() {
         try {
           const fallbackPlans = await getBillingPlans();
           if (mounted) setPlans(fallbackPlans || []);
-        } catch {}
+        } catch {
+          // no-op
+        }
         toast.error(error?.data?.message || error?.message || "No se pudieron cargar los datos de billing");
       } finally {
         if (mounted) setLoading(false);
       }
     })();
+
     return () => {
       mounted = false;
     };
   }, []);
 
   const currentPlanRank = getPlanRank(currentPlan || undefined);
+
   const sortedPlans = React.useMemo(() => {
     const copy = [...plans];
     copy.sort((a, b) => getPlanRank(a.name) - getPlanRank(b.name));
     return copy;
   }, [plans]);
+
   const upgradePlans = React.useMemo(
     () => sortedPlans.filter((plan) => getPlanRank(plan.name) > currentPlanRank),
     [sortedPlans, currentPlanRank],
@@ -65,12 +82,12 @@ export default function BillingPlans() {
   async function onSubscribe(planName: string) {
     try {
       if (getPlanRank(planName) <= currentPlanRank) {
-        toast.info("Ese plan ya lo tenés o es inferior al actual.");
+        toast.info("Ese plan ya lo tienes o es inferior al actual.");
         return;
       }
 
       setSubmittingPlan(planName);
-      const returnUrl = `https://datacivis.com.ar/billing/checkout/return`;
+      const returnUrl = "https://datacivis.com.ar/billing/checkout/return";
       const checkout = await createSubscriptionCheckout({
         planName,
         billingCycle: cycle,
@@ -79,7 +96,7 @@ export default function BillingPlans() {
 
       const target = checkout.initPoint || checkout.sandboxInitPoint;
       if (!target) {
-        throw new Error("No se recibió URL de checkout");
+        throw new Error("No se recibio URL de checkout");
       }
       window.location.assign(target);
     } catch (error: any) {
@@ -92,78 +109,127 @@ export default function BillingPlans() {
   return (
     <OnlineLayout>
       <div className="space-y-5">
-        <header className="rounded-2xl border border-neutral-200 bg-white/80 p-4 dark:border-neutral-800 dark:bg-neutral-900/70">
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">Planes</h1>
-          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
-            Elegí un plan y completá tu suscripción.
-          </p>
-          <div className="mt-4 inline-flex rounded-lg border border-neutral-300 p-1 dark:border-neutral-700">
-            <button
-              className={`rounded-md px-3 py-1.5 text-sm ${cycle === "monthly" ? "bg-neutral-900 text-white dark:bg-white dark:text-black" : ""}`}
-              onClick={() => setCycle("monthly")}
-            >
-              Mensual
-            </button>
-            <button
-              className={`rounded-md px-3 py-1.5 text-sm ${cycle === "yearly" ? "bg-neutral-900 text-white dark:bg-white dark:text-black" : ""}`}
-              onClick={() => setCycle("yearly")}
-            >
-              Anual
-            </button>
+        <header className="relative overflow-hidden rounded-[30px] border border-[#1f2a3b] bg-[#0a111b] p-5 text-white shadow-[0_28px_90px_rgba(0,0,0,0.45)] md:p-7">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.2),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(56,189,248,0.18),transparent_35%)]" />
+
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200/75">Upgrade engine</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight">Planes y suscripcion</h1>
+              <p className="mt-2 max-w-2xl text-sm text-white/65">
+                Elige un plan superior para ampliar cupos y funciones en minutos.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/70">
+                <Sparkles className="h-3.5 w-3.5 text-cyan-200" />
+                Plan actual: <strong className="font-semibold text-white">{String(currentPlan || "free").toUpperCase()}</strong>
+              </div>
+            </div>
+
+            <div className="inline-flex rounded-full border border-white/20 bg-black/20 p-1">
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  cycle === "monthly" ? "bg-white text-black shadow-lg" : "text-white/70 hover:text-white"
+                }`}
+                onClick={() => setCycle("monthly")}
+              >
+                Mensual
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  cycle === "yearly" ? "bg-white text-black shadow-lg" : "text-white/70 hover:text-white"
+                }`}
+                onClick={() => setCycle("yearly")}
+              >
+                Anual
+              </button>
+            </div>
           </div>
         </header>
 
         {loading ? (
-          <div className="rounded-2xl border border-neutral-200 bg-white/80 p-4 text-sm dark:border-neutral-800 dark:bg-neutral-900/70">
+          <div className="rounded-2xl border border-[#233146] bg-[#0d1522] p-4 text-sm text-white/70 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
             Cargando planes...
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {upgradePlans.map((plan) => (
-              <article
-                key={plan.name}
-                className="rounded-2xl border border-neutral-200 bg-white/80 p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/70"
-              >
-                <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
-                  {plan.displayName || String(plan.name).toUpperCase()}
-                </h2>
-                <p className="mt-2 min-h-10 text-sm text-neutral-600 dark:text-neutral-300">
-                  {plan.unlimitedCampaigns
-                    ? "Campañas ilimitadas"
-                    : `Hasta ${plan.maxActiveCampaigns} campañas activas`}
-                </p>
-                <p className="mt-4 text-3xl font-bold text-neutral-900 dark:text-neutral-50">
-                  {planPrice(plan, cycle) ?? 0}
-                  <span className="ml-1 text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                    $ARS / {cycle === "monthly" ? "mes" : "año"}
-                  </span>
-                </p>
-                <ul className="mt-4 space-y-2 text-sm text-neutral-700 dark:text-neutral-200">
-                  <li>
-                    • Mensajes:{" "}
-                    {plan.unlimitedMessages ? "Ilimitados" : `${plan.quotaMessages.toLocaleString()}`}
-                  </li>
-                  <li>
-                    • Audios: {plan.unlimitedAudios ? "Ilimitados" : `${plan.quotaAudios.toLocaleString()}`}
-                  </li>
-                  <li>• Marketing: {plan.allowMarketing ? "Sí" : "No"}</li>
-                  <li>• Social Listening: {plan.allowSocialListening ? "Sí" : "No"}</li>
-                </ul>
-                <button
-                  type="button"
-                  onClick={() => onSubscribe(plan.name)}
-                  disabled={submittingPlan === plan.name}
-                  className="mt-6 w-full rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            {upgradePlans.map((plan) => {
+              const rank = getPlanRank(plan.name);
+              const isFeatured = rank >= 2;
+
+              return (
+                <article
+                  key={plan.name}
+                  className={`group relative overflow-hidden rounded-[26px] border p-5 text-white shadow-[0_22px_60px_rgba(0,0,0,0.4)] transition hover:-translate-y-1 ${
+                    isFeatured
+                      ? "border-emerald-200/35 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.2),transparent_42%),#0f1927]"
+                      : "border-[#273449] bg-[#111a2a]"
+                  }`}
                 >
-                  {submittingPlan === plan.name ? "Iniciando..." : "Suscribirme"}
-                </button>
-              </article>
-            ))}
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-cyan-300/12 blur-3xl transition group-hover:scale-110" />
+
+                  <div className="relative">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-2xl font-semibold tracking-tight">
+                          {plan.displayName || String(plan.name).toUpperCase()}
+                        </h2>
+                        <p className="mt-2 min-h-10 text-sm text-white/65">
+                          {plan.unlimitedCampaigns
+                            ? "Campanas ilimitadas"
+                            : `Hasta ${plan.maxActiveCampaigns} campanas activas`}
+                        </p>
+                      </div>
+
+                      {isFeatured ? (
+                        <span className="rounded-full border border-emerald-200/40 bg-emerald-300/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-100">
+                          Recomendado
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-5">
+                      <p className="text-4xl font-semibold tracking-tight">{formatArs(planPrice(plan, cycle))}</p>
+                      <p className="text-sm text-white/65">por {cycle === "monthly" ? "mes" : "ano"}</p>
+                    </div>
+
+                    <ul className="mt-5 space-y-2 text-sm">
+                      <li className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium border-white/15 bg-white/5 text-white/80">
+                        <Zap className="h-3.5 w-3.5 text-cyan-200" />
+                        Mensajes: {plan.unlimitedMessages ? "Ilimitados" : plan.quotaMessages.toLocaleString("es-AR")}
+                      </li>
+                      <li className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium border-white/15 bg-white/5 text-white/80">
+                        <Zap className="h-3.5 w-3.5 text-cyan-200" />
+                        Audios: {plan.unlimitedAudios ? "Ilimitados" : plan.quotaAudios.toLocaleString("es-AR")}
+                      </li>
+                      <li className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${featureTone(plan.allowMarketing)}`}>
+                        <Check className="h-3.5 w-3.5" />
+                        Marketing {plan.allowMarketing ? "incluido" : "no incluido"}
+                      </li>
+                      <li className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${featureTone(plan.allowSocialListening)}`}>
+                        <Check className="h-3.5 w-3.5" />
+                        Social listening {plan.allowSocialListening ? "incluido" : "no incluido"}
+                      </li>
+                    </ul>
+
+                    <button
+                      type="button"
+                      onClick={() => onSubscribe(plan.name)}
+                      disabled={submittingPlan === plan.name}
+                      className="mt-6 w-full rounded-full border border-emerald-100/35 bg-emerald-400/90 px-4 py-2.5 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {submittingPlan === plan.name ? "Iniciando..." : "Suscribirme"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
 
         {!loading && currentPlan && upgradePlans.length === 0 ? (
-          <div className="rounded-2xl border border-neutral-200 bg-white/80 p-4 text-sm dark:border-neutral-800 dark:bg-neutral-900/70">
+          <div className="rounded-2xl border border-[#2a364b] bg-[#101827] p-4 text-sm text-white/80 shadow-[0_16px_44px_rgba(0,0,0,0.35)]">
             Tu plan actual es <strong>{String(currentPlan).toUpperCase()}</strong>. No hay planes superiores disponibles.
           </div>
         ) : null}
