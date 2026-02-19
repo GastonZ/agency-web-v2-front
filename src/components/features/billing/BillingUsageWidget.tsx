@@ -19,49 +19,47 @@ function formatCount(value: number) {
   return value.toLocaleString("es-AR");
 }
 
-function UsageBar({ label, used, limit, remaining, icon: Icon }: CounterView) {
+function UsageLane({ label, used, limit, remaining, icon: Icon }: CounterView) {
   const pct = clampProgress(used, limit);
   const risk = pct >= 90 ? "high" : pct >= 70 ? "mid" : "low";
 
   const tone =
     risk === "high"
-      ? "from-rose-500 via-orange-400 to-yellow-300"
+      ? "from-rose-500 via-orange-400 to-amber-300"
       : risk === "mid"
-        ? "from-amber-400 via-emerald-300 to-cyan-200"
-        : "from-emerald-300 via-cyan-300 to-blue-300";
+        ? "from-amber-300 via-emerald-400 to-emerald-300"
+        : "from-emerald-400 via-emerald-500 to-teal-400";
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#101723] px-4 py-4 shadow-[0_16px_38px_rgba(0,0,0,0.28)]">
-      <div className="pointer-events-none absolute -right-8 -top-12 h-28 w-28 rounded-full bg-cyan-300/12 blur-2xl transition group-hover:scale-110" />
-
-      <div className="relative flex items-start justify-between gap-3">
+    <div className="rounded-xl bg-neutral-900/5 p-4 ring-1 ring-neutral-200/70 dark:bg-white/5 dark:ring-neutral-800/70">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/45">{label}</p>
-          <p className="mt-2 text-xl font-semibold text-white">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">{label}</p>
+          <p className="mt-1.5 text-xl font-semibold text-neutral-900 dark:text-neutral-50">
             {limit ? `${formatCount(used)} / ${formatCount(limit)}` : `${formatCount(used)} usados`}
           </p>
         </div>
-        <div className="rounded-xl border border-white/10 bg-white/5 p-2 text-cyan-200">
-          <Icon className="h-4 w-4" />
+        <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/20">
+          <Icon className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
         </div>
       </div>
 
-      <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+      <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-neutral-300/50 dark:bg-neutral-700/50">
         <div
-          className={`h-full rounded-full bg-gradient-to-r ${tone} shadow-[0_0_26px_rgba(45,212,191,0.45)] transition-all duration-700`}
+          className={`h-full rounded-full bg-gradient-to-r ${tone} transition-all duration-700`}
           style={{ width: `${pct}%` }}
         />
       </div>
 
       <div className="mt-3 flex items-center justify-between text-xs">
-        <span className="text-white/55">Uso del ciclo actual</span>
-        <span className="rounded-full border border-white/15 bg-white/10 px-2 py-1 font-medium text-white/80">
+        <span className="text-neutral-500 dark:text-neutral-400">Uso del ciclo actual</span>
+        <span className="rounded-full bg-emerald-500/10 px-2 py-1 font-medium text-emerald-800 ring-1 ring-emerald-500/20 dark:text-emerald-300">
           {remaining === null || remaining === undefined
             ? "Sin limite"
             : `${formatCount(remaining)} restantes`}
         </span>
       </div>
-    </article>
+    </div>
   );
 }
 
@@ -72,24 +70,22 @@ export default function BillingUsageWidget({ summary }: { summary: BillingSummar
   const audiosUsed = summary.usage.audiosUsed ?? 0;
 
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-[#1d2938] bg-[#0b111b] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.35)] md:p-6">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.16),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.14),transparent_42%)]" />
-
-      <header className="relative mb-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">Control de consumo</p>
-        <h3 className="mt-2 text-lg font-semibold text-white">Capacidad del ciclo actual</h3>
-        <p className="text-sm text-white/60">Visualiza en tiempo real cuanto te queda antes del siguiente periodo.</p>
+    <section className="rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/70 md:p-5">
+      <header>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">Control de consumo</p>
+        <h3 className="mt-1.5 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Capacidad del ciclo actual</h3>
+        <p className="text-sm text-neutral-600 dark:text-neutral-300">Visualiza cuanto te queda antes del siguiente periodo.</p>
       </header>
 
-      <div className="relative grid grid-cols-1 gap-4 md:grid-cols-2">
-        <UsageBar
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <UsageLane
           label="Mensajes"
           used={messagesUsed}
           limit={messagesLimit}
           remaining={summary.remaining.messages}
           icon={MessageSquareText}
         />
-        <UsageBar
+        <UsageLane
           label="Audios"
           used={audiosUsed}
           limit={audiosLimit}

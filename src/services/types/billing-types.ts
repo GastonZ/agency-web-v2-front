@@ -1,4 +1,5 @@
 export type BillingPlanName = "free" | "basic" | "premium" | "custom" | (string & {});
+export type SelfServeCheckoutPlanName = "basic" | "premium";
 export type BillingCycle = "monthly" | "yearly";
 export type BillingStatus =
   | "active"
@@ -73,7 +74,7 @@ export type BillingSummary = {
 };
 
 export type CreateSubscriptionCheckoutPayload = {
-  planName: BillingPlanName;
+  planName: SelfServeCheckoutPlanName;
   billingCycle?: BillingCycle;
   payerEmail?: string;
   returnUrl?: string;
