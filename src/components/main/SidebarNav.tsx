@@ -143,6 +143,6 @@ export const defaultNavItems: NavItem[] = [
   { id: "campaign", label: "Campaign", href: "/campaign_selection", icon: Folder },
   { id: "myCampaigns", label: "My Campaigns", href: "/my_campaigns", icon: Factory },
   { id: "inbox", label: "Inbox", href: "/inbox", icon: MessageSquare },
-  { id: "billing", label: "Billing", href: "/billing/subscription", icon: CreditCard },
+/*   { id: "billing", label: "Billing", href: "/billing/subscription", icon: CreditCard }, */
   { id: "settings", label: "Settings", href: "/settings", icon: Settings },
 ];

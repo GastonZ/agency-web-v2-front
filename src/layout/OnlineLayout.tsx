@@ -32,7 +32,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
       { id: "campaign", label: t("campaign_title"), href: "/campaign_selection", icon: Folder },
       { id: "myCampaigns", label: t("my_campaigns_title"), href: "/my_campaigns", icon: Factory },
       { id: "inbox", label: t("inbox_title"), href: "/inbox", icon: MessageSquare },
-      { id: "billing", label: "Billing", href: "/billing/subscription", icon: CreditCard },
+      /* { id: "billing", label: "Billing", href: "/billing/subscription", icon: CreditCard }, */
       { id: "settings", label: t("settings_title"), href: "/settings", icon: Settings },
     ],
     // Recompute labels when language changes.
@@ -118,7 +118,7 @@ const OnlineLayout: React.FC<OnlineLayoutProps> = ({ children, currentPath }) =>
         </header>
 
         <main className={`flex-1 min-h-0 overflow-y-auto px-4 pb-8 pt-4 lg:pt-6 ${SIDE_WIDTH ? "lg:pl-64" : "lg:pl-[72px]"}`}>
-          <BillingStatusBanner status={billingStatus} />
+          {/* <BillingStatusBanner status={billingStatus} /> */}
           {children}
         </main>
       </div>
