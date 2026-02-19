@@ -215,7 +215,7 @@ export default function BillingPlans() {
                         <p className="text-4xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
                           {formatArs(planPrice(plan, cycle))}
                         </p>
-                        <p className="text-sm text-neutral-600 dark:text-neutral-300">por {cycle === "monthly" ? "mes" : "ano"}</p>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-300">por {cycle === "monthly" ? "mes" : "año"}</p>
                       </div>
 
                       <ul className="mt-5 space-y-2 text-sm text-neutral-700 dark:text-neutral-200">

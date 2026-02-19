@@ -26,6 +26,7 @@ import {
   appendModerationCampaignLeadNextAction,
   getModerationCampaignLead,
   lookupModerationCampaignLeads,
+  getModerationAccounts,
 } from "../services/campaigns";
 import { getMyAreas } from "../services/subaccounts";
 import type { LeadStatus, ModerationCampaignItem } from "../services/types/moderation-types";
@@ -91,6 +92,38 @@ function channelBadgeMeta(channel: any): { label: string; short: string; classNa
     className:
       "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30",
   };
+}
+
+function hasLinkedInstagramAccount(data: any): boolean {
+  return Boolean(
+    data?.instagram &&
+    (
+      data.instagram.username ||
+      data.instagram.name ||
+      data.instagram.profilePicture ||
+      data.instagram.id
+    ),
+  );
+}
+
+function hasLinkedFacebookAccount(data: any): boolean {
+  return Boolean(
+    data?.facebook &&
+    (
+      data.facebook.id ||
+      data.facebook.name ||
+      data.facebook.profilePicture
+    ),
+  );
+}
+
+function hasLinkedWhatsappAccount(data: any): boolean {
+  return Boolean(
+    data?.whatsapp?.qrScanned === true ||
+    data?.whatsapp?.connected === true ||
+    data?.whatsapp?.phoneNumber ||
+    data?.whatsapp?.qrScannedByPhone,
+  );
 }
 
 function buildModernAgentId(campaignId: string | undefined | null): string {
@@ -1206,6 +1239,10 @@ export default function Inbox() {
 
     return campaigns.find((c) => getCampaignAgentCandidates(c).includes(a)) || null;
   }, [agentKey, campaigns]);
+  const selectedCampaignWhatsappLinked = React.useMemo(
+    () => Boolean((selectedCampaign as any)?.whatsappStatus?.qrScanned),
+    [selectedCampaign],
+  );
 
   const queryContactId = React.useMemo(() => {
     const raw = new URLSearchParams(location.search).get("contactId") || "";
@@ -1253,6 +1290,7 @@ export default function Inbox() {
 
   const [activeContactId, setActiveContactId] = React.useState<string | null>(null);
   const [activeThread, setActiveThread] = React.useState<InboxThread | null>(null);
+  const [connectedByChannel, setConnectedByChannel] = React.useState<Partial<Record<InboxChannel, boolean>>>({});
 
   const [messages, setMessages] = React.useState<InboxMessage[]>([]);
   const [chatLoading, setChatLoading] = React.useState(false);
@@ -1313,6 +1351,40 @@ export default function Inbox() {
   }, []);
 
   React.useEffect(() => {
+    let cancelled = false;
+
+    if (!selectedCampaign?.id) {
+      setConnectedByChannel({});
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setConnectedByChannel({ whatsapp: selectedCampaignWhatsappLinked });
+
+    (async () => {
+      try {
+        const accountsData: any = await getModerationAccounts(selectedCampaign.id);
+        if (cancelled) return;
+
+        setConnectedByChannel({
+          whatsapp: selectedCampaignWhatsappLinked || hasLinkedWhatsappAccount(accountsData),
+          instagram: hasLinkedInstagramAccount(accountsData),
+          facebook: hasLinkedFacebookAccount(accountsData),
+        });
+      } catch {
+        if (cancelled) return;
+        // Fallback: keep WhatsApp from campaign status and avoid false negatives on IG/FB.
+        setConnectedByChannel({ whatsapp: selectedCampaignWhatsappLinked });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCampaign?.id, selectedCampaignWhatsappLinked]);
+
+  React.useEffect(() => {
     if (!selectedCampaign?.id) return;
     if (!threads.length) {
       setLeadMiniMap({});
@@ -1369,6 +1441,23 @@ export default function Inbox() {
     () => (activeThread ? channelBadgeMeta(activeThread.channel) : null),
     [activeThread],
   );
+  const activeThreadChannel = React.useMemo(
+    () => (activeThread ? normalizeInboxChannel(activeThread.channel) : null),
+    [activeThread],
+  );
+  const isActiveChannelDisconnected = React.useMemo(() => {
+    if (!activeThreadChannel) return false;
+    const connected = connectedByChannel[activeThreadChannel];
+    return connected === false;
+  }, [activeThreadChannel, connectedByChannel]);
+  const disconnectedChannelMessage = React.useMemo(() => {
+    if (!activeThread || !isActiveChannelDisconnected) return "";
+    const label = channelBadgeMeta(activeThread.channel).label;
+    return tr(
+      "inbox.channel_unlinked_readonly",
+      `No puedes enviar mensajes: ${label} no esta vinculado en esta campana.`,
+    );
+  }, [activeThread, isActiveChannelDisconnected, tr]);
 
   const filteredThreads = React.useMemo(() => {
     const q = (threadQuery || "").trim().toLowerCase();
@@ -1827,6 +1916,7 @@ export default function Inbox() {
 
   const canSend = React.useMemo(() => {
     if (!activeThread) return false;
+    if (isActiveChannelDisconnected) return false;
 
     const md: any = (activeThread as any).metadata || {};
     const takeover = String(md.takeoverMode || "BOT").toUpperCase();
@@ -1838,7 +1928,7 @@ export default function Inbox() {
     // Align with backend: allow send when HUMAN and either unlocked OR locked by me.
     if (!lockedBy) return true;
     return String(lockedBy) === String(executingUserId);
-  }, [activeThread, executingUserId]);
+  }, [activeThread, isActiveChannelDisconnected, executingUserId]);
 
   const isReadOnlyLock = React.useMemo(() => {
     if (!activeThread) return false;
@@ -1898,6 +1988,10 @@ export default function Inbox() {
     const activeChannel = normalizeInboxChannel(activeThread.channel);
     const normalizedActiveContactId = normalizeContactId(activeContactId, activeChannel);
     if (!isValidContactId(normalizedActiveContactId)) return;
+    if (isActiveChannelDisconnected) {
+      alert(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
+      return;
+    }
     if (!canSend) {
       alert(
         tr(
@@ -1965,7 +2059,19 @@ export default function Inbox() {
       const msg = e?.data?.message || e?.message || tr("inbox.error_send_message", "No se pudo enviar el mensaje");
       alert(msg);
     }
-  }, [draft, activeThread, activeContactId, canSend, agentKey, executingUserId, pending, scrollToBottom]);
+  }, [
+    draft,
+    activeThread,
+    activeContactId,
+    canSend,
+    agentKey,
+    executingUserId,
+    pending,
+    scrollToBottom,
+    isActiveChannelDisconnected,
+    disconnectedChannelMessage,
+    tr,
+  ]);
 
   const onPickFile = React.useCallback(() => {
     fileInputRef.current?.click();
@@ -1979,6 +2085,10 @@ export default function Inbox() {
       const file = e.target.files?.[0];
       e.target.value = "";
       if (!file || !activeThread || !activeContactId) return;
+      if (isActiveChannelDisconnected) {
+        alert(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
+        return;
+      }
       if (!canSend) {
         alert(
           tr(
@@ -2062,7 +2172,7 @@ export default function Inbox() {
         alert(err?.message || tr("inbox.error_read_file", "No se pudo leer el archivo"));
       }
     },
-    [activeThread, activeContactId, canSend, pending, tr]
+    [activeThread, activeContactId, canSend, pending, tr, isActiveChannelDisconnected, disconnectedChannelMessage]
   );
 
   const stopRecording = React.useCallback(() => {
@@ -2075,6 +2185,10 @@ export default function Inbox() {
 
   const startRecording = React.useCallback(async () => {
     if (!activeThread || !activeContactId) return;
+    if (isActiveChannelDisconnected) {
+      alert(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
+      return;
+    }
     if (!canSend) {
       alert(
         tr(
@@ -2128,7 +2242,7 @@ export default function Inbox() {
       setIsRecording(false);
       alert(e?.message || tr("inbox.error_start_recording", "No se pudo iniciar la grabación"));
     }
-  }, [activeThread, activeContactId, canSend, pending, tr]);
+  }, [activeThread, activeContactId, canSend, pending, tr, isActiveChannelDisconnected, disconnectedChannelMessage]);
 
 
   // Realtime: inbox-thread-updated + inbox-message
@@ -2734,7 +2848,15 @@ export default function Inbox() {
 
             {/* Composer */}
             <div className="px-2 py-2 border-t border-neutral-200/40 dark:border-neutral-800/60 bg-neutral-50/90 dark:bg-neutral-900/90">
-              {activeThread?.metadata?.takeoverMode === "BOT" && (
+              {isActiveChannelDisconnected && (
+                <div className="mb-2 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs text-red-700 dark:text-red-200">
+                    <ShieldAlert className="h-4 w-4 shrink-0" />
+                    <span>{disconnectedChannelMessage}</span>
+                  </div>
+                </div>
+              )}
+              {!isActiveChannelDisconnected && activeThread?.metadata?.takeoverMode === "BOT" && (
                 <div className="mb-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-200">
                     <ShieldAlert className="h-4 w-4 shrink-0" />
@@ -2837,7 +2959,12 @@ export default function Inbox() {
                   placeholder={
                     !activeThread
                       ? tr("inbox.select_conversation", "Seleccioná una conversación…")
-                      : !canSend
+                      : isActiveChannelDisconnected
+                        ? tr(
+                          "inbox.channel_unlinked_placeholder",
+                          "No puedes responder: este canal ya no esta vinculado.",
+                        )
+                        : !canSend
                         ? tr(
                           "inbox.activate_human_to_reply",
                           "Activá modo humano para responder.",
