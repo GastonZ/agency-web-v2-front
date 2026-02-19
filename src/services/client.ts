@@ -47,6 +47,15 @@ export interface SubLoginResponse {
   areaName: string;
 }
 
+export interface VerifyEmailResponse {
+  message: string;
+  user?: {
+    id?: string;
+    email?: string;
+    activated?: boolean;
+  };
+}
+
 export async function loginUser(credentials: LoginCredentials): Promise<LoginResponse> {
   try {
     const { data } = await api.post<LoginResponse>("auth/login", credentials);
@@ -115,6 +124,25 @@ export async function signUp(data: SignUpData): Promise<SignUpResponse> {
         throw new Error("error_user_exists");
       }
 
+      if (
+        status === 409 &&
+        typeof message === "string" &&
+        message.toLowerCase().includes("pending verification")
+      ) {
+        throw new Error(
+          "Tu cuenta todavía no está verificada. Te reenviamos el correo de validación.",
+        );
+      }
+
+      if (
+        status >= 500 &&
+        message === "Could not send verification email. Please try again."
+      ) {
+        throw new Error(
+          "No pudimos enviar el correo de verificación. Intenta nuevamente.",
+        );
+      }
+
       if (status >= 500) {
         throw new Error("error_server");
       }
@@ -178,6 +206,51 @@ export async function subLogin(credentials: SubLoginCredentials): Promise<SubLog
       }
 
       throw new Error(message || `Error ${status} en la autenticación`);
+    }
+
+    throw new Error("error_network");
+  }
+}
+
+export async function verifyEmail(token: string): Promise<VerifyEmailResponse> {
+  try {
+    const { data } = await api.post<VerifyEmailResponse>("users/verify-email", {
+      token,
+    });
+
+    if (!data?.message) {
+      throw new Error("error_invalid");
+    }
+
+    return data;
+  } catch (error: any) {
+    if (error) {
+      const status: number = error.status;
+      const messageRaw = error.data?.message;
+      const message: string = Array.isArray(messageRaw)
+        ? messageRaw.join(", ")
+        : String(messageRaw || "");
+
+      if (
+        status === 400 &&
+        (
+          message === "Invalid or expired verification token" ||
+          message === "Invalid verification token payload" ||
+          message === "Verification token is required"
+        )
+      ) {
+        throw new Error("El enlace de verificación es inválido o está vencido.");
+      }
+
+      if (status === 404 && message === "User not found") {
+        throw new Error("No encontramos la cuenta para verificar.");
+      }
+
+      if (status >= 500) {
+        throw new Error("error_server");
+      }
+
+      throw new Error(message || `Error ${status} al verificar el correo`);
     }
 
     throw new Error("error_network");
