@@ -33,6 +33,7 @@ import {
   listThreads,
   getThreadMessages,
   markThreadRead,
+  markThreadUnread,
   sendMessage,
   takeoverThread,
   startThread,
@@ -1893,6 +1894,45 @@ export default function Inbox() {
     }
   }, [activeThread, activeContactId, agentKey, tr]);
 
+  const onMarkUnread = React.useCallback(async () => {
+    if (!activeThread || !agentKey) return;
+
+    const activeChannel = normalizeInboxChannel(activeThread.channel);
+    const currentCid = normalizeContactId((activeContactId ?? activeThread.contactId) as any, activeChannel);
+    if (!isValidContactId(currentCid)) return;
+
+    const currentUnread = Number(activeThread.metadata?.unreadCount || 0);
+
+    try {
+      const res = await markThreadUnread(
+        agentKey,
+        currentCid,
+        {
+          expectedUnread: currentUnread,
+          unreadCount: Math.max(1, currentUnread || 1),
+        },
+        { channel: activeChannel },
+      );
+
+      const nextUnread = Number(res?.unreadCount || 1);
+      setActiveThread((prev) =>
+        prev
+          ? { ...prev, metadata: { ...prev.metadata, unreadCount: nextUnread } }
+          : prev,
+      );
+
+      setThreads((prev) =>
+        prev.map((x) =>
+          threadKey(x.channel, x.contactId) === threadKey(activeThread.channel, currentCid)
+            ? { ...x, metadata: { ...x.metadata, unreadCount: nextUnread } }
+            : x,
+        ),
+      );
+    } catch (e: any) {
+      alert(e?.data?.message || e?.message || tr("inbox.error_mark_unread", "No se pudo marcar como no leído"));
+    }
+  }, [activeThread, activeContactId, agentKey, tr]);
+
   const onSend = React.useCallback(async () => {
     if (!agentKey || !activeThread || !activeContactId) return;
     const activeChannel = normalizeInboxChannel(activeThread.channel);
@@ -2629,6 +2669,17 @@ export default function Inbox() {
                     }
                   >
                     <ClipboardList className="h-5 w-5" />
+                  </button>
+                )}
+
+                {activeThread && (
+                  <button
+                    onClick={onMarkUnread}
+                    className="px-2.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors bg-white/15 text-white hover:bg-white/25"
+                    title={tr("inbox.mark_unread", "Marcar como no leído")}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 inline-block" />
+                    <span className="hidden sm:inline">{tr("inbox.mark_unread_short", "Marcas como no leído")}</span>
                   </button>
                 )}
 

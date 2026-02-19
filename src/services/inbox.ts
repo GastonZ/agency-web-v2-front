@@ -137,6 +137,24 @@ export async function markThreadRead(
   return data;
 }
 
+export async function markThreadUnread(
+  agentId: string,
+  contactId: string,
+  body?: { expectedUnread?: number; unreadCount?: number },
+  opts?: { channel?: InboxChannel }
+) {
+  const channel = opts?.channel ?? "whatsapp";
+  const safeAgentId = encodeURIComponent(agentId);
+  const safeContactId = encodeURIComponent(contactId);
+
+  const { data } = await api.post<{ ok: boolean; unreadCount: number }>(
+    `inbox/${safeAgentId}/threads/${safeContactId}/mark-unread`,
+    body ?? {},
+    { params: { channel } }
+  );
+  return data;
+}
+
 type SendTextBody = { type: "text"; text: string };
 type SendAudioBody = { type: "audio"; base64: string; mimeType: string };
 type SendImageBody = { type: "image"; text?: string; base64: string; mimeType: string };
