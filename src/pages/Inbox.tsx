@@ -7,6 +7,7 @@ import {
   Copy,
   Check,
   Loader2,
+  Mail,
   Mic,
   Paperclip,
   Send,
@@ -34,6 +35,7 @@ import {
   listThreads,
   getThreadMessages,
   markThreadRead,
+  markThreadUnread,
   sendMessage,
   takeoverThread,
   startThread,
@@ -1940,6 +1942,7 @@ export default function Inbox() {
 
     return takeover === "HUMAN" && Boolean(lockedBy) && String(lockedBy) !== String(executingUserId);
   }, [activeThread, executingUserId]);
+  const activeUnreadCount = Number(activeThread?.metadata?.unreadCount || 0);
 
   const onToggleTakeover = React.useCallback(async () => {
     if (!activeThread || !agentKey) return;
@@ -1980,6 +1983,53 @@ export default function Inbox() {
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || tr("inbox.error_takeover", "No se pudo cambiar el takeover");
       alert(msg);
+    }
+  }, [activeThread, activeContactId, agentKey, tr]);
+
+  const onMarkUnread = React.useCallback(async () => {
+    if (!activeThread || !agentKey) return;
+
+    const activeChannel = normalizeInboxChannel(activeThread.channel);
+    const currentCid = normalizeContactId((activeContactId ?? activeThread.contactId) as any, activeChannel);
+    if (!isValidContactId(currentCid)) {
+      alert(tr("inbox.invalid_thread", "Thread invalido (contactId vacio/undefined)."));
+      return;
+    }
+
+    const currentUnread = Number((activeThread as any)?.metadata?.unreadCount || 0);
+
+    try {
+      const res = await markThreadUnread(
+        agentKey,
+        currentCid,
+        {
+          expectedUnread: currentUnread,
+          unreadCount: Math.max(1, currentUnread || 1),
+        },
+        { channel: activeChannel },
+      );
+
+      const key = threadKey(activeChannel, currentCid);
+
+      setThreads((prev) =>
+        prev.map((x) =>
+          threadKey(x.channel, x.contactId) === key
+            ? { ...x, metadata: { ...x.metadata, unreadCount: res.unreadCount } }
+            : x,
+        ),
+      );
+
+      setActiveThread((prev) =>
+        prev && threadKey(prev.channel, prev.contactId) === key
+          ? { ...prev, metadata: { ...prev.metadata, unreadCount: res.unreadCount } }
+          : prev,
+      );
+    } catch (e: any) {
+      alert(
+        e?.data?.message ||
+          e?.message ||
+          tr("inbox.error_mark_unread", "No se pudo marcar como no leido"),
+      );
     }
   }, [activeThread, activeContactId, agentKey, tr]);
 
@@ -2731,6 +2781,23 @@ export default function Inbox() {
 
               {/* Acciones del chat */}
               <div className="flex items-center gap-1.5 shrink-0">
+                {activeThread && (
+                  <button
+                    onClick={onMarkUnread}
+                    disabled={activeUnreadCount > 0}
+                    className="px-2.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 disabled:cursor-not-allowed"
+                    title={
+                      activeUnreadCount > 0
+                        ? tr("inbox.already_unread", "Ya esta marcado como no leido")
+                        : tr("inbox.mark_unread", "Marcar como no leido")
+                    }
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tr("inbox.mark_unread_short", "No leido")}</span>
+                    <span className="sm:hidden">{tr("inbox.new", "Nuevo")}</span>
+                  </button>
+                )}
+
                 {activeThread && (
                   <button
                     onClick={() => setLeadModalOpen(true)}
