@@ -315,7 +315,7 @@ export default function StatisticsView() {
             setEditingWebchatDomain(false);
         } catch (e: any) {
             console.error("Error saving webchat domain", e);
-            alert("No se pudo guardar el dominio.");
+            toast.error("No se pudo guardar el dominio.");
         } finally {
             setSavingWebchat(false);
         }
@@ -891,3 +891,4 @@ Solo explicá estos pasos en detalle cuando el usuario pida ayuda con WhatsApp o
         </OnlineLayout >
     );
 }
+

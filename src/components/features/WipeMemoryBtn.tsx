@@ -14,10 +14,10 @@ import { useTranslation } from "react-i18next";
 type Props = {
   userId: string;
   namespaces?: Array<"global" | "moderation" | string>;
-  draftKey?: string;         // por si querés usar otra clave de draft en el futuro
+  draftKey?: string;
   label?: string;
   className?: string;
-  confirm?: boolean;         // pedir confirmación antes de borrar
+  confirm?: boolean;
 };
 
 const WipeMemoryBtn: React.FC<Props> = ({
@@ -28,22 +28,16 @@ const WipeMemoryBtn: React.FC<Props> = ({
   className = "",
   confirm = false,
 }) => {
-  const handleWipe = React.useCallback(() => {
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+  const runWipe = React.useCallback(() => {
     if (!userId || typeof userId !== "string") {
       toast?.error?.("Falta userId para limpiar snapshots.");
       return;
     }
 
-    if (confirm) {
-      const ok = window.confirm(
-        `Esto borrará:\n\n- agency:realtime:snapshot:{${namespaces.join(", ")}}:${userId}\n- ${draftKey}\n\n¿Continuar?`
-      );
-      if (!ok) return;
-    }
-
     const removed: string[] = [];
 
-    // 1) Snapshots por namespace
     try {
       for (const ns of namespaces) {
         clearBotSnapshot(ns, userId);
@@ -53,7 +47,6 @@ const WipeMemoryBtn: React.FC<Props> = ({
       console.warn("[WipeMemoryBtn] error clearing bot snapshots:", e);
     }
 
-    // 2) Draft de campaña (clave fija por ahora)
     try {
       localStorage.removeItem(draftKey);
       removed.push(draftKey);
@@ -61,32 +54,83 @@ const WipeMemoryBtn: React.FC<Props> = ({
       console.warn("[WipeMemoryBtn] error removing draftKey:", e);
     }
 
-    // Logs útiles
     try {
       console.groupCollapsed("[WipeMemoryBtn] removed keys");
-      removed.forEach(k => console.log("×", k));
+      removed.forEach((k) => console.log("x", k));
       console.groupEnd();
     } catch {}
 
-    // Feedback + refresh
-    toast?.info?.("Contexto borrado. Recargando…");
+    toast?.info?.("Contexto borrado. Recargando...");
     setTimeout(() => window.location.reload(), 600);
-  }, [userId, namespaces, draftKey, confirm]);
+  }, [userId, namespaces, draftKey]);
 
-  const { t } = useTranslation('translations');
+  const handleWipe = React.useCallback(() => {
+    if (confirm) {
+      setConfirmOpen(true);
+      return;
+    }
+    runWipe();
+  }, [confirm, runWipe]);
+
+  const { t } = useTranslation("translations");
 
   return (
-    <button
-      type="button"
-      onClick={handleWipe}
-      className={["flex gap-2 justify-center items-center dark:bg-emerald-700 bg-emerald-300 p-2 rounded-lg w-[220px] hover:scale-105 transition cursor-pointer hover:bg-emerald-400",
-        className,
-      ].join(" ")}
-      title="Borrar snapshots (global/moderation) y draft, luego refrescar"
-    >
-      <Trash2 className="w-4 h-4" />
-      <span className="text-sm font-semibold">{t("wipe_memory_refresh")}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleWipe}
+        className={[
+          "flex gap-2 justify-center items-center dark:bg-emerald-700 bg-emerald-300 p-2 rounded-lg w-[220px] hover:scale-105 transition cursor-pointer hover:bg-emerald-400",
+          className,
+        ].join(" ")}
+        title="Borrar snapshots (global/moderation) y draft, luego refrescar"
+      >
+        <Trash2 className="w-4 h-4" />
+        <span className="text-sm font-semibold">{label || t("wipe_memory_refresh")}</span>
+      </button>
+
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 z-[13000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setConfirmOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-neutral-200/70 dark:border-neutral-800/70">
+              <div className="text-sm font-semibold">{t("common.confirm", { defaultValue: "Confirmar" })}</div>
+            </div>
+            <div className="px-4 py-4 text-sm whitespace-pre-wrap">
+              {`Esto borrara:\n\n- agency:realtime:snapshot:{${namespaces.join(", ")}}:${userId}\n- ${draftKey}\n\n�Continuar?`}
+            </div>
+            <div className="px-4 py-3 border-t border-neutral-200/70 dark:border-neutral-800/70 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                className="px-3 py-1.5 rounded-lg text-xs bg-neutral-200/80 dark:bg-neutral-800/80 hover:bg-neutral-300 dark:hover:bg-neutral-700"
+              >
+                {t("cancel", { defaultValue: "Cancelar" })}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmOpen(false);
+                  runWipe();
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs bg-red-600 text-white hover:bg-red-500"
+              >
+                {t("delete", { defaultValue: "Eliminar" })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

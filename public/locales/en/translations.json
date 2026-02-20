@@ -617,6 +617,8 @@
     "cancel": "Cancel",
     "close": "Close",
     "inbox": {
+        "filter_all_threads": "All",
+        "filter_unread_threads": "Unread",
         "activate_human": "Enable human mode",
         "activate_human_to_reply": "Enable human mode to reply.",
         "already_unread": "Already marked as unread",

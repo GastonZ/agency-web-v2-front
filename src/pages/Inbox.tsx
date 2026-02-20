@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
@@ -9,10 +9,12 @@ import {
   Loader2,
   Mail,
   Mic,
+  Pencil,
   Paperclip,
   Send,
   ShieldAlert,
   Square,
+  Trash2,
   X,
   Video,
 } from "lucide-react";
@@ -36,6 +38,8 @@ import {
   getThreadMessages,
   markThreadRead,
   markThreadUnread,
+  editThreadMessage,
+  deleteThreadMessage,
   sendMessage,
   takeoverThread,
   startThread,
@@ -49,6 +53,8 @@ import {
 
 const INBOX_CHANNELS: InboxChannel[] = ["whatsapp", "instagram", "facebook"];
 const LEGACY_LAST_AGENT_STORAGE_KEY = "inbox:lastAgentId";
+const WHATSAPP_MESSAGE_ACTION_WINDOW_MS = 10 * 60 * 1000;
+const OPTIMISTIC_REQUEST_ID_PREFIX = "temp-";
 
 function normalizeBotId(input: string): string {
   if (!input) return "";
@@ -277,7 +283,7 @@ function extractPayloadAgentAliases(payload: any): string[] {
 }
 
 function formatContactId(contactId: string, channel: any = "whatsapp"): string {
-  if (!contactId) return "—";
+  if (!contactId) return "â€”";
   const ch = normalizeInboxChannel(channel);
   if (ch !== "whatsapp") return contactId;
   const base = contactId.split("@")[0] || contactId;
@@ -309,22 +315,77 @@ function threadDisplayName(t: InboxThread): string {
   return isViableName(t.name) ? (t.name as string) : formatContactId(t.contactId, t.channel);
 }
 
+function isOptimisticRequestId(requestId?: string): boolean {
+  const rid = String(requestId || "").trim();
+  return Boolean(rid && rid.startsWith(OPTIMISTIC_REQUEST_ID_PREFIX));
+}
+
+function messageMediaSignature(m: InboxMessage): string {
+  return m.profile?.media ? `${m.profile.media.type}:${m.profile.media.mimeType || ""}` : "";
+}
+
 function msgKey(m: InboxMessage): string {
-  // No explicit id is provided; dedupe based on stable fields.
-  const media = m.profile?.media ? `${m.profile.media.type}:${m.profile.media.mimeType || ""}` : "";
+  if (m.requestId) return `rid:${m.requestId}`;
+  const media = messageMediaSignature(m);
   return `${m.time}:${m.role}:${m.content || ""}:${media}`;
+}
+
+function mergeMessageItem(prev: InboxMessage, next: InboxMessage): InboxMessage {
+  return {
+    ...prev,
+    ...next,
+    profile: {
+      ...(prev.profile || {}),
+      ...(next.profile || {}),
+    } as any,
+  };
 }
 
 function mergeUniqueMessages(prev: InboxMessage[], next: InboxMessage[]): InboxMessage[] {
   if (!next.length) return prev;
-  const seen = new Set(prev.map(msgKey));
   const merged = [...prev];
+
   for (const m of next) {
+    const incomingRid = String(m.requestId || "").trim();
+    const incomingHasStableRid = Boolean(incomingRid && !isOptimisticRequestId(incomingRid));
+
+    if (m.requestId) {
+      const idx = merged.findIndex((x) => x.requestId && x.requestId === m.requestId);
+      if (idx >= 0) {
+        merged[idx] = mergeMessageItem(merged[idx], m);
+        continue;
+      }
+    }
+
+    // Replace optimistic human outgoing message with the definitive server message.
+    if (incomingHasStableRid && m.role === "assistant") {
+      const incomingContent = String(m.content || "").trim();
+      const incomingMedia = messageMediaSignature(m);
+      const idxOptimistic = merged.findIndex((x) => {
+        const rid = String(x.requestId || "").trim();
+        const isOptimistic = !rid || isOptimisticRequestId(rid);
+        if (!isOptimistic) return false;
+        if (x.role !== "assistant") return false;
+        if (String(x.content || "").trim() !== incomingContent) return false;
+        if (messageMediaSignature(x) !== incomingMedia) return false;
+        return Math.abs(Number(x.time || 0) - Number(m.time || 0)) <= 2 * 60 * 1000;
+      });
+      if (idxOptimistic >= 0) {
+        merged[idxOptimistic] = mergeMessageItem(merged[idxOptimistic], m);
+        continue;
+      }
+    }
+
     const k = msgKey(m);
-    if (seen.has(k)) continue;
-    seen.add(k);
+    const idxByKey = merged.findIndex((x) => msgKey(x) === k);
+    if (idxByKey >= 0) {
+      merged[idxByKey] = mergeMessageItem(merged[idxByKey], m);
+      continue;
+    }
+
     merged.push(m);
   }
+
   merged.sort((a, b) => a.time - b.time);
   return merged;
 }
@@ -444,6 +505,90 @@ async function copyToClipboard(text: string) {
       return false;
     }
   }
+}
+
+function InboxDialogModal({
+  open,
+  mode,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  mode: "info" | "confirm";
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  React.useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onCancel]);
+
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[13000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onCancel();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onCancel();
+      }}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 ring-1 ring-emerald-400/30 shadow-2xl overflow-hidden"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-4 py-3 border-b border-neutral-200/70 dark:border-neutral-800/70">
+          <div className="text-sm font-semibold">{title}</div>
+        </div>
+        <div className="px-4 py-4 text-sm whitespace-pre-wrap">{message}</div>
+        <div className="px-4 py-3 border-t border-neutral-200/70 dark:border-neutral-800/70 flex items-center justify-end gap-2">
+          {mode === "confirm" && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-3 py-1.5 rounded-lg text-xs bg-neutral-200/80 dark:bg-neutral-800/80 hover:bg-neutral-300 dark:hover:bg-neutral-700"
+            >
+              {cancelText || "Cancelar"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onConfirm}
+            className={[
+              "px-3 py-1.5 rounded-lg text-xs text-white",
+              mode === "confirm"
+                ? "bg-red-600 hover:bg-red-500"
+                : "bg-emerald-600 hover:bg-emerald-500",
+            ].join(" ")}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 function LeadActionsModal({
@@ -657,20 +802,20 @@ function LeadActionsModal({
         </div>
         <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4 mx-2 mt-2">
           {loadingLead ? (
-            <div className="mt-2 text-xs opacity-70">Cargando estado actual…</div>
+            <div className="mt-2 text-xs opacity-70">Cargando estado actualâ€¦</div>
           ) : currentStatus ? (
             <div className="mt-2 text-xs opacity-70">
               Estado: <span className="font-semibold">
                 {currentStatus === "custom" ? (currentCustomLabel || "custom") : t("lead_status" + '.' + currentStatus)}
               </span>{" "}
-              · Área: <span className="font-semibold">{t(selectedArea)}</span>
+              Â· Ãrea: <span className="font-semibold">{t(selectedArea)}</span>
             </div>
           ) : null}
         </div>
         <div className="p-5 grid grid-cols-1 gap-4">
           {disabled ? (
             <div className="rounded-xl bg-amber-500/10 ring-1 ring-amber-400/25 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-              Para editar un lead necesitás tener seleccionada una campaña y una conversación.
+              Para editar un lead necesitÃ¡s tener seleccionada una campaÃ±a y una conversaciÃ³n.
             </div>
           ) : null}
 
@@ -740,7 +885,7 @@ function LeadActionsModal({
             </div>
 
             {areasLoading ? (
-              <div className="mt-2 text-xs opacity-70">Cargando áreas…</div>
+              <div className="mt-2 text-xs opacity-70">Cargando Ã¡reasâ€¦</div>
             ) : null}
           </div>
 
@@ -757,7 +902,7 @@ function LeadActionsModal({
                 disabled={disabled || nextActionLoading}
                 rows={3}
                 className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none"
-                placeholder="Agregar próxima acción…"
+                placeholder="Agregar prÃ³xima acciÃ³nâ€¦"
               />
 
               <div className="flex justify-end">
@@ -774,7 +919,7 @@ function LeadActionsModal({
 
               {nextActions.length ? (
                 <div className="mt-2 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 p-3">
-                  <div className="text-xs opacity-70 mb-2">Últimas acciones</div>
+                  <div className="text-xs opacity-70 mb-2">Ãšltimas acciones</div>
                   <ul className="space-y-2">
                     {nextActions
                       .slice()
@@ -959,7 +1104,7 @@ function StartThreadModal({
   const doSubmit = React.useCallback(
     async (overrideForce?: boolean) => {
       if (!agentId) {
-        setErr(tr("inbox.start_thread.select_campaign_first", "Seleccioná una campaña primero."));
+        setErr(tr("inbox.start_thread.select_campaign_first", "SeleccionÃ¡ una campaÃ±a primero."));
         return;
       }
 
@@ -968,11 +1113,11 @@ function StartThreadModal({
       const nm = (name || "").trim();
 
       if (!pn) {
-        setErr(tr("inbox.start_thread.enter_phone", "Ingresá un número de teléfono."));
+        setErr(tr("inbox.start_thread.enter_phone", "IngresÃ¡ un nÃºmero de telÃ©fono."));
         return;
       }
       if (!msg) {
-        setErr(tr("inbox.start_thread.enter_message", "Escribí el primer mensaje."));
+        setErr(tr("inbox.start_thread.enter_message", "EscribÃ­ el primer mensaje."));
         return;
       }
 
@@ -1042,7 +1187,7 @@ function StartThreadModal({
           e?.data?.message ||
           e?.data?.error ||
           e?.message ||
-          tr("inbox.start_thread.cannot_start", "No se pudo iniciar la conversación");
+          tr("inbox.start_thread.cannot_start", "No se pudo iniciar la conversaciÃ³n");
         setErr(message);
         setConflict(status === 409);
       } finally {
@@ -1081,7 +1226,7 @@ function StartThreadModal({
             <div className="mt-1 text-xs opacity-70">
               {tr(
                 "inbox.start_thread.description",
-                "Enviá el primer mensaje y se creará la conversación en Inbox (modo humano).",
+                "EnviÃ¡ el primer mensaje y se crearÃ¡ la conversaciÃ³n en Inbox (modo humano).",
               )}
             </div>
           </div>
@@ -1111,7 +1256,7 @@ function StartThreadModal({
                     {tr("inbox.start_thread.force_send", "Forzar takeover y enviar")}
                   </button>
                   <span className="text-xs opacity-80">
-                    {tr("inbox.start_thread.force_hint", "(solo si necesitás tomar control)")}
+                    {tr("inbox.start_thread.force_hint", "(solo si necesitÃ¡s tomar control)")}
                   </span>
                 </div>
               ) : null}
@@ -1121,7 +1266,7 @@ function StartThreadModal({
           <div className="rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 bg-white/60 dark:bg-neutral-950/25 p-4 grid grid-cols-1 gap-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="grid gap-1">
-                <span className="text-xs opacity-70">{tr("inbox.start_thread.phone", "Teléfono *")}</span>
+                <span className="text-xs opacity-70">{tr("inbox.start_thread.phone", "TelÃ©fono *")}</span>
                 <input
                   autoFocus
                   value={phoneNumber}
@@ -1148,7 +1293,7 @@ function StartThreadModal({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={3}
-                placeholder="Hola! Te escribo por…"
+                placeholder="Hola! Te escribo porâ€¦"
                 className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 resize-none"
               />
             </label>
@@ -1163,7 +1308,7 @@ function StartThreadModal({
               <span>
                 {tr(
                   "inbox.start_thread.force_label",
-                  "Forzar takeover si la conversación está tomada por otro usuario.",
+                  "Forzar takeover si la conversaciÃ³n estÃ¡ tomada por otro usuario.",
                 )}
                 <span className="block text-xs opacity-70">
                   {tr("inbox.start_thread.force_409", "Si no, el backend puede responder 409.")}
@@ -1199,7 +1344,7 @@ function StartThreadModal({
 }
 
 function ChevronHint() {
-  return <span className="text-[11px] opacity-70">…</span>;
+  return <span className="text-[11px] opacity-70">â€¦</span>;
 }
 
 export default function Inbox() {
@@ -1286,6 +1431,7 @@ export default function Inbox() {
 
   const [threadQuery, setThreadQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | LeadStatus | "untracked">("all");
+  const [threadUnreadFilter, setThreadUnreadFilter] = React.useState<"all" | "unread">("all");
 
   const [leadMiniMap, setLeadMiniMap] = React.useState<Record<string, any>>({});
   const [leadMiniLoading, setLeadMiniLoading] = React.useState(false);
@@ -1297,6 +1443,24 @@ export default function Inbox() {
   const [messages, setMessages] = React.useState<InboxMessage[]>([]);
   const [chatLoading, setChatLoading] = React.useState(false);
   const [chatError, setChatError] = React.useState<string | null>(null);
+  const [editingMessageRequestId, setEditingMessageRequestId] = React.useState<string | null>(null);
+  const [messageActionLoadingId, setMessageActionLoadingId] = React.useState<string | null>(null);
+  const confirmResolverRef = React.useRef<((value: boolean) => void) | null>(null);
+  const [dialogState, setDialogState] = React.useState<{
+    open: boolean;
+    mode: "info" | "confirm";
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+  }>({
+    open: false,
+    mode: "info",
+    title: "",
+    message: "",
+    confirmText: "",
+    cancelText: "",
+  });
 
   const runtimeAgentAliases = React.useMemo(() => {
     const dynamic = (threads || [])
@@ -1312,6 +1476,58 @@ export default function Inbox() {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   const [pending, setPending] = React.useState<PendingAttachment | null>(null);
+  const activeThreadKeyRef = React.useRef<string>("");
+
+  const closeDialog = React.useCallback((result: boolean) => {
+    setDialogState((prev) => ({ ...prev, open: false }));
+    const resolver = confirmResolverRef.current;
+    if (resolver) {
+      confirmResolverRef.current = null;
+      resolver(result);
+    }
+  }, []);
+
+  const showInfo = React.useCallback(
+    (message: string, title?: string) => {
+      const resolver = confirmResolverRef.current;
+      if (resolver) {
+        confirmResolverRef.current = null;
+        resolver(false);
+      }
+      setDialogState({
+        open: true,
+        mode: "info",
+        title: title || tr("common.notice", "Aviso"),
+        message: String(message || ""),
+        confirmText: tr("common.ok", "Aceptar"),
+        cancelText: tr("cancel", "Cancelar"),
+      });
+    },
+    [tr],
+  );
+
+  const showConfirm = React.useCallback(
+    (
+      message: string,
+      opts?: {
+        title?: string;
+        confirmText?: string;
+        cancelText?: string;
+      },
+    ) =>
+      new Promise<boolean>((resolve) => {
+        confirmResolverRef.current = resolve;
+        setDialogState({
+          open: true,
+          mode: "confirm",
+          title: opts?.title || tr("common.confirm", "Confirmar"),
+          message: String(message || ""),
+          confirmText: opts?.confirmText || tr("delete", "Eliminar"),
+          cancelText: opts?.cancelText || tr("cancel", "Cancelar"),
+        });
+      }),
+    [tr],
+  );
 
   const closeMobileChat = React.useCallback(() => {
     setActiveThread(null);
@@ -1321,10 +1537,31 @@ export default function Inbox() {
     setChatLoading(false);
     setDraft("");
     setPending(null);
+    setEditingMessageRequestId(null);
+    setMessageActionLoadingId(null);
 
     const base = agentKey ? `/inbox/${encodeURIComponent(agentKey)}` : "/inbox";
     navigate(base, { replace: true });
   }, [agentKey, navigate]);
+
+  React.useEffect(() => {
+    if (!activeThread) {
+      activeThreadKeyRef.current = "";
+      return;
+    }
+    const cid = normalizeContactId(activeContactId ?? activeThread.contactId, activeThread.channel);
+    activeThreadKeyRef.current = threadKey(activeThread.channel, cid);
+  }, [activeThread, activeContactId]);
+
+  React.useEffect(() => {
+    return () => {
+      const resolver = confirmResolverRef.current;
+      if (resolver) {
+        confirmResolverRef.current = null;
+        resolver(false);
+      }
+    };
+  }, []);
 
   // Lead actions (status/area/next-action) directly from Inbox.
   const [leadModalOpen, setLeadModalOpen] = React.useState(false);
@@ -1436,7 +1673,7 @@ export default function Inbox() {
 
   const leadTitle = React.useMemo(() => {
     if (!activeThread) return "";
-    return `${threadDisplayName(activeThread)} · ${activeThread.channel}`;
+    return `${threadDisplayName(activeThread)} Â· ${activeThread.channel}`;
   }, [activeThread]);
 
   const activeThreadChannelMeta = React.useMemo(
@@ -1477,6 +1714,8 @@ export default function Inbox() {
           : name.includes(q) || cid.includes(q);
 
       if (!matchesText) return false;
+      const unreadCount = Number((t as any)?.metadata?.unreadCount || 0);
+      if (threadUnreadFilter === "unread" && unreadCount <= 0) return false;
 
       if (!selectedCampaign?.id) return true;
       const convId = `${selectedCampaign.id}_${String(t.channel || "whatsapp").toLowerCase()}_${t.contactId}`;
@@ -1488,7 +1727,7 @@ export default function Inbox() {
 
       return leadStatus === statusFilter;
     });
-  }, [threads, threadQuery, statusFilter, selectedCampaign?.id, leadMiniMap]);
+  }, [threads, threadQuery, statusFilter, threadUnreadFilter, selectedCampaign?.id, leadMiniMap]);
 
   const chatScrollRef = React.useRef<HTMLDivElement | null>(null);
   const bottomRef = React.useRef<HTMLDivElement | null>(null);
@@ -1687,6 +1926,8 @@ export default function Inbox() {
     setActiveThread(null);
     setMessages([]);
     setChatError(null);
+    setEditingMessageRequestId(null);
+    setMessageActionLoadingId(null);
   }, [agentKey, lastAgentStorageKey, refreshThreads]);
 
 
@@ -1697,7 +1938,7 @@ export default function Inbox() {
       const channel = normalizeInboxChannel(t.channel);
       const cid = normalizeContactId(t.contactId, channel);
       if (!isValidContactId(cid)) {
-        setChatError(tr("inbox.invalid_thread", "Thread inválido (contactId vacío/undefined)."));
+        setChatError(tr("inbox.invalid_thread", "Thread invÃ¡lido (contactId vacÃ­o/undefined)."));
         return;
       }
 
@@ -1710,6 +1951,8 @@ export default function Inbox() {
       setPending(null);
       setDraft("");
       setChatLoading(true);
+      setEditingMessageRequestId(null);
+      setMessageActionLoadingId(null);
 
       try {
         const res: ThreadMessagesResponse = await getThreadMessages(agentKey, cid, {
@@ -1843,29 +2086,7 @@ export default function Inbox() {
     scrollToBottom("auto");
   }, [messages.length, activeContactId, activeThread, scrollToBottom]);
 
-  // Hot-fix: ocultar duplicados consecutivos (mismo content + role)
-  const displayMessages = React.useMemo(() => {
-    let prevContent = "";
-    let prevRole: string | null = null;
-
-    return messages.filter((m) => {
-      const c = (m.content ?? "").trim();
-      const r = m.role ?? null;
-
-      if (!c) {
-        prevContent = "";
-        prevRole = null;
-        return true;
-      }
-
-      const isDup = c === prevContent && r === prevRole;
-      if (isDup) return false;
-
-      prevContent = c;
-      prevRole = r;
-      return true;
-    });
-  }, [messages]);
+  const displayMessages = messages;
 
 
   // Auto-open a contact when navigated from Leads -> Inbox (e.g. /inbox/:agentId?contactId=...)
@@ -1943,6 +2164,11 @@ export default function Inbox() {
     return takeover === "HUMAN" && Boolean(lockedBy) && String(lockedBy) !== String(executingUserId);
   }, [activeThread, executingUserId]);
   const activeUnreadCount = Number(activeThread?.metadata?.unreadCount || 0);
+  const isComposerEditMode = Boolean(editingMessageRequestId);
+  const isComposerSendDisabled =
+    !activeThread ||
+    !canSend ||
+    (isComposerEditMode ? !draft.trim() : !pending && !draft.trim());
 
   const onToggleTakeover = React.useCallback(async () => {
     if (!activeThread || !agentKey) return;
@@ -1950,7 +2176,7 @@ export default function Inbox() {
     const activeChannel = normalizeInboxChannel(activeThread.channel);
     const currentCid = normalizeContactId((activeContactId ?? activeThread.contactId) as any, activeChannel);
     if (!isValidContactId(currentCid)) {
-      alert(tr("inbox.invalid_thread", "Thread inválido (contactId vacío/undefined)."));
+      showInfo(tr("inbox.invalid_thread", "Thread invÃ¡lido (contactId vacÃ­o/undefined)."));
       return;
     }
 
@@ -1982,9 +2208,9 @@ export default function Inbox() {
       });
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || tr("inbox.error_takeover", "No se pudo cambiar el takeover");
-      alert(msg);
+      showInfo(msg);
     }
-  }, [activeThread, activeContactId, agentKey, tr]);
+  }, [activeThread, activeContactId, agentKey, tr, showInfo]);
 
   const onMarkUnread = React.useCallback(async () => {
     if (!activeThread || !agentKey) return;
@@ -1992,7 +2218,7 @@ export default function Inbox() {
     const activeChannel = normalizeInboxChannel(activeThread.channel);
     const currentCid = normalizeContactId((activeContactId ?? activeThread.contactId) as any, activeChannel);
     if (!isValidContactId(currentCid)) {
-      alert(tr("inbox.invalid_thread", "Thread invalido (contactId vacio/undefined)."));
+      showInfo(tr("inbox.invalid_thread", "Thread invalido (contactId vacio/undefined)."));
       return;
     }
 
@@ -2025,13 +2251,169 @@ export default function Inbox() {
           : prev,
       );
     } catch (e: any) {
-      alert(
+      showInfo(
         e?.data?.message ||
           e?.message ||
           tr("inbox.error_mark_unread", "No se pudo marcar como no leido"),
       );
     }
-  }, [activeThread, activeContactId, agentKey, tr]);
+  }, [activeThread, activeContactId, agentKey, tr, showInfo]);
+
+  const onStartEditMessage = React.useCallback((m: InboxMessage) => {
+    const requestId = String(m.requestId || "").trim();
+    if (!requestId) return;
+    setEditingMessageRequestId(requestId);
+    setPending(null);
+    setDraft(String(m.content || ""));
+    setTimeout(() => {
+      try {
+        textareaRef.current?.focus();
+      } catch {
+        // ignore focus issues
+      }
+    }, 0);
+  }, []);
+
+  const onCancelEditMessage = React.useCallback(() => {
+    setEditingMessageRequestId(null);
+    setDraft("");
+  }, []);
+
+  const onConfirmEditMessage = React.useCallback(async () => {
+    if (!agentKey || !activeThread || !activeContactId) return;
+    const requestId = String(editingMessageRequestId || "").trim();
+    const text = draft.trim();
+    if (!requestId || !text || isOptimisticRequestId(requestId)) return;
+
+    const activeChannel = normalizeInboxChannel(activeThread.channel);
+    if (activeChannel !== "whatsapp") return;
+    const normalizedActiveContactId = normalizeContactId(activeContactId, activeChannel);
+    if (!isValidContactId(normalizedActiveContactId)) return;
+
+    const current = messages.find((x) => String(x.requestId || "") === requestId);
+    if (!current) {
+      showInfo(tr("inbox.error_edit_message_not_synced", "Este mensaje aun no se sincronizo. Intentalo en unos segundos."));
+      return;
+    }
+    const ageMs = Date.now() - Number(current.time || 0);
+    if (ageMs < 0 || ageMs > WHATSAPP_MESSAGE_ACTION_WINDOW_MS) {
+      showInfo(tr("inbox.error_edit_message_window", "La ventana para editar este mensaje ya vencio."));
+      setEditingMessageRequestId(null);
+      setDraft("");
+      return;
+    }
+
+    const loadingKey = `edit:${requestId}`;
+    setMessageActionLoadingId(loadingKey);
+    try {
+      const res = await editThreadMessage(
+        agentKey,
+        normalizedActiveContactId,
+        { requestId, text },
+        { channel: activeChannel },
+      );
+      if (res?.message) {
+        setMessages((prev) =>
+          mergeUniqueMessages(prev, [{ ...(res.message as any), channel: activeChannel }]),
+        );
+      }
+      setEditingMessageRequestId(null);
+      setDraft("");
+    } catch (e: any) {
+      showInfo(e?.data?.message || e?.message || tr("inbox.error_edit_message", "No se pudo editar el mensaje"));
+    } finally {
+      setMessageActionLoadingId((prev) => (prev === loadingKey ? null : prev));
+    }
+  }, [editingMessageRequestId, draft, agentKey, activeThread, activeContactId, tr, messages, showInfo]);
+
+  const onDeleteMessage = React.useCallback(
+    async (m: InboxMessage) => {
+      if (!agentKey || !activeThread || !activeContactId) return;
+      const requestId = String(m.requestId || "").trim();
+      if (!requestId || isOptimisticRequestId(requestId)) return;
+
+      const activeChannel = normalizeInboxChannel(activeThread.channel);
+      if (activeChannel !== "whatsapp") return;
+      const normalizedActiveContactId = normalizeContactId(activeContactId, activeChannel);
+      if (!isValidContactId(normalizedActiveContactId)) return;
+      const ageMs = Date.now() - Number(m.time || 0);
+      if (ageMs < 0 || ageMs > WHATSAPP_MESSAGE_ACTION_WINDOW_MS) {
+        showInfo(tr("inbox.error_delete_message_window", "La ventana para eliminar este mensaje ya vencio."));
+        return;
+      }
+
+      const confirmed = await showConfirm(
+        tr("inbox.confirm_delete_message", "Â¿Eliminar este mensaje para todos?"),
+      );
+      if (!confirmed) return;
+
+      const loadingKey = `delete:${requestId}`;
+      setMessageActionLoadingId(loadingKey);
+      try {
+        const res = await deleteThreadMessage(
+          agentKey,
+          normalizedActiveContactId,
+          { requestId },
+          { channel: activeChannel },
+        );
+        if (res?.message) {
+          setMessages((prev) =>
+            mergeUniqueMessages(prev, [{ ...(res.message as any), channel: activeChannel }]),
+          );
+        }
+      } catch (e: any) {
+        showInfo(
+          e?.data?.message ||
+            e?.message ||
+            tr("inbox.error_delete_message", "No se pudo eliminar el mensaje"),
+        );
+      } finally {
+        setMessageActionLoadingId((prev) => (prev === loadingKey ? null : prev));
+      }
+    },
+    [agentKey, activeThread, activeContactId, tr, showInfo, showConfirm],
+  );
+
+  const reconcileOptimisticTextMessage = React.useCallback(
+    async (params: {
+      threadKeyValue: string;
+      channel: InboxChannel;
+      contactId: string;
+      text: string;
+      optimisticTime: number;
+    }) => {
+      if (!agentKey) return;
+      const { threadKeyValue, channel, contactId, text, optimisticTime } = params;
+      const delays = [1200, 2400, 4000, 6500];
+
+      for (const delayMs of delays) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        if (activeThreadKeyRef.current !== threadKeyValue) return;
+
+        try {
+          const res = await getThreadMessages(agentKey, contactId, {
+            channel,
+            limit: 50,
+          });
+          if (activeThreadKeyRef.current !== threadKeyValue) return;
+
+          const normalized = (res.messages || []).map((m) => ({ ...m, channel } as InboxMessage));
+          setMessages((prev) => mergeUniqueMessages(prev, normalized));
+
+          const hasStable = normalized.some((m) => {
+            if (m.role !== "assistant") return false;
+            if (isOptimisticRequestId(m.requestId)) return false;
+            if (String(m.content || "").trim() !== String(text || "").trim()) return false;
+            return Math.abs(Number(m.time || 0) - optimisticTime) <= 3 * 60 * 1000;
+          });
+          if (hasStable) return;
+        } catch {
+          // Non-blocking fallback for missed realtime events
+        }
+      }
+    },
+    [agentKey],
+  );
 
   const onSend = React.useCallback(async () => {
     if (!agentKey || !activeThread || !activeContactId) return;
@@ -2039,16 +2421,21 @@ export default function Inbox() {
     const normalizedActiveContactId = normalizeContactId(activeContactId, activeChannel);
     if (!isValidContactId(normalizedActiveContactId)) return;
     if (isActiveChannelDisconnected) {
-      alert(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
+      showInfo(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
       return;
     }
     if (!canSend) {
-      alert(
+      showInfo(
         tr(
           "inbox.must_be_human",
-          "Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.",
+          "TenÃ©s que estar en modo HUMANO para enviar. Si estÃ¡ bloqueado por otro usuario, primero tomÃ¡ el control.",
         ),
       );
+      return;
+    }
+
+    if (editingMessageRequestId) {
+      await onConfirmEditMessage();
       return;
     }
 
@@ -2079,7 +2466,7 @@ export default function Inbox() {
         setDraft("");
         scrollToBottom("smooth");
       } catch (e: any) {
-        alert(e?.data?.message || e?.message || tr("inbox.error_send_file", "No se pudo enviar el archivo"));
+        showInfo(e?.data?.message || e?.message || tr("inbox.error_send_file", "No se pudo enviar el archivo"));
       }
       return;
     }
@@ -2087,12 +2474,14 @@ export default function Inbox() {
     const text = draft.trim();
     if (!text) return;
 
+    const optimisticTime = Date.now();
     const optimistic: InboxMessage = {
       agentId: agentKey,
       userId: executingUserId,
+      requestId: `${OPTIMISTIC_REQUEST_ID_PREFIX}${optimisticTime}`,
       role: "assistant",
       content: text,
-      time: Date.now(),
+      time: optimisticTime,
       name: "Human",
       channel: activeChannel,
       profile: { source: "human", authorUserId: executingUserId },
@@ -2104,10 +2493,18 @@ export default function Inbox() {
     try {
       const body: SendMessageBody = { type: "text", text };
       await sendMessage(agentKey, normalizedActiveContactId, body, { channel: activeChannel });
+      const expectedThreadKey = threadKey(activeChannel, normalizedActiveContactId);
+      void reconcileOptimisticTextMessage({
+        threadKeyValue: expectedThreadKey,
+        channel: activeChannel,
+        contactId: normalizedActiveContactId,
+        text,
+        optimisticTime,
+      });
       scrollToBottom("smooth");
     } catch (e: any) {
       const msg = e?.data?.message || e?.message || tr("inbox.error_send_message", "No se pudo enviar el mensaje");
-      alert(msg);
+      showInfo(msg);
     }
   }, [
     draft,
@@ -2121,14 +2518,15 @@ export default function Inbox() {
     isActiveChannelDisconnected,
     disconnectedChannelMessage,
     tr,
+    reconcileOptimisticTextMessage,
+    showInfo,
+    editingMessageRequestId,
+    onConfirmEditMessage,
   ]);
 
   const onPickFile = React.useCallback(() => {
     fileInputRef.current?.click();
   }, []);
-
-  console.log(threads);
-  
 
   const onFileChange = React.useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2136,14 +2534,14 @@ export default function Inbox() {
       e.target.value = "";
       if (!file || !activeThread || !activeContactId) return;
       if (isActiveChannelDisconnected) {
-        alert(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
+        showInfo(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
         return;
       }
       if (!canSend) {
-        alert(
+        showInfo(
           tr(
             "inbox.must_be_human",
-            "Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.",
+            "TenÃ©s que estar en modo HUMANO para enviar. Si estÃ¡ bloqueado por otro usuario, primero tomÃ¡ el control.",
           ),
         );
         return;
@@ -2152,26 +2550,26 @@ export default function Inbox() {
       try {
         const mimeType = file.type || "application/octet-stream";
 
-        // Restricción de imágenes (solo png/jpg/jpeg)
+        // RestricciÃ³n de imÃ¡genes (solo png/jpg/jpeg)
         if (isImageMime(mimeType) && !isAllowedImageMime(mimeType)) {
-          alert(tr("inbox.allowed_images", "Solo se permiten imágenes PNG, JPG o JPEG."));
+          showInfo(tr("inbox.allowed_images", "Solo se permiten imÃ¡genes PNG, JPG o JPEG."));
           return;
         }
 
         const ext = (file.name.split(".").pop() || "").toLowerCase();
 
         if (mimeType === "application/pdf" || ext === "pdf") {
-          alert(tr("inbox.pdf_not_allowed", "Por ahora no se permite enviar PDF."));
+          showInfo(tr("inbox.pdf_not_allowed", "Por ahora no se permite enviar PDF."));
           return;
         }
 
         if (isVideoMime(mimeType)) {
-          alert(tr("inbox.video_not_allowed", "Por ahora no se permite enviar videos."));
+          showInfo(tr("inbox.video_not_allowed", "Por ahora no se permite enviar videos."));
           return;
         }
 
         if (isAudioMime(mimeType)) {
-          alert(tr("inbox.audio_not_allowed", "Por ahora no se permite enviar audios."));
+          showInfo(tr("inbox.audio_not_allowed", "Por ahora no se permite enviar audios."));
           return;
         }
 
@@ -2185,7 +2583,7 @@ export default function Inbox() {
 
         // Si no es imagen, solo dejamos pasar docs soportados
         if (!isImageMime(mimeType) && !isAllowedDoc) {
-          alert(
+          showInfo(
             tr(
               "inbox.allowed_documents",
               "Solo se permiten archivos Word (.doc/.docx), Excel (.xls/.xlsx) o TXT (.txt).",
@@ -2219,10 +2617,10 @@ export default function Inbox() {
         // Default: document
         setPending({ kind: "document", mimeType, base64, fileName: file.name });
       } catch (err: any) {
-        alert(err?.message || tr("inbox.error_read_file", "No se pudo leer el archivo"));
+        showInfo(err?.message || tr("inbox.error_read_file", "No se pudo leer el archivo"));
       }
     },
-    [activeThread, activeContactId, canSend, pending, tr, isActiveChannelDisconnected, disconnectedChannelMessage]
+    [activeThread, activeContactId, canSend, pending, tr, isActiveChannelDisconnected, disconnectedChannelMessage, showInfo]
   );
 
   const stopRecording = React.useCallback(() => {
@@ -2236,21 +2634,21 @@ export default function Inbox() {
   const startRecording = React.useCallback(async () => {
     if (!activeThread || !activeContactId) return;
     if (isActiveChannelDisconnected) {
-      alert(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
+      showInfo(disconnectedChannelMessage || tr("inbox.channel_unlinked_generic", "Canal no vinculado."));
       return;
     }
     if (!canSend) {
-      alert(
+      showInfo(
         tr(
           "inbox.must_be_human",
-          "Tenés que estar en modo HUMANO para enviar. Si está bloqueado por otro usuario, primero tomá el control.",
+          "TenÃ©s que estar en modo HUMANO para enviar. Si estÃ¡ bloqueado por otro usuario, primero tomÃ¡ el control.",
         ),
       );
       return;
     }
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      alert(tr("inbox.no_audio_recording_support", "Tu navegador no soporta grabación de audio."));
+      showInfo(tr("inbox.no_audio_recording_support", "Tu navegador no soporta grabaciÃ³n de audio."));
       return;
     }
 
@@ -2290,9 +2688,9 @@ export default function Inbox() {
       rec.start();
     } catch (e: any) {
       setIsRecording(false);
-      alert(e?.message || tr("inbox.error_start_recording", "No se pudo iniciar la grabación"));
+      showInfo(e?.message || tr("inbox.error_start_recording", "No se pudo iniciar la grabaciÃ³n"));
     }
-  }, [activeThread, activeContactId, canSend, pending, tr, isActiveChannelDisconnected, disconnectedChannelMessage]);
+  }, [activeThread, activeContactId, canSend, pending, tr, isActiveChannelDisconnected, disconnectedChannelMessage, showInfo]);
 
 
   // Realtime: inbox-thread-updated + inbox-message
@@ -2359,6 +2757,8 @@ export default function Inbox() {
       const msg = payload.message as InboxMessage;
       if (!msg) return;
 
+      const action = String(payload.action || "created").toLowerCase();
+      const isMutation = action === "updated" || action === "deleted";
       const ts = typeof msg.time === "number" ? msg.time : Date.now();
 
       // Update preview / ordering, but never overwrite a meaningful name with an empty one.
@@ -2370,7 +2770,9 @@ export default function Inbox() {
           ? {
             ...existing,
             contactId: cid,
-            lastMessageDate: new Date(ts).toISOString(),
+            lastMessageDate: isMutation
+              ? existing.lastMessageDate || new Date(ts).toISOString()
+              : new Date(ts).toISOString(),
             metadata: {
               ...existing.metadata,
               lastMessagePreview: msg.content,
@@ -2398,8 +2800,10 @@ export default function Inbox() {
         const merged = existing ? mergeThread(existing, updatedThread) : updatedThread;
 
         const others = prev.filter((t) => threadKey(t.channel, t.contactId) !== key);
-        const next = [merged, ...others];
-        next.sort((a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime());
+        const next = [merged, ...others] as InboxThread[];
+        if (!isMutation) {
+          next.sort((a, b) => new Date(b.lastMessageDate || 0).getTime() - new Date(a.lastMessageDate || 0).getTime());
+        }
         return next;
       });
 
@@ -2407,6 +2811,10 @@ export default function Inbox() {
       const normalizedMsg: InboxMessage = { ...msg, time: ts, channel } as InboxMessage;
       if (activeThread && threadKey(activeThread.channel, activeContactId) === threadKey(channel, cid)) {
         setMessages((prev) => mergeUniqueMessages(prev, [normalizedMsg]));
+      }
+      if (isMutation && normalizedMsg.requestId && editingMessageRequestId === normalizedMsg.requestId) {
+        setEditingMessageRequestId(null);
+        setDraft("");
       }
     };
 
@@ -2417,7 +2825,7 @@ export default function Inbox() {
       socket.off("inbox-thread-updated", onThreadUpdated);
       socket.off("inbox-message", onInboxMessage);
     };
-  }, [runtimeAgentAliases, agentKey, activeContactId, activeThread, selectedCampaignChannels, threads.length]);
+  }, [runtimeAgentAliases, agentKey, activeContactId, activeThread, selectedCampaignChannels, threads.length, editingMessageRequestId]);
 
   const loadOlder = React.useCallback(async () => {
     if (!agentKey || !activeThread || !activeContactId) return;
@@ -2440,20 +2848,20 @@ export default function Inbox() {
       });
       setMessages((prev) => mergeUniqueMessages(res.messages || [], prev));
     } catch (e: any) {
-      alert(
+      showInfo(
         e?.data?.message ||
         e?.message ||
         tr("inbox.error_load_older", "No se pudieron cargar mensajes anteriores"),
       );
     }
-  }, [activeThread, activeContactId, messages, agentKey, tr]);
+  }, [activeThread, activeContactId, messages, agentKey, tr, showInfo]);
 
   return (
     <OnlineLayout>
       {/* Ocupa todo el espacio disponible dentro del main del layout */}
       <div className="flex pt-4 flex-col h-full -mx-4 -mt-4 lg:mx-0 lg:-mt-6 lg:h-[calc(100vh-56px-1.5rem)] lg:gap-4">
 
-        {/* ── Barra superior (header) ── visible en desktop y en mobile SOLO cuando no hay chat abierto */}
+        {/* â”€â”€ Barra superior (header) â”€â”€ visible en desktop y en mobile SOLO cuando no hay chat abierto */}
         <div
           className={[
             "shrink-0 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl shadow ring-1 ring-emerald-400/20",
@@ -2467,11 +2875,11 @@ export default function Inbox() {
             <div className="hidden sm:block">
               <h1 className="text-2xl font-semibold tracking-tight">{tr("inbox.title", "Inbox")}</h1>
               <p className="text-sm text-neutral-600 dark:text-neutral-300">
-                {tr("inbox.subtitle", "Seleccioná una campaña para ver la bandeja.")}
+                {tr("inbox.subtitle", "SeleccionÃ¡ una campaÃ±a para ver la bandeja.")}
               </p>
             </div>
 
-            {/* Mobile: título compacto + controles en una fila */}
+            {/* Mobile: tÃ­tulo compacto + controles en una fila */}
             <div className="sm:hidden flex items-center justify-between gap-2">
               <h1 className="text-lg font-semibold tracking-tight">{tr("inbox.title", "Inbox")}</h1>
               <div className="flex items-center gap-1.5">
@@ -2482,7 +2890,7 @@ export default function Inbox() {
                   }}
                   disabled={!selectedCampaign?.id}
                   className="p-2 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-60 inline-flex items-center"
-                  title={tr("inbox.back_to_stats", "Volver a estadísticas")}
+                  title={tr("inbox.back_to_stats", "Volver a estadÃ­sticas")}
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </button>
@@ -2507,7 +2915,7 @@ export default function Inbox() {
                 }}
                 className="min-w-[200px] lg:min-w-[260px] rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               >
-                <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaña…")}</option>
+                <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaÃ±aâ€¦")}</option>
                 {campaigns.map((c) => (
                   <option key={c.id} value={resolveCampaignAgentKey(c)}>
                     {c.name}
@@ -2524,12 +2932,12 @@ export default function Inbox() {
                 className="px-3 py-2 rounded-lg text-sm bg-neutral-200/70 dark:bg-neutral-800/70 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-60 inline-flex items-center gap-2"
                 title={
                   selectedCampaign?.id
-                    ? tr("inbox.back_to_stats", "Volver a estadísticas")
-                    : tr("inbox.select_campaign", "Seleccioná una campaña")
+                    ? tr("inbox.back_to_stats", "Volver a estadÃ­sticas")
+                    : tr("inbox.select_campaign", "SeleccionÃ¡ una campaÃ±a")
                 }
               >
                 <ArrowLeft className="h-4 w-4" />
-                {tr("inbox.back_to_stats", "Volver a estadísticas")}
+                {tr("inbox.back_to_stats", "Volver a estadÃ­sticas")}
               </button>
 
               <button
@@ -2541,7 +2949,7 @@ export default function Inbox() {
               </button>
             </div>
 
-            {/* Mobile: selector de campaña debajo */}
+            {/* Mobile: selector de campaÃ±a debajo */}
             <div className="sm:hidden">
               <select
                 value={agentId}
@@ -2552,7 +2960,7 @@ export default function Inbox() {
                 }}
                 className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               >
-                <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaña…")}</option>
+                <option value="">{tr("inbox.select_campaign_placeholder", "Seleccionar campaÃ±aâ€¦")}</option>
                 {campaigns.map((c) => (
                   <option key={c.id} value={resolveCampaignAgentKey(c)}>
                     {c.name}
@@ -2569,7 +2977,7 @@ export default function Inbox() {
           )}
         </div>
 
-        {/* ── Contenedor principal: lista + chat ── */}
+        {/* â”€â”€ Contenedor principal: lista + chat â”€â”€ */}
         <div className="flex flex-col lg:flex-row lg:gap-4 flex-1 min-h-0 overflow-hidden lg:px-0">
           {/* Threads list */}
           <div
@@ -2591,29 +2999,56 @@ export default function Inbox() {
                   title={
                     agentKey
                       ? tr("inbox.new_message_tooltip", "Enviar un mensaje a un nuevo contacto")
-                      : tr("inbox.select_campaign", "Seleccioná una campaña")
+                      : tr("inbox.select_campaign", "SeleccionÃ¡ una campaÃ±a")
                   }
                 >
                   <Send className="h-4 w-4" />
                   <span className="hidden sm:inline">{tr("inbox.new_message", "Nuevo mensaje")}</span>
                   <span className="sm:hidden">{tr("inbox.new", "Nuevo")}</span>
                 </button>
-                {threadsLoading && <div className="text-xs text-white/70">{tr("loading", "Cargando…")}</div>}
+                {threadsLoading && <div className="text-xs text-white/70">{tr("loading", "Cargandoâ€¦")}</div>}
               </div>
             </div>
 
-            {/* Búsqueda y filtros */}
+            {/* BÃºsqueda y filtros */}
             <div className="px-3 py-2 border-b border-neutral-200/40 dark:border-neutral-800/60 space-y-2 bg-neutral-50/80 dark:bg-neutral-900/80">
               {leadMiniLoading ? (
-                <div className="text-xs text-neutral-500">{tr("inbox.loading_status", "Cargando status…")}</div>
+                <div className="text-xs text-neutral-500">{tr("inbox.loading_status", "Cargando statusâ€¦")}</div>
               ) : null}
 
               <input
                 value={threadQuery}
                 onChange={(e) => setThreadQuery(e.target.value)}
-                placeholder={tr("inbox.search_placeholder", "Buscar por nombre o teléfono…")}
+                placeholder={tr("inbox.search_placeholder", "Buscar por nombre o telÃ©fonoâ€¦")}
                 className="w-full rounded-full border border-neutral-300/60 dark:border-neutral-700/60 bg-white/90 dark:bg-neutral-950/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               />
+
+              <div className="rounded-full border border-neutral-300/60 dark:border-neutral-700/60 bg-white/70 dark:bg-neutral-950/60 p-1 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setThreadUnreadFilter("all")}
+                  className={[
+                    "flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    threadUnreadFilter === "all"
+                      ? "bg-emerald-600 text-white"
+                      : "bg-transparent text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/70 dark:hover:bg-neutral-800/80",
+                  ].join(" ")}
+                >
+                  {tr("inbox.filter_all_threads", "Todos")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThreadUnreadFilter("unread")}
+                  className={[
+                    "flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    threadUnreadFilter === "unread"
+                      ? "bg-emerald-600 text-white"
+                      : "bg-transparent text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/70 dark:hover:bg-neutral-800/80",
+                  ].join(" ")}
+                >
+                  {tr("inbox.filter_unread_threads", "No leí­dos")}
+                </button>
+              </div>
 
               <select
                 value={statusFilter}
@@ -2628,7 +3063,7 @@ export default function Inbox() {
                 className="w-full rounded-lg border border-neutral-300/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-950/60 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
               >
                 <option value="all">{tr("inbox.all_statuses", "Todos los estados")}</option>
-                <option value="untracked">{tr("inbox.untracked", "Sin análisis")}</option>
+                <option value="untracked">{tr("inbox.untracked", "Sin anÃ¡lisis")}</option>
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
                     {t("lead_status" + '.' + s)}
@@ -2641,7 +3076,7 @@ export default function Inbox() {
             <div className="flex-1 overflow-y-auto">
               {threads.length === 0 && !threadsLoading ? (
                 <div className="p-4 text-sm text-neutral-600 dark:text-neutral-300">
-                  {agentId ? tr("inbox.no_conversations", "No hay conversaciones.") : tr("inbox.select_campaign", "Seleccioná una campaña.")}
+                  {agentId ? tr("inbox.no_conversations", "No hay conversaciones.") : tr("inbox.select_campaign", "SeleccionÃ¡ una campaÃ±a.")}
                 </div>
               ) : (
                 <ul className="divide-y divide-neutral-200/40 dark:divide-neutral-800/60">
@@ -2699,7 +3134,7 @@ export default function Inbox() {
 
                             <div className="flex items-center justify-between gap-1.5 mt-0.5 min-w-0">
                               <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate min-w-0 flex-1">
-                                {t.metadata?.lastMessagePreview || "—"}
+                                {t.metadata?.lastMessagePreview || "â€”"}
                               </div>
                               <div className="flex items-center gap-1 shrink-0 ml-1">
                                 {takeover === "HUMAN" && (
@@ -2709,7 +3144,7 @@ export default function Inbox() {
                                 )}
                                 {takeover === "HUMAN" && lockedBy && lockedBy !== executingUserId && (
                                   <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-red-500/10 text-red-600 dark:text-red-300 ring-1 ring-red-400/30 hidden sm:inline-block">
-                                    🔒
+                                    ðŸ”’
                                   </span>
                                 )}
                                 {unread > 0 && (
@@ -2740,7 +3175,7 @@ export default function Inbox() {
           >
             {/* Header del chat estilo WhatsApp */}
             <div className="flex items-center gap-3 px-3 py-2.5 border-b border-neutral-200/40 dark:border-neutral-800/60 bg-[#075E54] dark:bg-[#1a2a27]">
-              {/* Botón volver (solo mobile) */}
+              {/* BotÃ³n volver (solo mobile) */}
               {activeThread ? (
                 <button
                   type="button"
@@ -2805,8 +3240,8 @@ export default function Inbox() {
                     className="p-2 rounded-full text-white hover:bg-white/10 transition-colors disabled:opacity-60 inline-flex items-center justify-center"
                     title={
                       selectedCampaign?.id
-                        ? tr("inbox.edit_lead_tooltip", "Editar lead (status / área / próxima acción)")
-                        : tr("inbox.edit_lead_need_campaign", "Seleccioná la campaña para obtener el campaignId")
+                        ? tr("inbox.edit_lead_tooltip", "Editar lead (status / Ã¡rea / prÃ³xima acciÃ³n)")
+                        : tr("inbox.edit_lead_need_campaign", "SeleccionÃ¡ la campaÃ±a para obtener el campaignId")
                     }
                   >
                     <ClipboardList className="h-5 w-5" />
@@ -2853,7 +3288,7 @@ export default function Inbox() {
               </div>
             )}
 
-            {/* Área de mensajes — fondo estilo WhatsApp */}
+            {/* Ãrea de mensajes â€” fondo estilo WhatsApp */}
             <div
               ref={chatScrollRef}
               className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 min-h-0"
@@ -2866,13 +3301,13 @@ export default function Inbox() {
               {chatLoading ? (
                 <div className="flex justify-center pt-8">
                   <div className="text-sm text-neutral-500 bg-white/70 dark:bg-neutral-800/70 rounded-full px-4 py-2">
-                    {tr("loading", "Cargando…")}
+                    {tr("loading", "Cargandoâ€¦")}
                   </div>
                 </div>
               ) : !activeThread ? (
                 <div className="flex justify-center pt-8">
                   <div className="text-sm text-neutral-500 bg-white/70 dark:bg-neutral-800/70 rounded-full px-4 py-2">
-                    {tr("inbox.open_conversation", "Abrí una conversación.")}
+                    {tr("inbox.open_conversation", "AbrÃ­ una conversaciÃ³n.")}
                   </div>
                 </div>
               ) : (
@@ -2890,6 +3325,33 @@ export default function Inbox() {
 
                   {displayMessages.map((m) => {
                     const mine = m.role === "assistant";
+                    const requestId = String(m.requestId || "").trim();
+                    const isEditing = Boolean(requestId && editingMessageRequestId === requestId);
+                    const isBusyEdit = Boolean(requestId && messageActionLoadingId === `edit:${requestId}`);
+                    const isBusyDelete = Boolean(requestId && messageActionLoadingId === `delete:${requestId}`);
+                    const activeChannel = normalizeInboxChannel(activeThread?.channel || "whatsapp");
+                    const isWhatsappThread = activeChannel === "whatsapp";
+                    const isHumanOutbound = (m.profile?.source || "bot") === "human";
+                    const isOwnAuthor =
+                      !m.profile?.authorUserId ||
+                      String(m.profile.authorUserId) === String(executingUserId);
+                    const isDeleted = Boolean(m.profile?.isDeleted);
+                    const hasMedia = Boolean(m.profile?.media);
+                    const hasStableRequestId = Boolean(requestId && !isOptimisticRequestId(requestId));
+                    const ageMs = Date.now() - Number(m.time || 0);
+                    const isWithinActionWindow = ageMs >= 0 && ageMs <= WHATSAPP_MESSAGE_ACTION_WINDOW_MS;
+                    const canModerate = Boolean(
+                      isWhatsappThread &&
+                      mine &&
+                      canSend &&
+                      isHumanOutbound &&
+                      isOwnAuthor &&
+                      hasStableRequestId &&
+                      isWithinActionWindow,
+                    );
+                    const canEditMessage = canModerate && !hasMedia && !isDeleted;
+                    const canDeleteMessage = canModerate && !isDeleted;
+
                     return (
                       <div key={msgKey(m)} className={mine ? "flex justify-end" : "flex justify-start"}>
                         <div
@@ -2898,12 +3360,40 @@ export default function Inbox() {
                             mine
                               ? "bg-[#dcf8c6] dark:bg-[#005c4b] text-neutral-900 dark:text-neutral-50 rounded-tr-sm"
                               : "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 rounded-tl-sm",
+                            isEditing ? "ring-2 ring-emerald-400/60" : "",
                           ].join(" ")}
                         >
-                          {m.content}
+                          <span className={isDeleted ? "italic opacity-80" : ""}>{m.content}</span>
                           <div className={["mt-0.5 text-[10px] text-right", mine ? "text-neutral-600/70 dark:text-neutral-300/70" : "text-neutral-500"].join(" ")}>
                             {new Date(m.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            {m.profile?.editedAt ? `· ${tr("inbox.edited", "editado")}` : ""}
                           </div>
+                          {(canEditMessage || canDeleteMessage) && (
+                            <div className="mt-1 flex items-center justify-end gap-1">
+                              {canEditMessage && (
+                                <button
+                                  type="button"
+                                  onClick={() => onStartEditMessage(m)}
+                                  disabled={isBusyEdit || isBusyDelete}
+                                  className="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-60"
+                                  title={tr("inbox.edit_message", "Editar mensaje")}
+                                >
+                                  {isBusyEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Pencil className="h-3.5 w-3.5" />}
+                                </button>
+                              )}
+                              {canDeleteMessage && (
+                                <button
+                                  type="button"
+                                  onClick={() => onDeleteMessage(m)}
+                                  disabled={isBusyEdit || isBusyDelete}
+                                  className="p-1 rounded-md hover:bg-red-500/15 text-red-600 dark:text-red-300 disabled:opacity-60"
+                                  title={tr("inbox.delete_message", "Eliminar mensaje")}
+                                >
+                                  {isBusyDelete ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -2927,7 +3417,7 @@ export default function Inbox() {
                 <div className="mb-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-200">
                     <ShieldAlert className="h-4 w-4 shrink-0" />
-                    <span>{tr("inbox.reply_requires_human", "Para responder, activá el modo humano.")}</span>
+                    <span>{tr("inbox.reply_requires_human", "Para responder, activÃ¡ el modo humano.")}</span>
                   </div>
                   <button
                     onClick={onToggleTakeover}
@@ -2943,6 +3433,26 @@ export default function Inbox() {
                 <div className="mb-2 flex items-center gap-2 text-xs text-red-600 dark:text-red-300 px-1">
                   <ShieldAlert className="h-4 w-4 shrink-0" />
                   {tr("inbox.read_only_locked", "Bloqueado por otro usuario. Solo lectura.")}
+                </div>
+              )}
+
+              {isComposerEditMode && (
+                <div className="mb-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                      {tr("inbox.edit_mode_active", "Editando mensaje")}
+                    </div>
+                    <div className="text-[11px] text-emerald-700/80 dark:text-emerald-200/80 truncate">
+                      {tr("inbox.edit_mode_hint", "Modifica el texto y presiona Guardar.")}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onCancelEditMessage}
+                    className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white/70 dark:bg-neutral-900/60 hover:bg-white dark:hover:bg-neutral-800"
+                  >
+                    {tr("cancel", "Cancelar")}
+                  </button>
                 </div>
               )}
 
@@ -2992,9 +3502,13 @@ export default function Inbox() {
               <div className="flex items-end gap-2">
                 <button
                   onClick={onPickFile}
-                  disabled={!activeThread || !canSend}
+                  disabled={!activeThread || !canSend || isComposerEditMode}
                   className="p-2.5 rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 hover:bg-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-50 shrink-0"
-                  title={tr("inbox.attach", "Adjuntar")}
+                  title={
+                    isComposerEditMode
+                      ? tr("inbox.attach_disabled_while_editing", "Adjuntar deshabilitado durante edicion")
+                      : tr("inbox.attach", "Adjuntar")
+                  }
                 >
                   <Paperclip className="h-5 w-5" />
                 </button>
@@ -3025,7 +3539,7 @@ export default function Inbox() {
                   disabled={!activeThread || !canSend}
                   placeholder={
                     !activeThread
-                      ? tr("inbox.select_conversation", "Seleccioná una conversación…")
+                      ? tr("inbox.select_conversation", "SeleccionÃ¡ una conversaciÃ³nâ€¦")
                       : isActiveChannelDisconnected
                         ? tr(
                           "inbox.channel_unlinked_placeholder",
@@ -3034,22 +3548,24 @@ export default function Inbox() {
                         : !canSend
                         ? tr(
                           "inbox.activate_human_to_reply",
-                          "Activá modo humano para responder.",
+                          "ActivÃ¡ modo humano para responder.",
                         )
+                        : isComposerEditMode
+                        ? tr("inbox.edit_message_placeholder", "Edita el mensaje...")
                         : tr(
                           "inbox.write_message_placeholder",
-                          "Escribí un mensaje…",
+                          "EscribÃ­ un mensajeâ€¦",
                         )
                   }
-                  className="flex-1 rounded-full border border-neutral-300/60 dark:border-neutral-700/60 bg-white dark:bg-neutral-950/80 px-4 py-2.5 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none min-h-[42px]"
+                  className="flex-1 rounded-2xl border border-neutral-300/60 dark:border-neutral-700/60 bg-white dark:bg-neutral-950/80 px-4 py-2.5 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:opacity-60 resize-none min-h-[42px]"
                 />
                 <button
                   onClick={onSend}
-                  disabled={!activeThread || !canSend || (!pending && !draft.trim())}
+                  disabled={isComposerSendDisabled}
                   className="p-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 shrink-0"
-                  title={tr("send", "Enviar")}
+                  title={isComposerEditMode ? tr("inbox.save_edit", "Guardar edicion") : tr("send", "Enviar")}
                 >
-                  <Send className="h-5 w-5" />
+                  {isComposerEditMode ? <Check className="h-5 w-5" /> : <Send className="h-5 w-5" />}
                 </button>
               </div>
 
@@ -3064,6 +3580,17 @@ export default function Inbox() {
           </div>
         </div>
       </div>
+
+      <InboxDialogModal
+        open={dialogState.open}
+        mode={dialogState.mode}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmText={dialogState.confirmText}
+        cancelText={dialogState.cancelText}
+        onConfirm={() => closeDialog(true)}
+        onCancel={() => closeDialog(false)}
+      />
 
       <LeadActionsModal
         open={leadModalOpen}
@@ -3084,3 +3611,5 @@ export default function Inbox() {
     </OnlineLayout>
   );
 }
+
+

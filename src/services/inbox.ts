@@ -23,15 +23,22 @@ export type InboxThread = {
 export type InboxMessageProfile = {
   source?: "human" | "bot";
   authorUserId?: string;
+  editedAt?: string;
+  editedByUserId?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedByUserId?: string;
   media?: {
     type: "image" | "audio" | "video" | "document";
     mimeType?: string;
+    fileName?: string;
   };
 } | null;
 
 export type InboxMessage = {
   agentId: string;
   userId?: string;
+  requestId?: string;
   role: "user" | "assistant";
   content: string;
   time: number;
@@ -181,6 +188,42 @@ export async function sendMessage(
 
   const { data } = await api.post<{ ok: boolean }>(
     `inbox/${safeAgentId}/threads/${safeContactId}/send`,
+    body,
+    { params: { channel } }
+  );
+  return data;
+}
+
+export async function editThreadMessage(
+  agentId: string,
+  contactId: string,
+  body: { requestId: string; text: string },
+  opts?: { channel?: InboxChannel }
+) {
+  const channel = opts?.channel ?? "whatsapp";
+  const safeAgentId = encodeURIComponent(agentId);
+  const safeContactId = encodeURIComponent(contactId);
+
+  const { data } = await api.post<{ ok: boolean; message: InboxMessage }>(
+    `inbox/${safeAgentId}/threads/${safeContactId}/messages/edit`,
+    body,
+    { params: { channel } }
+  );
+  return data;
+}
+
+export async function deleteThreadMessage(
+  agentId: string,
+  contactId: string,
+  body: { requestId: string },
+  opts?: { channel?: InboxChannel }
+) {
+  const channel = opts?.channel ?? "whatsapp";
+  const safeAgentId = encodeURIComponent(agentId);
+  const safeContactId = encodeURIComponent(contactId);
+
+  const { data } = await api.post<{ ok: boolean; message: InboxMessage }>(
+    `inbox/${safeAgentId}/threads/${safeContactId}/messages/delete`,
     body,
     { params: { channel } }
   );
