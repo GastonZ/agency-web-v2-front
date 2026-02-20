@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
 import OnlineLayout from "../layout/OnlineLayout";
 import { getMyBillingSummary } from "../services/billing";
@@ -15,7 +16,7 @@ export default function BillingCheckoutReturn() {
       setLastStatus(summary.subscription.status);
       toast.success(`Estado actualizado: ${summary.subscription.status}`);
     } catch (error: any) {
-      toast.error(error?.data?.message || error?.message || "No se pudo consultar la suscripción");
+      toast.error(error?.data?.message || error?.message || "No se pudo consultar la suscripcion");
     } finally {
       setLoading(false);
     }
@@ -23,16 +24,17 @@ export default function BillingCheckoutReturn() {
 
   return (
     <OnlineLayout>
-      <section className="mx-auto w-full max-w-2xl rounded-2xl border border-neutral-200 bg-white/80 p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/70">
-        <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
-          Estamos validando tu suscripción
-        </h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-          Si recién terminaste el checkout, el estado puede demorar unos segundos en actualizarse.
+      <section className="mx-auto w-full max-w-2xl overflow-hidden rounded-[30px] border border-[#243149] bg-[#0d1523] p-6 text-white shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
+        <div className="pointer-events-none absolute" />
+
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/75">Checkout return</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Validando tu suscripcion</h1>
+        <p className="mt-2 text-sm text-white/65">
+          Si acabas de completar el checkout, el estado puede tardar unos segundos en reflejarse.
         </p>
 
         {lastStatus ? (
-          <p className="mt-4 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+          <p className="mt-4 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white/85">
             Estado actual: <strong>{lastStatus}</strong>
           </p>
         ) : null}
@@ -42,15 +44,16 @@ export default function BillingCheckoutReturn() {
             type="button"
             onClick={refresh}
             disabled={loading}
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-100/35 bg-emerald-300 px-4 py-2 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? "Consultando..." : "Recargar suscripción"}
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Consultando..." : "Recargar suscripcion"}
           </button>
           <Link
             to="/billing/subscription"
-            className="rounded-md border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-600"
+            className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
           >
-            Ir a Mi Suscripción
+            Ir a Mi Suscripcion
           </Link>
         </div>
       </section>

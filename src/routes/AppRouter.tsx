@@ -24,12 +24,17 @@ import InstagramCallback from '../pages/InstagramCallback';
 import FacebookCallback from '../pages/FacebookCallback';
 import SubAuth from '../pages/SubAuth';
 import Inbox from '../pages/Inbox';
+import BillingPlans from '../pages/BillingPlans';
+import BillingSubscription from '../pages/BillingSubscription';
+import BillingCheckoutReturn from '../pages/BillingCheckoutReturn';
+import BillingDiagnostics from '../pages/BillingDiagnostics';
+import VerifyEmail from '../pages/VerifyEmail';
 
 const AppRouter: React.FC = () => (
     <Router>
         <ToastContainer />
         <Routes>
-            {/* Rutas públicas*/}
+            {/* Rutas publicas */}
             <Route
                 path="/auth"
                 element={
@@ -47,6 +52,8 @@ const AppRouter: React.FC = () => (
                     </PublicOnlyRoute>
                 }
             />
+
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Rutas privadas */}
             <Route element={<ProtectedRoute />}>
@@ -92,7 +99,10 @@ const AppRouter: React.FC = () => (
                 <Route path="/inbox/:agentId" element={<Inbox />} />
 
                 <Route path="/settings" element={<Settings />} />
-                {/* Billing oculto temporalmente en esta rama/release */}
+{/*                 <Route path="/billing/plans" element={<BillingPlans />} />
+                <Route path="/billing/subscription" element={<BillingSubscription />} />
+                <Route path="/billing/checkout/return" element={<BillingCheckoutReturn />} />
+                <Route path="/billing/diagnostics" element={<BillingDiagnostics />} /> */}
             </Route>
             <Route path='/landing-datacivis' element={<I18nProvider>
                 <DatacivisLanding />

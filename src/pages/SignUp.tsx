@@ -36,7 +36,11 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
                 email,
                 password,
             });
-            toast.success(t("signup_success") || "Sign up successful!");
+            toast.success(
+                t("signup_success_email_validation", {
+                    defaultValue: "Registro exitoso. Revisa tu correo para validar tu cuenta.",
+                }),
+            );
             setIsLogin(true);
 
         } catch (err: any) {

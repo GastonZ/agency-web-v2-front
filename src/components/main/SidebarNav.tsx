@@ -5,7 +5,8 @@ import {
   Folder,
   X,
   Factory,
-  MessageSquare
+  MessageSquare,
+  CreditCard
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "../features/ThemeToggle";
@@ -142,6 +143,6 @@ export const defaultNavItems: NavItem[] = [
   { id: "campaign", label: "Campaign", href: "/campaign_selection", icon: Folder },
   { id: "myCampaigns", label: "My Campaigns", href: "/my_campaigns", icon: Factory },
   { id: "inbox", label: "Inbox", href: "/inbox", icon: MessageSquare },
-  // Billing oculto temporalmente en esta rama/release.
+/*   { id: "billing", label: "Billing", href: "/billing/subscription", icon: CreditCard }, */
   { id: "settings", label: "Settings", href: "/settings", icon: Settings },
 ];
