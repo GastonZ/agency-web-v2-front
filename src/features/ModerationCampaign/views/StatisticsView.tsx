@@ -322,6 +322,11 @@ export default function StatisticsView() {
     };
 
     const frontBase = (import.meta.env.VITE_FRONT_URL || "").replace(/\/+$/, "/");
+    const runtimeOrigin =
+        typeof window !== "undefined"
+            ? window.location.origin
+            : (import.meta.env.VITE_FRONT_URL || "").replace(/\/+$/, "");
+    const instagramRedirectUri = `${runtimeOrigin}/instagram/callback`;
 
     const sdkScript = [
         '<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>',
@@ -409,7 +414,7 @@ export default function StatisticsView() {
                                             <div className="w-full sm:w-auto">
                                                 <InstagramConnectButton
                                                     clientId={import.meta.env.VITE_IG_APP_ID!}
-                                                    redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
+                                                    redirectUri={instagramRedirectUri}
                                                     campaignId={campaign.id}
                                                 />
                                             </div>
@@ -467,7 +472,7 @@ export default function StatisticsView() {
                                 isIgConnected && hasInstagram ? (
                                     <InstagramConnectButton
                                         clientId={import.meta.env.VITE_IG_APP_ID!}
-                                        redirectUri={import.meta.env.VITE_FRONT_URL + "instagram/callback"}
+                                        redirectUri={instagramRedirectUri}
                                         campaignId={campaign.id}
                                         variant="reconnect"
                                     />
