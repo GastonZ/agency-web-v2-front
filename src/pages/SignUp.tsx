@@ -17,17 +17,20 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const { t } = useTranslation('translations');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (loading) return;
         if (!name || !lastName || !password || !email) {
             setError(t("signup_error_required"));
             toast.error(t("signup_error_required"));
             return;
         }
         setError("");
+        setLoading(true);
         try {
             await signUp({
                 name,
@@ -47,6 +50,8 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
             const errorMsg = err.message || t("signup_error_generic");
             setError(t(errorMsg));
             toast.error(t(errorMsg));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -87,6 +92,7 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
                         required
                         placeholder={t("signup_name_placeholder") || "John"}
                         autoComplete="given-name"
+                        disabled={loading}
                     />
                     <Input
                         type="text"
@@ -96,6 +102,7 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
                         required
                         placeholder={t("signup_lastname_placeholder") || "Doe"}
                         autoComplete="family-name"
+                        disabled={loading}
                     />
                     <Input
                         type="text"
@@ -105,6 +112,7 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
                         required={false}
                         placeholder={t("signup_username_placeholder") || "Optional"}
                         autoComplete="username"
+                        disabled={loading}
                     />
                     <Input
                         type="email"
@@ -114,6 +122,7 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
                         required
                         placeholder={t("signup_email_placeholder")}
                         autoComplete="email"
+                        disabled={loading}
                     />
                     <PasswordInput
                         label={t("login_password_label")}
@@ -122,10 +131,12 @@ const SignUp: React.FC<SignUpProps> = ({ setIsLogin }) => {
                         required
                         placeholder="********"
                         autoComplete="new-password"
+                        disabled={loading}
                     />
 
                     <Button
                         type="submit"
+                        loading={loading}
                         className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-md shadow-emerald-500/30"
                     >
                         {t("signup_button")}

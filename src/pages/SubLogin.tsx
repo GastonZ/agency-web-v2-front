@@ -23,6 +23,7 @@ const SubLogin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
 
     if (!username || !password) {
       setErrorMsg(t("emptyFields"));
